@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace
+   version = "1.0">
+   <Group
+      location = "container:"
+      name = "TIER-0-Foundation">
+      <FileRef
+         location = "group:TIER-0-Foundation/EduGoCommon">
+      </FileRef>
+   </Group>
+   <Group
+      location = "container:"
+      name = "TIER-1-Core">
+      <FileRef
+         location = "group:TIER-1-Core/Logger">
+      </FileRef>
+      <FileRef
+         location = "group:TIER-1-Core/Models">
+      </FileRef>
+   </Group>
+   <Group
+      location = "container:"
+      name = "TIER-2-Infrastructure">
+      <FileRef
+         location = "group:TIER-2-Infrastructure/Network">
+      </FileRef>
+      <FileRef
+         location = "group:TIER-2-Infrastructure/Storage">
+      </FileRef>
+   </Group>
+   <Group
+      location = "container:"
+      name = "TIER-3-Domain">
+      <FileRef
+         location = "group:TIER-3-Domain/Auth">
+      </FileRef>
+      <FileRef
+         location = "group:TIER-3-Domain/Roles">
+      </FileRef>
+   </Group>
+   <Group
+      location = "container:"
+      name = "TIER-4-Features">
+      <FileRef
+         location = "group:TIER-4-Features/API">
+      </FileRef>
+      <FileRef
+         location = "group:TIER-4-Features/Analytics">
+      </FileRef>
+      <FileRef
+         location = "group:TIER-4-Features/AI">
+      </FileRef>
+   </Group>
+</Workspace>
