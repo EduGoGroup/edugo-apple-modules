@@ -1,0 +1,22 @@
+{
+  "plan_mejoras": {
+    "total_mejoras": 24,
+    "por_prioridad": {"CRITICA": 7, "ALTA": 5, "MEDIA": 6, "BAJA": 6},
+    "archivos_afectados": [
+      ".claude/commands/041-implementer-task.md",
+      ".claude/agents/implementer/code-executor-agent.md",
+      ".claude/agents/implementer/result-reporter-agent.md",
+      ".claude/agents/implementer/validator-agent.md",
+      ".claude/agents/common/mcp-validator.md",
+      ".claude/agents/common/search-local.md"
+    ]
+  },
+  "fases_ejecucion": [
+    {"fase": 1, "nombre": "Correcciones Críticas", "mejoras": ["M001", "CE001", "CE002", "CE004", "RR001", "RR002", "RR004"], "minutos": 25},
+    {"fase": 2, "nombre": "Alta Prioridad - Comando", "mejoras": ["M002", "M003", "M004"], "minutos": 10},
+    {"fase": 3, "nombre": "Alta Prioridad - Agentes", "mejoras": ["CE003", "RR003"], "minutos": 10},
+    {"fase": 4, "nombre": "Media Prioridad", "mejoras": ["M005", "M006", "CE005", "VA002", "VA003", "RR005"], "minutos": 20},
+    {"fase": 5, "nombre": "Baja Prioridad", "mejoras": ["M007", "MV001", "MV002", "SL001", "SL002", "VA001"], "minutos": 15}
+  ],
+  "tiempo_total_estimado_minutos": 80
+}

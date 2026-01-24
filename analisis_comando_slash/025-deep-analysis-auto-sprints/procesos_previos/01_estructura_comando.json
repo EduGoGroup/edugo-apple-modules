@@ -1,0 +1,60 @@
+{
+  "comando": "025-deep-analysis-auto-sprints",
+  "version": "2.5",
+  "descripcion": "Generar automáticamente todos los sprints de un proyecto",
+  "frontmatter": {
+    "name": "025-deep-analysis-auto-sprints",
+    "description": "Generar automáticamente todos los sprints de un proyecto",
+    "allowed_tools": [
+      "Task",
+      "mcp__MCPEco__get_project_info",
+      "mcp__MCPEco__execution_session_manage",
+      "mcp__MCPEco__list_flows",
+      "mcp__MCPEco__get_flow_row"
+    ]
+  },
+  "total_fases": 9,
+  "fases": [
+    { "orden": -1, "nombre": "Cargar Herramientas MCP", "agente": null },
+    { "orden": 0, "nombre": "Validar MCP", "agente": "mcp-validator" },
+    { "orden": 1, "nombre": "Obtener Proyecto y Validar", "agente": null },
+    { "orden": 1.5, "nombre": "Inicializar Sesión de Ejecución", "agente": null },
+    { "orden": 2, "nombre": "Verificar Sprints Existentes", "agente": null },
+    { "orden": 3, "nombre": "Leer Constitución", "agente": "search-local" },
+    { "orden": 4, "nombre": "Planear Sprints", "agente": "general-purpose" },
+    { "orden": 5, "nombre": "Crear Sprints (Loop)", "agente": "milestone-analyzer, flow-creator, impact-filter, module-creator, story-creator" },
+    { "orden": 6, "nombre": "Finalizar Step y Retornar Resultado", "agente": null }
+  ],
+  "subagent_types": [
+    "mcp-validator",
+    "search-local",
+    "general-purpose",
+    "milestone-analyzer",
+    "flow-creator",
+    "impact-filter",
+    "module-creator",
+    "story-creator"
+  ],
+  "herramientas_mcp": [
+    "mcp__MCPEco__get_project_info",
+    "mcp__MCPEco__execution_session_manage",
+    "mcp__MCPEco__list_flows",
+    "mcp__MCPEco__get_flow_row"
+  ],
+  "advertencias_criticas": [
+    "SEGUIR EL PLAN AL PIE DE LA LETRA",
+    "NO asumir cambios o mejoras al flujo sin consultar al usuario primero",
+    "Si detectas algo que debe cambiarse o mejorarse, DETENER la ejecución y PREGUNTAR AL USUARIO usando AskUserQuestion",
+    "NO modificar el orden de las fases sin autorización explícita",
+    "NO omitir pasos aunque parezcan opcionales",
+    "NO agregar pasos adicionales sin consultar",
+    "Si un agente falla, registrar en logs y reportar al usuario, NO intentar soluciones alternativas sin autorización",
+    "En caso de duda -> PREGUNTAR AL USUARIO",
+    "CRÍTICO - FIX REAL: Agentes corregidos con MCPSearch en tools + model:sonnet (module-creator v2.3, flow-creator, story-creator)",
+    "MCPSearch requiere Sonnet 4+ (no funciona con Haiku)",
+    "FASE 3 CRÍTICA: Si no se encuentra constitución, proceso termina con error (no fallback)",
+    "VALIDACIÓN CRÍTICA: Verificar que los flow_rows REALMENTE existen en BD antes de crear stories",
+    "ERROR CRÍTICO posible: El agente module-creator puede retornar IDs de flow_rows que NO fueron persistidos en BD",
+    "CIRCUIT BREAKER: Si >50% de sprints fallan, el proceso se detiene"
+  ]
+}

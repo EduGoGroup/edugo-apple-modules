@@ -1,0 +1,56 @@
+{
+  "comando": "042-implementer-correction",
+  "total_agentes": 3,
+  "agentes": [
+    {
+      "nombre": "mcp-validator",
+      "archivo": ".claude/agents/common/mcp-validator.md",
+      "modelo": "haiku",
+      "version": "2.2",
+      "responsabilidad": "Validar conectividad del servidor MCP MCPEco",
+      "tools_permitidos": ["mcp__MCPEco__list_documents"],
+      "prohibiciones": ["NO usar Bash/Read/Write/Edit", "NO reintentar", "NO solucionar errores"],
+      "input": { "requiere_parametros": false },
+      "output": {
+        "exito": { "status": "ok", "mcp_available": true },
+        "error": { "status": "error", "error_code": "MCP_NOT_AVAILABLE" }
+      },
+      "errores_posibles": ["MCP_NOT_AVAILABLE"]
+    },
+    {
+      "nombre": "correction-executor-agent",
+      "archivo": ".claude/agents/implementer/correction-executor-agent.md",
+      "modelo": "sonnet",
+      "version": "2.1",
+      "responsabilidad": "Aplicar correcciones automáticas a código existente",
+      "tools_permitidos": ["Read", "Edit"],
+      "prohibiciones": ["NUNCA MCP tools", "NUNCA Task()", "NUNCA Bash", "NUNCA crear archivos nuevos"],
+      "input": { "requiere_parametros": true, "campos": ["project_path", "tech", "issues_to_fix"] },
+      "output": {
+        "exito": { "status": "success", "files_modified": [], "corrections_applied": 0, "corrections_failed": 0 },
+        "error": { "status": "error", "error_message": "..." }
+      },
+      "errores_posibles": ["project_path requerido", "Sugerencia ambigua"]
+    },
+    {
+      "nombre": "validator-agent",
+      "archivo": ".claude/agents/implementer/validator-agent.md",
+      "modelo": "haiku",
+      "version": "2.3",
+      "responsabilidad": "Validar compilación y tests del código",
+      "tools_permitidos": ["Bash"],
+      "prohibiciones": ["NUNCA modificar archivos", "NUNCA MCP tools", "NUNCA Task()", "NUNCA comandos destructivos"],
+      "input": { "requiere_parametros": true, "campos": ["project_path", "tech", "files_to_validate"] },
+      "output": {
+        "exito": { "status": "success", "validation": { "compiles": true, "tests_pass": true } },
+        "error": { "status": "error", "error_code": "INVALID_PATH" }
+      },
+      "errores_posibles": ["project_path requerido", "INVALID_PATH", "Errores de compilación"]
+    }
+  ],
+  "resumen_modelos": {
+    "haiku": ["mcp-validator", "validator-agent"],
+    "sonnet": ["correction-executor-agent"],
+    "opus": []
+  }
+}

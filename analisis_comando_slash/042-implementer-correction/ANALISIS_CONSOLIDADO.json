@@ -1,0 +1,558 @@
+{
+  "comando": {
+    "nombre": "042-implementer-correction",
+    "version": "2.0.0",
+    "descripcion": "Orquestador para aplicar correcciones automáticas a código (invocado por code-review/qa)",
+    "breaking_changes": [
+      "project_id ahora es OBLIGATORIO (BREAKING CHANGE v2.0)",
+      "Este comando NO avanza la task - el invocador es responsable",
+      "Fail-safe: si correcciones rompen código, retorna success: false sin excepción",
+      "Tracking OPCIONAL: requiere session_id Y step_id en input"
+    ]
+  },
+  "estructura_comando": {
+    "total_fases": 7,
+    "herramientas_mcp_permitidas": [
+      "mcp__MCPEco__execution_session_manage"
+    ],
+    "fases": [
+      {
+        "orden": -2,
+        "nombre": "Inicializar TODO List",
+        "proposito": "Crear lista de tareas visible al usuario con 6 items",
+        "agente": null,
+        "modelo": null,
+        "entrada": {
+          "tipo": "ninguna",
+          "campos": []
+        },
+        "salida": {
+          "campos": [
+            "TODO list con 6 items"
+          ]
+        },
+        "validaciones": [],
+        "errores_posibles": []
+      },
+      {
+        "orden": -1,
+        "nombre": "Cargar Herramientas MCP",
+        "proposito": "Cargar herramientas MCP con MCPSearch",
+        "agente": null,
+        "modelo": null,
+        "mcp_tools": [
+          "MCPSearch (select:mcp__MCPEco__execution_session_manage)"
+        ],
+        "entrada": {
+          "tipo": "ninguna",
+          "campos": []
+        },
+        "salida": {
+          "campos": [
+            "Herramientas cargadas"
+          ]
+        },
+        "validaciones": [],
+        "errores_posibles": []
+      },
+      {
+        "orden": 0,
+        "nombre": "Validar MCP",
+        "proposito": "Validar servidor MCP disponible",
+        "agente": "mcp-validator",
+        "modelo": "haiku",
+        "mcp_tools": [],
+        "entrada": {
+          "tipo": "prompt estático",
+          "campos": []
+        },
+        "salida": {
+          "campos": [
+            "status"
+          ]
+        },
+        "validaciones": [
+          "status === 'ok'"
+        ],
+        "errores_posibles": [
+          {
+            "error_code": "MCP_UNAVAILABLE",
+            "fatal": true
+          }
+        ]
+      },
+      {
+        "orden": 1,
+        "nombre": "Parsear y Validar Input",
+        "proposito": "Parsear JSON, validar campos obligatorios, determinar tracking",
+        "agente": null,
+        "modelo": null,
+        "mcp_tools": [
+          "mcp__MCPEco__execution_session_manage (condicional)"
+        ],
+        "entrada": {
+          "tipo": "JSON",
+          "campos": [
+            "project_id (REQUERIDO)",
+            "project_path (REQUERIDO)",
+            "tech (REQUERIDO)",
+            "session_id (opcional)",
+            "step_id (opcional)",
+            "task_id (opcional)",
+            "correction_context (opcional)",
+            "issues_to_fix (REQUERIDO)"
+          ]
+        },
+        "salida": {
+          "campos": [
+            "input parseado",
+            "TRACKING_ENABLED",
+            "logStep function"
+          ]
+        },
+        "validaciones": [
+          "JSON válido",
+          "project_id presente",
+          "project_path presente",
+          "tech presente",
+          "issues_to_fix es array"
+        ],
+        "errores_posibles": [
+          {
+            "error_code": "INVALID_JSON_INPUT",
+            "fatal": true
+          },
+          {
+            "error_code": "PROJECT_ID_REQUIRED",
+            "fatal": true
+          },
+          {
+            "error_code": "MISSING_REQUIRED_FIELDS",
+            "fatal": true
+          },
+          {
+            "error_code": "INVALID_ISSUES_FORMAT",
+            "fatal": true
+          }
+        ]
+      },
+      {
+        "orden": 2,
+        "nombre": "Aplicar Correcciones",
+        "proposito": "Delegar a correction-executor para aplicar fixes",
+        "agente": "correction-executor-agent",
+        "modelo": "sonnet",
+        "mcp_tools": [],
+        "entrada": {
+          "tipo": "JSON",
+          "campos": [
+            "project_path",
+            "tech",
+            "issues_to_fix"
+          ]
+        },
+        "salida": {
+          "campos": [
+            "correctionsApplied",
+            "filesModified",
+            "corrections_failed",
+            "corrections_detail",
+            "failures_detail"
+          ]
+        },
+        "validaciones": [
+          "status === 'success'"
+        ],
+        "errores_posibles": [
+          {
+            "error_code": "CORRECTIONS_FAILED",
+            "fatal": true
+          }
+        ]
+      },
+      {
+        "orden": 3,
+        "nombre": "Validar Correcciones",
+        "proposito": "Verificar que código corregido compila y pasa tests",
+        "agente": "validator-agent",
+        "modelo": "haiku",
+        "mcp_tools": [],
+        "entrada": {
+          "tipo": "JSON",
+          "campos": [
+            "project_path",
+            "tech",
+            "files_to_validate"
+          ]
+        },
+        "salida": {
+          "campos": [
+            "compiles",
+            "tests_pass",
+            "validationSkipped"
+          ]
+        },
+        "validaciones": [],
+        "errores_posibles": [
+          {
+            "error_code": null,
+            "fatal": false,
+            "manejo": "marca validation_skipped: true"
+          }
+        ]
+      },
+      {
+        "orden": 4,
+        "nombre": "Retornar Resultado",
+        "proposito": "Consolidar y retornar JSON final",
+        "agente": null,
+        "modelo": null,
+        "mcp_tools": [],
+        "entrada": {
+          "tipo": "variables de fases anteriores",
+          "campos": []
+        },
+        "salida": {
+          "campos": [
+            "success",
+            "project_id",
+            "task_id",
+            "mode",
+            "correction_context",
+            "metrics",
+            "files_modified",
+            "summary"
+          ]
+        },
+        "validaciones": [],
+        "errores_posibles": []
+      }
+    ]
+  },
+  "analisis_fases": {
+    "total_fases": 7,
+    "flujo_ejecucion": "Lineal (secuencial, no ramificado)",
+    "manejo_errores": {
+      "estrategia": "Fail-fast con early return. Cada error retorna JSON con success: false. NO lanza excepciones.",
+      "output_error": {
+        "success": false,
+        "error": "<ERROR_CODE>",
+        "details": "<mensaje>"
+      }
+    },
+    "funciones_auxiliares": [
+      {
+        "nombre": "logStep",
+        "proposito": "Enviar logs a BD si tracking habilitado",
+        "parametros": [
+          "message"
+        ],
+        "retorno": "void"
+      }
+    ],
+    "fases_por_responsabilidad": {
+      "inicializacion": [
+        "Inicializar TODO List",
+        "Cargar Herramientas MCP"
+      ],
+      "validacion": [
+        "Validar MCP",
+        "Parsear y Validar Input",
+        "Validar Correcciones"
+      ],
+      "ejecucion": [
+        "Aplicar Correcciones"
+      ],
+      "finalizacion": [
+        "Retornar Resultado"
+      ]
+    }
+  },
+  "agentes": {
+    "total_agentes": 3,
+    "lista": [
+      {
+        "nombre": "mcp-validator",
+        "archivo": ".claude/agents/common/mcp-validator.md",
+        "modelo": "haiku",
+        "version": "2.2",
+        "responsabilidad": "Validar conectividad del servidor MCP MCPEco",
+        "tools_permitidos": [
+          "mcp__MCPEco__list_documents"
+        ],
+        "prohibiciones": [
+          "NO usar Bash/Read/Write/Edit",
+          "NO reintentar",
+          "NO solucionar errores"
+        ],
+        "input": {
+          "requiere_parametros": false
+        },
+        "output": {
+          "exito": {
+            "status": "ok",
+            "mcp_available": true
+          },
+          "error": {
+            "status": "error",
+            "error_code": "MCP_NOT_AVAILABLE"
+          }
+        },
+        "errores_posibles": [
+          "MCP_NOT_AVAILABLE"
+        ],
+        "fase_ejecucion": 0,
+        "uso_en_comando": "Fase 0: Validar que el servidor MCP esté disponible antes de continuar"
+      },
+      {
+        "nombre": "correction-executor-agent",
+        "archivo": ".claude/agents/implementer/correction-executor-agent.md",
+        "modelo": "sonnet",
+        "version": "2.1",
+        "responsabilidad": "Aplicar correcciones automáticas a código existente",
+        "tools_permitidos": [
+          "Read",
+          "Edit"
+        ],
+        "prohibiciones": [
+          "NUNCA MCP tools",
+          "NUNCA Task()",
+          "NUNCA Bash",
+          "NUNCA crear archivos nuevos"
+        ],
+        "input": {
+          "requiere_parametros": true,
+          "campos": [
+            "project_path",
+            "tech",
+            "issues_to_fix"
+          ]
+        },
+        "output": {
+          "exito": {
+            "status": "success",
+            "files_modified": [],
+            "corrections_applied": 0,
+            "corrections_failed": 0
+          },
+          "error": {
+            "status": "error",
+            "error_message": "..."
+          }
+        },
+        "errores_posibles": [
+          "project_path requerido",
+          "Sugerencia ambigua"
+        ],
+        "fase_ejecucion": 2,
+        "uso_en_comando": "Fase 2: Aplicar las correcciones específicas al código basadas en issues_to_fix"
+      },
+      {
+        "nombre": "validator-agent",
+        "archivo": ".claude/agents/implementer/validator-agent.md",
+        "modelo": "haiku",
+        "version": "2.3",
+        "responsabilidad": "Validar compilación y tests del código",
+        "tools_permitidos": [
+          "Bash"
+        ],
+        "prohibiciones": [
+          "NUNCA modificar archivos",
+          "NUNCA MCP tools",
+          "NUNCA Task()",
+          "NUNCA comandos destructivos"
+        ],
+        "input": {
+          "requiere_parametros": true,
+          "campos": [
+            "project_path",
+            "tech",
+            "files_to_validate"
+          ]
+        },
+        "output": {
+          "exito": {
+            "status": "success",
+            "validation": {
+              "compiles": true,
+              "tests_pass": true
+            }
+          },
+          "error": {
+            "status": "error",
+            "error_code": "INVALID_PATH"
+          }
+        },
+        "errores_posibles": [
+          "project_path requerido",
+          "INVALID_PATH",
+          "Errores de compilación"
+        ],
+        "fase_ejecucion": 3,
+        "uso_en_comando": "Fase 3: Validar que el código corregido compila correctamente y pasa los tests"
+      }
+    ],
+    "distribucion_por_modelo": {
+      "haiku": [
+        "mcp-validator",
+        "validator-agent"
+      ],
+      "sonnet": [
+        "correction-executor-agent"
+      ],
+      "opus": []
+    },
+    "matriz_permisos": {
+      "mcp-validator": {
+        "Read": false,
+        "Edit": false,
+        "Bash": false,
+        "Task": false,
+        "MCP_tools": true,
+        "prohibicion_critica": "Solo lectura de MCP, sin modificaciones"
+      },
+      "correction-executor-agent": {
+        "Read": true,
+        "Edit": true,
+        "Bash": false,
+        "Task": false,
+        "MCP_tools": false,
+        "prohibicion_critica": "No puede crear archivos nuevos, solo editar existentes"
+      },
+      "validator-agent": {
+        "Read": false,
+        "Edit": false,
+        "Bash": true,
+        "Task": false,
+        "MCP_tools": false,
+        "prohibicion_critica": "Solo lectura mediante comandos, sin modificación de archivos"
+      }
+    }
+  },
+  "flujo_completo": {
+    "entrada_requerida": {
+      "project_id": "string (OBLIGATORIO)",
+      "project_path": "string (OBLIGATORIO)",
+      "tech": "string (OBLIGATORIO)",
+      "issues_to_fix": "array (OBLIGATORIO)",
+      "session_id": "string (OPCIONAL)",
+      "step_id": "string (OPCIONAL)",
+      "task_id": "string (OPCIONAL)",
+      "correction_context": "object (OPCIONAL)"
+    },
+    "salida_esperada": {
+      "success": "boolean",
+      "project_id": "string",
+      "task_id": "string | null",
+      "mode": "string",
+      "correction_context": "object | null",
+      "metrics": "object",
+      "files_modified": "array",
+      "summary": "string"
+    },
+    "flujo_secuencial": [
+      {
+        "paso": 1,
+        "fase": "Inicializar TODO List",
+        "responsable": "orchestrator",
+        "accion": "Crear TODO list con 6 items"
+      },
+      {
+        "paso": 2,
+        "fase": "Cargar Herramientas MCP",
+        "responsable": "orchestrator",
+        "accion": "Cargar mcp__MCPEco__execution_session_manage"
+      },
+      {
+        "paso": 3,
+        "fase": "Validar MCP",
+        "responsable": "mcp-validator",
+        "accion": "Verificar disponibilidad del servidor MCP",
+        "criterio_exito": "status === 'ok'",
+        "criterio_fallo": "MCP_UNAVAILABLE (fatal)"
+      },
+      {
+        "paso": 4,
+        "fase": "Parsear y Validar Input",
+        "responsable": "orchestrator",
+        "accion": "Validar JSON input y campos obligatorios",
+        "criterio_exito": "Todos los campos obligatorios presentes",
+        "criterio_fallo": "INVALID_JSON_INPUT | PROJECT_ID_REQUIRED | MISSING_REQUIRED_FIELDS (fatal)"
+      },
+      {
+        "paso": 5,
+        "fase": "Aplicar Correcciones",
+        "responsable": "correction-executor-agent",
+        "accion": "Editar archivos para aplicar fixes",
+        "criterio_exito": "status === 'success'",
+        "criterio_fallo": "CORRECTIONS_FAILED (fatal)"
+      },
+      {
+        "paso": 6,
+        "fase": "Validar Correcciones",
+        "responsable": "validator-agent",
+        "accion": "Compilar y ejecutar tests",
+        "criterio_exito": "compiles=true AND tests_pass=true",
+        "criterio_fallo": "No fatal, marca validation_skipped: true"
+      },
+      {
+        "paso": 7,
+        "fase": "Retornar Resultado",
+        "responsable": "orchestrator",
+        "accion": "Consolidar y retornar JSON final",
+        "salida": "JSON con success, metrics, files_modified, summary"
+      }
+    ]
+  },
+  "analisis_integracion": {
+    "dependencias_entre_agentes": [
+      {
+        "fase_anterior": "Validar MCP",
+        "agente_anterior": "mcp-validator",
+        "fase_siguiente": "Parsear y Validar Input",
+        "agente_siguiente": "orchestrator",
+        "dependencia": "Requiere MCP disponible para tracking opcional"
+      },
+      {
+        "fase_anterior": "Parsear y Validar Input",
+        "agente_anterior": "orchestrator",
+        "fase_siguiente": "Aplicar Correcciones",
+        "agente_siguiente": "correction-executor-agent",
+        "dependencia": "Requiere input validado con project_path, tech, issues_to_fix"
+      },
+      {
+        "fase_anterior": "Aplicar Correcciones",
+        "agente_anterior": "correction-executor-agent",
+        "fase_siguiente": "Validar Correcciones",
+        "agente_siguiente": "validator-agent",
+        "dependencia": "Requiere que los archivos hayan sido modificados exitosamente"
+      }
+    ],
+    "puntos_criticos": [
+      {
+        "ubicacion": "Fase 1 (Parsear Input)",
+        "criticidad": "CRITICA",
+        "razon": "project_id es obligatorio (breaking change v2.0)",
+        "impacto": "Sin project_id, el comando falla inmediatamente"
+      },
+      {
+        "ubicacion": "Fase 0 (Validar MCP)",
+        "criticidad": "ALTA",
+        "razon": "Si MCP no está disponible, tracking es imposible",
+        "impacto": "Pero comando sigue sin tracking (graceful degradation)"
+      },
+      {
+        "ubicacion": "Fase 2 (Aplicar Correcciones)",
+        "criticidad": "CRITICA",
+        "razon": "correction-executor-agent no puede crear archivos nuevos",
+        "impacto": "Solo puede editar archivos existentes"
+      },
+      {
+        "ubicacion": "Fase 3 (Validar Correcciones)",
+        "criticidad": "MEDIA",
+        "razon": "Errores de compilación no son fatales",
+        "impacto": "Se marca validation_skipped: true y continúa"
+      }
+    ]
+  }
+}

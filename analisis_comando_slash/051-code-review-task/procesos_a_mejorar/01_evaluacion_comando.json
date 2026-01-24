@@ -1,0 +1,101 @@
+{
+  "comando": "051-code-review-task",
+  "archivo": ".claude/commands/051-code-review-task.md",
+  "puntaje": 82,
+  "cumple": [
+    "Frontmatter completo con name, description, allowed-tools",
+    "FASE -2 con TODO List usando TodoWrite para tracking visual",
+    "FASE -1 con MCPSearch para cargar herramientas MCP",
+    "Validación de input estructurada en FASE 1",
+    "Manejo de errores con failSession para tracking",
+    "Tracking de sesión con execution_session_manage",
+    "Funciones auxiliares bien definidas",
+    "Delegación a agentes con prompt JSON.stringify()",
+    "Validación de respuestas de agentes",
+    "Actualización del TODO List en cada fase",
+    "Retorno JSON estructurado al final",
+    "Logging estructurado con console.log",
+    "Variables globales declaradas",
+    "Documentación con diagrama de flujo y changelog"
+  ],
+  "no_cumple": [
+    "Algunas herramientas MCP no se cargan con MCPSearch en FASE -1",
+    "Falta Read en allowed-tools para validación física",
+    "No hay try-catch global envolviendo toda la ejecución",
+    "No se valida físicamente que las correcciones se aplicaron"
+  ],
+  "mejoras": [
+    {
+      "id": "M001",
+      "prioridad": "MEDIA",
+      "archivo": ".claude/commands/051-code-review-task.md",
+      "seccion": "FASE -2: Inicializar TODO List",
+      "problema": "Numeración de fases inconsistente con ejemplo de mejores prácticas",
+      "cambio": "Renumerar: FASE -1 para TODO List, FASE 0 para MCPSearch",
+      "justificacion": "Consistencia con EXAMPLE-best-practices-command.md"
+    },
+    {
+      "id": "M002",
+      "prioridad": "ALTA",
+      "archivo": ".claude/commands/051-code-review-task.md",
+      "seccion": "FASE -1: Cargar Herramientas MCP",
+      "problema": "create_work_item y list_work_items declaradas pero no cargadas con MCPSearch",
+      "cambio": "Agregar MCPSearch queries para mcp__MCPEco__create_work_item y mcp__MCPEco__list_work_items",
+      "justificacion": "SIEMPRE cargar herramientas MCP con MCPSearch antes de usarlas"
+    },
+    {
+      "id": "M003",
+      "prioridad": "MEDIA",
+      "archivo": ".claude/commands/051-code-review-task.md",
+      "seccion": "Frontmatter allowed-tools",
+      "problema": "Falta Read en allowed-tools para validar archivos físicos",
+      "cambio": "Agregar Read a la lista de allowed-tools",
+      "justificacion": "Validar archivos físicos después de correcciones"
+    },
+    {
+      "id": "M004",
+      "prioridad": "BAJA",
+      "archivo": ".claude/commands/051-code-review-task.md",
+      "seccion": "FASE 6: Ciclo de Revisión",
+      "problema": "No se valida físicamente que los archivos fueron modificados",
+      "cambio": "Agregar validación con Read después de correction-executor",
+      "justificacion": "Prevenir falsos positivos de correcciones"
+    },
+    {
+      "id": "M005",
+      "prioridad": "MEDIA",
+      "archivo": ".claude/commands/051-code-review-task.md",
+      "seccion": "Variables Globales",
+      "problema": "Pseudo-código TypeScript puede confundir",
+      "cambio": "Agregar comentario aclarando que es pseudo-código",
+      "justificacion": "Claridad para desarrolladores"
+    },
+    {
+      "id": "M006",
+      "prioridad": "ALTA",
+      "archivo": ".claude/commands/051-code-review-task.md",
+      "seccion": "Todo el comando",
+      "problema": "No hay try-catch global para errores no manejados",
+      "cambio": "Envolver todo el flujo en try-catch global con failSession",
+      "justificacion": "Errores no capturados dejan estado inconsistente"
+    },
+    {
+      "id": "M007",
+      "prioridad": "BAJA",
+      "archivo": ".claude/commands/051-code-review-task.md",
+      "seccion": "Frontmatter allowed-tools",
+      "problema": "Falta mcp__MCPEco__get_story para contexto adicional",
+      "cambio": "Considerar agregar para expandir contexto en FASE 3",
+      "justificacion": "Anticipación de necesidades futuras"
+    },
+    {
+      "id": "M008",
+      "prioridad": "MEDIA",
+      "archivo": ".claude/commands/051-code-review-task.md",
+      "seccion": "FASE 0: Validar MCP",
+      "problema": "No se verifica que el agente mcp-validator exista",
+      "cambio": "Agregar comentario explicativo sobre dependencia de agente externo",
+      "justificacion": "Robustez y claridad"
+    }
+  ]
+}

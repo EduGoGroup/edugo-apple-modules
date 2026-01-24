@@ -1,0 +1,62 @@
+{
+  "resumen": {
+    "total_agentes": 4,
+    "puntaje_promedio": 79
+  },
+  "evaluaciones": [
+    {
+      "agente": "mcp-validator",
+      "archivo": ".claude/agents/common/mcp-validator.md",
+      "puntaje": 88,
+      "cumple": ["AGT001", "AGT002", "AGT003", "AGT005", "AGT007", "AGT010", "AGT011", "AGT012", "AGT013", "AGT014", "AGT015"],
+      "no_cumple": ["AGT004", "AGT006", "AGT008", "AGT009"],
+      "mejoras": [
+        {"id": "MV001", "prioridad": "ALTA", "archivo": ".claude/agents/common/mcp-validator.md", "seccion": "PASO 0", "problema": "Falta documentar validacion fail-fast explicita", "cambio": "Agregar comentario de validacion fail-fast", "justificacion": "AGT004"},
+        {"id": "MV002", "prioridad": "ALTA", "archivo": ".claude/agents/common/mcp-validator.md", "seccion": "PASO 1", "problema": "No hay try-catch en llamada MCP", "cambio": "Agregar try-catch alrededor de mcp__MCPEco__list_documents", "justificacion": "AGT006"},
+        {"id": "MV003", "prioridad": "MEDIA", "archivo": ".claude/agents/common/mcp-validator.md", "seccion": "Input", "problema": "Falta documentacion de output fields", "cambio": "Agregar tabla de Output Fields", "justificacion": "AGT008"},
+        {"id": "MV004", "prioridad": "MEDIA", "archivo": ".claude/agents/common/mcp-validator.md", "seccion": "Proceso", "problema": "No hay consideracion de timeout", "cambio": "Agregar seccion Consideraciones de Performance", "justificacion": "AGT009"}
+      ]
+    },
+    {
+      "agente": "search-local",
+      "archivo": ".claude/agents/common/search-local.md",
+      "puntaje": 92,
+      "cumple": ["AGT001", "AGT002", "AGT003", "AGT004", "AGT005", "AGT006", "AGT007", "AGT008", "AGT010", "AGT011", "AGT012", "AGT013", "AGT014", "AGT015"],
+      "no_cumple": ["AGT009"],
+      "mejoras": [
+        {"id": "SL001", "prioridad": "MEDIA", "archivo": ".claude/agents/common/search-local.md", "seccion": "PASO 0.5", "problema": "No hay timeout para verificacion de Ollama", "cambio": "Agregar timeout de 5 segundos", "justificacion": "AGT009"},
+        {"id": "SL002", "prioridad": "BAJA", "archivo": ".claude/agents/common/search-local.md", "seccion": "PASO 3", "problema": "No hay limite de documentos en loop", "cambio": "Agregar MAX_DOCS_TO_FETCH = 10", "justificacion": "AGT009"}
+      ]
+    },
+    {
+      "agente": "story-analyzer-agent",
+      "archivo": ".claude/agents/planner/story-analyzer-agent.md",
+      "puntaje": 68,
+      "cumple": ["AGT003", "AGT005", "AGT007", "AGT010", "AGT011", "AGT013", "AGT015"],
+      "no_cumple": ["AGT001", "AGT002", "AGT004", "AGT006", "AGT008", "AGT009", "AGT012", "AGT014"],
+      "mejoras": [
+        {"id": "SA001", "prioridad": "CRITICA", "archivo": ".claude/agents/planner/story-analyzer-agent.md", "seccion": "Frontmatter", "problema": "Falta subagent_type en frontmatter", "cambio": "Agregar subagent_type: story-analyzer-agent", "justificacion": "AGT001"},
+        {"id": "SA002", "prioridad": "CRITICA", "archivo": ".claude/agents/planner/story-analyzer-agent.md", "seccion": "Frontmatter - tools", "problema": "Herramientas no documentadas explicitamente", "cambio": "Agregar tabla de Herramientas Disponibles", "justificacion": "AGT002/AGT012"},
+        {"id": "SA003", "prioridad": "ALTA", "archivo": ".claude/agents/planner/story-analyzer-agent.md", "seccion": "PASO 1", "problema": "Validacion de input incompleta", "cambio": "Agregar validacion de tipos y valores permitidos", "justificacion": "AGT004"},
+        {"id": "SA004", "prioridad": "ALTA", "archivo": ".claude/agents/planner/story-analyzer-agent.md", "seccion": "PASO 2", "problema": "No hay manejo de errores si helpers no existen", "cambio": "Agregar try-catch para cada Read de helper", "justificacion": "AGT006/AGT014"},
+        {"id": "SA005", "prioridad": "ALTA", "archivo": ".claude/agents/planner/story-analyzer-agent.md", "seccion": "PASO 2.1", "problema": "No hay manejo de error si Task() falla", "cambio": "Agregar try-catch para Task search-local", "justificacion": "AGT006"},
+        {"id": "SA006", "prioridad": "MEDIA", "archivo": ".claude/agents/planner/story-analyzer-agent.md", "seccion": "Input", "problema": "Falta tabla de campos de input", "cambio": "Agregar tabla con campos, tipos, requerimiento", "justificacion": "AGT008"},
+        {"id": "SA007", "prioridad": "MEDIA", "archivo": ".claude/agents/planner/story-analyzer-agent.md", "seccion": "Proceso", "problema": "No hay consideraciones de performance", "cambio": "Agregar seccion Consideraciones de Performance", "justificacion": "AGT009"}
+      ]
+    },
+    {
+      "agente": "task-creator-agent",
+      "archivo": ".claude/agents/planner/task-creator-agent.md",
+      "puntaje": 70,
+      "cumple": ["AGT003", "AGT005", "AGT006", "AGT007", "AGT010", "AGT011", "AGT013", "AGT014", "AGT015"],
+      "no_cumple": ["AGT001", "AGT002", "AGT004", "AGT008", "AGT009", "AGT012"],
+      "mejoras": [
+        {"id": "TC001", "prioridad": "CRITICA", "archivo": ".claude/agents/planner/task-creator-agent.md", "seccion": "Frontmatter", "problema": "Falta subagent_type en frontmatter", "cambio": "Agregar subagent_type: task-creator-agent", "justificacion": "AGT001"},
+        {"id": "TC002", "prioridad": "CRITICA", "archivo": ".claude/agents/planner/task-creator-agent.md", "seccion": "Prohibiciones", "problema": "Herramientas permitidas no en formato tabla", "cambio": "Agregar tabla de Herramientas Disponibles", "justificacion": "AGT002/AGT012"},
+        {"id": "TC003", "prioridad": "ALTA", "archivo": ".claude/agents/planner/task-creator-agent.md", "seccion": "PASO 1", "problema": "Validacion incompleta de tipos y estructura", "cambio": "Agregar validacion de array y limite de tasks", "justificacion": "AGT004"},
+        {"id": "TC004", "prioridad": "MEDIA", "archivo": ".claude/agents/planner/task-creator-agent.md", "seccion": "Input", "problema": "Falta tabla de campos de input", "cambio": "Agregar tabla con campos, tipos, estructura de Task", "justificacion": "AGT008"},
+        {"id": "TC005", "prioridad": "MEDIA", "archivo": ".claude/agents/planner/task-creator-agent.md", "seccion": "Proceso", "problema": "No hay limite de batch ni timeout", "cambio": "Agregar seccion Consideraciones de Performance", "justificacion": "AGT009"}
+      ]
+    }
+  ]
+}

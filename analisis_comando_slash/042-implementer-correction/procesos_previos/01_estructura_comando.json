@@ -1,0 +1,28 @@
+{
+  "comando": "042-implementer-correction",
+  "version": "2.0.0",
+  "descripcion": "Orquestador para aplicar correcciones automáticas a código (invocado por code-review/qa)",
+  "frontmatter": {
+    "name": "042-implementer-correction",
+    "description": "Orquestador para aplicar correcciones automáticas a código (invocado por code-review/qa)",
+    "allowed_tools": ["Task", "TodoWrite", "MCPSearch", "mcp__MCPEco__execution_session_manage"]
+  },
+  "total_fases": 7,
+  "fases": [
+    { "orden": -2, "nombre": "Inicializar TODO List", "agente": null },
+    { "orden": -1, "nombre": "Cargar Herramientas MCP", "agente": null },
+    { "orden": 0, "nombre": "Validar MCP", "agente": "mcp-validator" },
+    { "orden": 1, "nombre": "Parsear y Validar Input", "agente": null },
+    { "orden": 2, "nombre": "Aplicar Correcciones", "agente": "correction-executor-agent" },
+    { "orden": 3, "nombre": "Validar Correcciones", "agente": "validator-agent" },
+    { "orden": 4, "nombre": "Retornar Resultado", "agente": null }
+  ],
+  "subagent_types": ["mcp-validator", "correction-executor-agent", "validator-agent"],
+  "herramientas_mcp": ["mcp__MCPEco__execution_session_manage"],
+  "advertencias_criticas": [
+    "project_id ahora es OBLIGATORIO (BREAKING CHANGE v2.0)",
+    "Este comando NO avanza la task - el invocador es responsable",
+    "Fail-safe: si correcciones rompen código, retorna success: false sin excepción",
+    "Tracking OPCIONAL: requiere session_id Y step_id en input"
+  ]
+}

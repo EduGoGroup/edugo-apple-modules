@@ -1,0 +1,39 @@
+{
+  "comando": "042-implementer-correction",
+  "puntaje": 82,
+  "cumple": [
+    "CMD-001", "CMD-002", "CMD-003", "CMD-004", "CMD-005", "CMD-006", "CMD-007",
+    "CMD-009", "CMD-011", "CMD-012", "CMD-013", "CMD-014", "CMD-015", "CMD-016",
+    "CMD-017", "CMD-018"
+  ],
+  "no_cumple": ["CMD-008", "CMD-010", "CMD-019"],
+  "mejoras": [
+    {
+      "id": "M001",
+      "prioridad": "CRITICA",
+      "archivo": ".claude/commands/042-implementer-correction.md",
+      "seccion": "FASE 2: Aplicar Correcciones",
+      "problema": "El comando usa pseudocódigo TypeScript para invocar mcp__MCPEco__execution_session_manage en lugar de invocar REALMENTE la herramienta MCP",
+      "cambio": "Agregar nota EXPLÍCITA en 'Nota sobre Pseudocódigo': 'EXCEPCIÓN CRÍTICA: Las llamadas a herramientas MCP (mcp__MCPEco__*) NO son pseudocódigo. El LLM DEBE invocar estas herramientas realmente.'",
+      "justificacion": "CMD-008: Debe invocar herramientas MCP reales, no simular"
+    },
+    {
+      "id": "M002",
+      "prioridad": "CRITICA",
+      "archivo": ".claude/commands/042-implementer-correction.md",
+      "seccion": "FASE 3: Validar Correcciones",
+      "problema": "El comando delega a subagentes pero NO valida físicamente los resultados (archivos modificados, comandos ejecutados)",
+      "cambio": "Agregar FASE 2.5 y FASE 3.5 para validar físicamente: verificar que archivos existen con timestamps recientes, ejecutar comando de compilación según tech y verificar exit code === 0",
+      "justificacion": "CMD-010: Debe validar físicamente resultados"
+    },
+    {
+      "id": "M003",
+      "prioridad": "BAJA",
+      "archivo": ".claude/commands/042-implementer-correction.md",
+      "seccion": "Después de Output Esperado",
+      "problema": "No hay ejemplos de flujo correcto vs incorrecto",
+      "cambio": "Agregar sección '## Ejemplos de Flujo' con 3 casos: éxito, input inválido (sin project_id), correcciones rompen compilación",
+      "justificacion": "CMD-019: Ejemplos ayudan a entender casos reales"
+    }
+  ]
+}

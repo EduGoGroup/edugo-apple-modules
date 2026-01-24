@@ -1,0 +1,165 @@
+{
+  "comando": "025-deep-analysis-auto-sprints",
+  "total_fases": 9,
+  "fases": [
+    {
+      "fase": -1,
+      "nombre": "Cargar Herramientas MCP",
+      "proposito": "Cargar todas las herramientas MCP requeridas antes de ejecutar cualquier logica del comando",
+      "agente": null,
+      "modelo": "default",
+      "mcp_tools": ["mcp__MCPEco__get_project_info", "mcp__MCPEco__execution_session_manage", "mcp__MCPEco__list_flows"],
+      "entrada": { "tipo": "ninguno", "campos": [] },
+      "salida": { "campos": ["herramientas_cargadas"] },
+      "validaciones": [],
+      "errores_posibles": ["Error cargando herramientas MCP"],
+      "logica_especial": "Usa MCPSearch con query select: para cada herramienta"
+    },
+    {
+      "fase": 0,
+      "nombre": "Validar MCP",
+      "proposito": "Verificar que el servidor MCP este disponible y funcionando correctamente",
+      "agente": "mcp-validator",
+      "modelo": "haiku",
+      "mcp_tools": [],
+      "entrada": { "tipo": "ninguno", "campos": [] },
+      "salida": { "campos": ["status"] },
+      "validaciones": ["mcpResult.status === 'ok'"],
+      "errores_posibles": ["MCP no disponible"],
+      "logica_especial": null
+    },
+    {
+      "fase": 1,
+      "nombre": "Obtener Proyecto y Validar",
+      "proposito": "Parsear argumentos del comando, obtener informacion del proyecto desde BD y validar que existe",
+      "agente": null,
+      "modelo": "default",
+      "mcp_tools": ["mcp__MCPEco__get_project_info"],
+      "entrada": { "tipo": "parametros", "campos": ["project_id (desde commandArgs)"] },
+      "salida": { "campos": ["project.project_id", "project.project_name", "project.project_level", "project.tech", "project.kind", "project.project_path", "project.config", "project.last_session_id"] },
+      "validaciones": ["args existe y no esta vacio", "project existe y project.success es true"],
+      "errores_posibles": ["project_id es OBLIGATORIO", "Proyecto no encontrado"],
+      "logica_especial": null
+    },
+    {
+      "fase": 1.5,
+      "nombre": "Inicializar Sesion de Ejecucion",
+      "proposito": "Crear o reusar sesion de ejecucion para tracking, e iniciar un nuevo step dentro de la sesion",
+      "agente": null,
+      "modelo": "default",
+      "mcp_tools": ["mcp__MCPEco__execution_session_manage"],
+      "entrada": { "tipo": "resultado_fase_anterior", "campos": ["project.project_id", "project.last_session_id", "project.project_level", "project.tech", "project.kind"] },
+      "salida": { "campos": ["sessionId", "stepId"] },
+      "validaciones": ["sessionResult existe y tiene session_id", "stepResult existe y tiene step_id"],
+      "errores_posibles": ["Error creando sesion de ejecucion", "Error creando step de ejecucion"],
+      "logica_especial": "Condicional: si project.last_session_id no existe, crea nueva sesion; si existe, reusa la sesion existente. Siempre crea nuevo step"
+    },
+    {
+      "fase": 2,
+      "nombre": "Verificar Sprints Existentes",
+      "proposito": "Verificar si el proyecto ya tiene sprints creados para evitar duplicacion",
+      "agente": null,
+      "modelo": "default",
+      "mcp_tools": ["mcp__MCPEco__list_flows"],
+      "entrada": { "tipo": "resultado_fase_anterior", "campos": ["project.project_id"] },
+      "salida": { "campos": ["existingFlows.flows"] },
+      "validaciones": ["existingFlows.flows.length > 0 indica que ya hay sprints"],
+      "errores_posibles": [],
+      "logica_especial": "Early return: Si ya existen sprints, retorna inmediatamente con success:true y mensaje"
+    },
+    {
+      "fase": 3,
+      "nombre": "Leer Constitucion",
+      "proposito": "Buscar y obtener el documento de constitucion del proyecto desde la base de datos",
+      "agente": "search-local",
+      "modelo": "sonnet",
+      "mcp_tools": ["mcp__MCPEco__execution_session_manage"],
+      "entrada": { "tipo": "resultado_fase_anterior", "campos": ["projectId", "stepId", "sessionId"] },
+      "salida": { "campos": ["constitutionContent", "constitutionDoc.document_id", "constitutionDoc.title"] },
+      "validaciones": ["searchResult existe y status === 'success'", "searchResult.documents_found > 0", "constitutionDoc existe (preferentemente con tag 'constitution')"],
+      "errores_posibles": ["No se encontro documento de constitucion para el proyecto", "Se encontraron documentos pero ninguno es valido"],
+      "logica_especial": "Busqueda con entity_type: project, entity_id: projectId. Filtro por tag 'constitution' con fallback al primer documento"
+    },
+    {
+      "fase": 4,
+      "nombre": "Planear Sprints",
+      "proposito": "Analizar la constitucion del proyecto y determinar cuantos sprints son necesarios con sus milestone descriptions",
+      "agente": "general-purpose",
+      "modelo": "default",
+      "mcp_tools": ["mcp__MCPEco__execution_session_manage"],
+      "entrada": { "tipo": "resultado_fase_anterior", "campos": ["constitutionContent", "project.project_level", "project.tech", "stepId"] },
+      "salida": { "campos": ["sprintPlan.total_sprints", "sprintPlan.sprints[].order", "sprintPlan.sprints[].milestone_description"] },
+      "validaciones": ["JSON parseable correctamente", "sprintPlan.total_sprints existe", "sprintPlan.sprints es un array", "sprints.length === total_sprints", "Cada sprint tiene order y milestone_description"],
+      "errores_posibles": ["Error parseando plan de sprints: JSON invalido", "Falta total_sprints o sprints no es array", "Inconsistencia entre total_sprints y sprints.length", "Sprint falta order o milestone_description"],
+      "logica_especial": "Limites por nivel de proyecto: mvp(1-1), standard(2-3), enterprise(3-8). Parser robusto de JSON que maneja markdown code blocks"
+    },
+    {
+      "fase": 5,
+      "nombre": "Crear Sprints (Loop)",
+      "proposito": "Iterar sobre cada sprint planificado y crear flow, flow_rows y stories usando agentes especializados",
+      "agente": "milestone-analyzer, flow-creator, impact-filter, module-creator, story-creator",
+      "modelo": "sonnet",
+      "mcp_tools": ["mcp__MCPEco__execution_session_manage", "mcp__MCPEco__list_flows", "mcp__MCPEco__get_flow_row"],
+      "entrada": { "tipo": "resultado_fase_anterior", "campos": ["sprintPlan.sprints", "project.*", "stepId", "sessionId"] },
+      "salida": { "campos": ["results[]", "successCount", "failureCount"] },
+      "validaciones": [
+        "FASE 5.1: analysisResult existe, tiene analysis, tiene proposed_modules array",
+        "FASE 5.2: flowResult existe, tiene flow, tiene flow_id",
+        "FASE 5.3: filterResult existe, tiene filtering_result, tiene approved_modules array",
+        "FASE 5.4: moduleResult existe, tiene flow_rows_created array con length > 0",
+        "FASE 5.4.1: cada flow_row_id existe realmente en BD via get_flow_row",
+        "FASE 5.5: storyResult existe, tiene stories_created array con length > 0"
+      ],
+      "errores_posibles": [
+        "milestone-analyzer retorno null/undefined o no retorno campo analysis",
+        "flow-creator retorno null/undefined o no retorno campo flow",
+        "impact-filter retorno null/undefined o no tiene approved_modules valido",
+        "module-creator retorno null/undefined o flow_rows no fueron persistidos en BD",
+        "story-creator retorno null/undefined o retorno 0 stories"
+      ],
+      "logica_especial": "Loop for-of sobre sprintPlan.sprints. Subfases 5.1-5.5 por cada sprint. Circuit breaker: si failureCount > total_sprints/2, rompe el loop"
+    },
+    {
+      "fase": 6,
+      "nombre": "Finalizar Step y Retornar Resultado",
+      "proposito": "Completar el step de ejecucion, finalizar sesion si fue exitoso, y retornar resumen final",
+      "agente": null,
+      "modelo": "default",
+      "mcp_tools": ["mcp__MCPEco__execution_session_manage"],
+      "entrada": { "tipo": "resultado_fase_anterior", "campos": ["sprintPlan.total_sprints", "successCount", "failureCount", "results", "project.project_id", "project.project_name", "sessionId", "stepId"] },
+      "salida": { "campos": ["success", "project_id", "session_id", "step_id", "total_planned", "total_created", "total_failed", "results"] },
+      "validaciones": [],
+      "errores_posibles": [],
+      "logica_especial": "Condicional: si successCount === total_sprints, finaliza sesion. Si failureCount > 0, solo hace log con level: warn"
+    }
+  ],
+  "manejo_errores": {
+    "estrategia": "Try-catch por sprint individual con circuit breaker global. Errores criticos en fases tempranas (0-3) terminan ejecucion. Errores en loop (fase 5) permiten continuar con otros sprints. Circuit breaker si >50% sprints fallan.",
+    "output_error": {
+      "success": false,
+      "error": "codigo_error",
+      "message": "mensaje descriptivo"
+    }
+  },
+  "funciones_auxiliares": [
+    {
+      "nombre": "Parser JSON robusto",
+      "descripcion": "Extrae JSON de respuestas que pueden venir en markdown code blocks o mezcladas con texto"
+    },
+    {
+      "nombre": "Limites por nivel",
+      "descripcion": "Objeto que mapea project_level a rangos de sprints permitidos: mvp(1-1), standard(2-3), enterprise(3-8)"
+    }
+  ],
+  "reglas_generales": {
+    "descripcion": "Reglas criticas que gobiernan toda la ejecucion del comando",
+    "reglas": [
+      "NO asumir cambios o mejoras al flujo sin consultar al usuario",
+      "Si detectas algo que debe cambiarse, DETENER y PREGUNTAR al usuario",
+      "NO modificar orden de fases sin autorizacion explicita",
+      "NO omitir pasos aunque parezcan opcionales",
+      "NO agregar pasos adicionales sin consultar",
+      "Si agente falla, registrar en logs y reportar, NO intentar soluciones alternativas sin autorizacion"
+    ]
+  }
+}

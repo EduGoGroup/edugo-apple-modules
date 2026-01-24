@@ -1,0 +1,470 @@
+{
+  "comando": "011-constitution-create-project",
+  "version": "1.3",
+  "analisis_detallado_por_fase": {
+    "fase_0": {
+      "nombre": "Validar MCP",
+      "proposito": "Verificar que el servidor MCP MCPEco esta disponible y operativo antes de continuar",
+      "agente": "common/mcp-validator",
+      "mcp_tools_usados": ["mcp__MCPEco__list_documents"],
+      "entrada": {
+        "tipo": "ninguna",
+        "descripcion": "No requiere parametros de entrada"
+      },
+      "salida": {
+        "exito": {
+          "status": "ok",
+          "mcp_available": true,
+          "message": "MCP server MCPEco operativo"
+        },
+        "error": {
+          "status": "error",
+          "mcp_available": false,
+          "error_code": "MCP_NOT_AVAILABLE",
+          "error_message": "<descripcion especifica del error>",
+          "suggestion": "Verificar que el servidor MCP este configurado en .mcp.json"
+        }
+      },
+      "validaciones": [
+        "Verificar respuesta del MCP tool (con datos o array vacio = operativo)",
+        "Timeout, error de conexion, tool not found = no disponible"
+      ],
+      "errores_posibles": [
+        {"error": "Tool not found", "causa": "MCP server no registrado"},
+        {"error": "Connection refused", "causa": "Servidor no iniciado"},
+        {"error": "Timeout", "causa": "Servidor lento o caido"},
+        {"error": "Permission denied", "causa": "Configuracion incorrecta"}
+      ],
+      "nota": "FASE 0 no puede loguear porque no tiene STEP_ID todavia"
+    },
+    "fase_1": {
+      "nombre": "Preprocesar Input",
+      "proposito": "Determinar si el input es texto directo o ruta a archivo markdown y extraer la descripcion del proyecto",
+      "agente": null,
+      "mcp_tools_usados": [],
+      "tools_usados": ["Read (si es archivo)"],
+      "entrada": {
+        "tipo": "string",
+        "descripcion": "$ARGUMENTS - puede ser texto o ruta .md"
+      },
+      "salida": {
+        "projectDescription": "string - descripcion del proyecto extraida",
+        "folderPath": "string - process.cwd()"
+      },
+      "validaciones": [
+        "Si $ARGUMENTS contiene '.md' -> leer archivo",
+        "Si no -> usar texto directamente"
+      ],
+      "errores_posibles": [
+        {"error": "File not found", "causa": "Ruta de archivo invalida"},
+        {"error": "Read permission denied", "causa": "Sin permisos de lectura"}
+      ]
+    },
+    "fase_2": {
+      "nombre": "Iniciar/Reutilizar Tracking (MODO RESILIENTE)",
+      "proposito": "Crear o reutilizar sesion de tracking para monitorear el progreso del comando",
+      "agente": null,
+      "mcp_tools_usados": ["mcp__MCPEco__execution_session_manage"],
+      "entrada": {
+        "tipo": "objeto opcional",
+        "descripcion": "Puede recibir session_id pre-existente para encadenar comandos"
+      },
+      "salida": {
+        "SESSION_ID": "string - ID de la sesion (nueva o reutilizada)",
+        "STEP_ID": "string - ID del step de constitucion"
+      },
+      "logica": {
+        "caso_1_tracking_preexistente": {
+          "descripcion": "Si viene session_id en input, reutilizar",
+          "acciones": [
+            "Usar SESSION_ID recibido",
+            "Crear solo nuevo step con action: start_step"
+          ]
+        },
+        "caso_2_sin_tracking": {
+          "descripcion": "Si no hay session_id, crear nuevo",
+          "acciones": [
+            "Crear sesion con action: start_session",
+            "Crear step con action: start_step"
+          ]
+        }
+      },
+      "validaciones": [
+        "Verificar que SESSION_ID y STEP_ID no sean null despues de la fase"
+      ],
+      "errores_posibles": [
+        {"error": "Session creation failed", "causa": "Error de BD o MCP"},
+        {"error": "Step creation failed", "causa": "Session ID invalido"}
+      ]
+    },
+    "fase_3": {
+      "nombre": "Analizar Descripcion",
+      "proposito": "Analizar la descripcion del proyecto para inferir tech, kind, level, requirements, complexity y configuracion",
+      "agente": "constitution/analyzer-agent",
+      "mcp_tools_usados": [],
+      "entrada": {
+        "project_description": "string - descripcion del proyecto",
+        "folder_path": "string - ruta de la carpeta"
+      },
+      "salida": {
+        "status": "success",
+        "analysis": {
+          "tech": "string - tecnologia/lenguaje (golang, python, etc.)",
+          "kind": "string - tipo de proyecto (api, web, mobile, etc.)",
+          "level": "string - nivel (mvp, standard, enterprise)",
+          "project_name": "string - nombre inferido",
+          "project_slug": "string - slug URL-friendly",
+          "folder_path": "string - ruta del proyecto",
+          "complexity": {
+            "score": "number 0-100",
+            "classification": "baja|media|alta",
+            "factors": "object - factores de complejidad",
+            "justification": "string - justificacion"
+          },
+          "requirements": "object - requisitos inferidos libremente",
+          "config": {
+            "threshold_code_review": "number",
+            "threshold_qa": "number",
+            "max_alt_flow_depth": "number"
+          },
+          "limits": {
+            "max_sprints": "number",
+            "max_flow_rows_per_sprint": "number",
+            "max_total_tasks": "number"
+          },
+          "validation": {
+            "original_level": "string",
+            "final_level": "string",
+            "was_changed": "boolean",
+            "changes": "array"
+          }
+        }
+      },
+      "validaciones": [
+        "result.status === 'success'",
+        "result.analysis debe existir",
+        "Campos requeridos: tech, kind, level, project_name, project_slug"
+      ],
+      "errores_posibles": [
+        {"error": "Respuesta invalida", "causa": "Agente no retorno estructura esperada"},
+        {"error": "Analysis missing", "causa": "Agente no pudo inferir metadata"}
+      ]
+    },
+    "fase_4": {
+      "nombre": "Crear Proyecto",
+      "proposito": "Crear el proyecto en la base de datos usando MCP",
+      "agente": "constitution/project-creator-agent",
+      "mcp_tools_usados": ["mcp__MCPEco__create_project", "mcp__MCPEco__set_active_project"],
+      "entrada": {
+        "analysis": "object - resultado completo del analyzer-agent"
+      },
+      "salida": {
+        "status": "success",
+        "project": {
+          "project_id": "string - formato proj-<19-digit-timestamp>",
+          "project_slug": "string",
+          "project_name": "string",
+          "tech": "string",
+          "kind": "string",
+          "project_level": "string",
+          "folder_path": "string"
+        }
+      },
+      "validaciones": [
+        "result.status === 'success'",
+        "result.project debe existir",
+        "result.project.project_id debe existir",
+        "project_id debe cumplir regex /^proj-\\d{19}$/ (detecta alucinaciones)"
+      ],
+      "errores_posibles": [
+        {"error": "MCP_CREATE_FAILED", "causa": "Error al crear en BD"},
+        {"error": "INVALID_PROJECT_ID", "causa": "LLM alucino el resultado"},
+        {"error": "MCP_NO_RESULT", "causa": "Tool no retorno resultado"},
+        {"error": "HALLUCINATION_DETECTED", "causa": "Agente detecto que iba a inventar"}
+      ]
+    },
+    "fase_5": {
+      "nombre": "Vincular Tracking",
+      "proposito": "Asociar la sesion de tracking con el proyecto recien creado",
+      "agente": null,
+      "mcp_tools_usados": ["mcp__MCPEco__execution_session_manage"],
+      "entrada": {
+        "SESSION_ID": "string - ID de la sesion",
+        "PROJECT_ID": "string - ID del proyecto creado"
+      },
+      "salida": {
+        "descripcion": "Session vinculada al proyecto"
+      },
+      "validaciones": [
+        "SESSION_ID y PROJECT_ID deben ser validos"
+      ],
+      "errores_posibles": [
+        {"error": "Link failed", "causa": "Session o Project ID invalido"}
+      ]
+    },
+    "fase_6": {
+      "nombre": "Determinar Documentos",
+      "proposito": "Identificar que documentos necesita el proyecto segun su nivel (mvp/standard/enterprise)",
+      "agente": "constitution/document-finder-agent",
+      "mcp_tools_usados": [],
+      "entrada": {
+        "project": "object - datos del proyecto creado"
+      },
+      "salida": {
+        "status": "success",
+        "required_documents": [
+          {
+            "id": "string - identificador del documento",
+            "title": "string - titulo",
+            "keywords": "array - palabras clave",
+            "priority": "number - prioridad de asociacion",
+            "search_queries": {
+              "local": {"query": "string", "min_similarity": "number"},
+              "internet": {"library_hint": "string", "query": "string"}
+            }
+          }
+        ],
+        "constitution_document": {
+          "title": "string",
+          "should_create": true,
+          "tags": "array"
+        }
+      },
+      "documentos_por_nivel": {
+        "mvp": ["estructura-basica", "testing-minimo"],
+        "standard": ["arquitectura", "estandares-codigo", "testing"],
+        "enterprise": ["arquitectura-enterprise", "estandares-codigo", "testing-avanzado", "seguridad", "observabilidad"]
+      },
+      "validaciones": [
+        "result.status === 'success'",
+        "result.required_documents debe existir y ser array"
+      ],
+      "errores_posibles": [
+        {"error": "Respuesta invalida", "causa": "Agente no retorno estructura esperada"}
+      ]
+    },
+    "fase_7": {
+      "nombre": "Buscar Documentos Existentes",
+      "proposito": "Buscar en la base de datos local si ya existen los documentos requeridos",
+      "agente": "common/search-local",
+      "mcp_tools_usados": ["mcp__MCPEco__search_documents_semantic", "mcp__MCPEco__list_documents"],
+      "entrada": {
+        "search_method": "semantic",
+        "query": "string - query de busqueda del documento",
+        "min_similarity": 0.5
+      },
+      "salida": {
+        "status": "success|not_found",
+        "documents_found": "number",
+        "results": [
+          {
+            "document_id": "string",
+            "title": "string",
+            "summary": "string"
+          }
+        ]
+      },
+      "logica": {
+        "descripcion": "Iterar sobre cada documento requerido y buscar",
+        "resultado_encontrado": "Agregar a existingDocuments con document_id",
+        "resultado_no_encontrado": "Agregar a documentsToCreate"
+      },
+      "validaciones": [
+        "result.status === 'success' y documents_found > 0 para considerarlo encontrado"
+      ],
+      "errores_posibles": [
+        {"error": "Ollama not available", "causa": "Servicio de embeddings no disponible"},
+        {"error": "Search failed", "causa": "Error en query semantica"}
+      ],
+      "nota": "Las busquedas SI pueden ser en paralelo (solo lectura), pero secuencial es valido para debugging"
+    },
+    "fase_8": {
+      "nombre": "Crear Documentos Faltantes",
+      "proposito": "Crear los documentos que no se encontraron: constitucion + documentos tecnicos",
+      "agentes": ["common/search-internet", "common/document-loader"],
+      "mcp_tools_usados": [
+        "mcp__MCPEco__create_document",
+        "mcp__MCPEco__create_tag",
+        "mcp__MCPEco__list_tags",
+        "mcp__MCPEco__generate_summary_embeddings",
+        "mcp__MCPEco__get_document"
+      ],
+      "advertencia_critica": "DEBE SER SECUENCIAL - NO PARALELO. Race conditions en creacion de tags duplicados causan perdida de documentos.",
+      "partes": {
+        "parte_a_constitucion": {
+          "descripcion": "SIEMPRE crear documento de constitucion",
+          "contenido": "Generado con generateConstitutionContent()",
+          "verificacion": "Despues de crear, verificar con mcp__MCPEco__get_document que existe"
+        },
+        "parte_b_documentos_tecnicos": {
+          "descripcion": "Crear documentos faltantes UNO POR UNO",
+          "pasos_por_documento": [
+            "1. Buscar contenido en internet (search-internet)",
+            "2. Si falla internet, usar contenido fallback",
+            "3. Crear documento (document-loader)",
+            "4. Verificar que existe en BD (mcp__MCPEco__get_document)",
+            "5. Agregar a createdDocuments"
+          ]
+        }
+      },
+      "entrada": {
+        "documentsToCreate": "array - documentos no encontrados en FASE 7",
+        "project": "object - datos del proyecto",
+        "analysis": "object - datos del analisis"
+      },
+      "salida": {
+        "createdDocuments": "array - documentos creados exitosamente",
+        "failedDocuments": "array - documentos que fallaron"
+      },
+      "manejo_errores": {
+        "descripcion": "Si un documento falla, registrar y continuar (no throw)",
+        "excepcion": "Si la constitucion falla, SI lanzar error"
+      },
+      "errores_posibles": [
+        {"error": "Internet search failed", "causa": "No se pudo obtener contenido de internet"},
+        {"error": "Document creation failed", "causa": "Error al crear en BD"},
+        {"error": "Duplicate tag error", "causa": "Race condition (manejado automaticamente)"},
+        {"error": "Constitution not created", "causa": "Error critico que detiene el proceso"}
+      ]
+    },
+    "fase_9": {
+      "nombre": "Asociar Documentos",
+      "proposito": "Vincular todos los documentos (existentes + creados) al proyecto",
+      "agente": "constitution/document-associator-agent",
+      "mcp_tools_usados": ["mcp__MCPEco__associate_document"],
+      "entrada": {
+        "project_id": "string - ID del proyecto",
+        "project_level": "string - nivel del proyecto",
+        "documents": "array - todos los documentos (existentes + creados) con source indicado"
+      },
+      "salida": {
+        "status": "success|partial",
+        "associated": {
+          "total": "number",
+          "successful": "number",
+          "failed": "number",
+          "documents": "array - detalle por documento"
+        }
+      },
+      "limites_por_nivel": {
+        "mvp": 5,
+        "standard": 10,
+        "enterprise": 20
+      },
+      "validaciones": [
+        "result.status === 'success' o 'partial'",
+        "result.associated debe existir"
+      ],
+      "errores_posibles": [
+        {"error": "Association failed", "causa": "Document o Project no existe"},
+        {"error": "Limit exceeded", "causa": "Demasiados documentos para el nivel"}
+      ]
+    },
+    "fase_10": {
+      "nombre": "Finalizar Tracking",
+      "proposito": "Marcar el step y la sesion como completados",
+      "agente": null,
+      "mcp_tools_usados": ["mcp__MCPEco__execution_session_manage"],
+      "entrada": {
+        "STEP_ID": "string",
+        "SESSION_ID": "string",
+        "project": "object - para el summary"
+      },
+      "salida": {
+        "descripcion": "Step y Session marcados como completados"
+      },
+      "acciones": [
+        "complete_step con STEP_ID",
+        "finish_session con SESSION_ID y summary"
+      ],
+      "errores_posibles": [
+        {"error": "Complete failed", "causa": "ID invalido o ya completado"}
+      ]
+    },
+    "fase_11": {
+      "nombre": "Retornar Resultado",
+      "proposito": "Construir y retornar el resultado final estructurado",
+      "agente": null,
+      "mcp_tools_usados": [],
+      "entrada": {
+        "project": "object - datos del proyecto",
+        "analysis": "object - datos del analisis",
+        "createdDocuments": "array",
+        "existingDocuments": "array",
+        "associatedCount": "number",
+        "SESSION_ID": "string"
+      },
+      "salida": {
+        "success": true,
+        "project_id": "string",
+        "project_slug": "string",
+        "project_name": "string",
+        "tech": "string",
+        "kind": "string",
+        "project_level": "string",
+        "folder_path": "string",
+        "analysis": {
+          "config": "object",
+          "limits": "object",
+          "complexity": "string",
+          "requirements": "array"
+        },
+        "documents": {
+          "created": "number",
+          "existing": "number",
+          "associated": "number",
+          "failed": "number"
+        },
+        "tracking": {
+          "session_id": "string",
+          "status": "completed"
+        },
+        "next_steps": {
+          "immediate": "Ejecutar /021-deep-analysis-create-sprint"
+        }
+      },
+      "errores_posibles": []
+    }
+  },
+  "manejo_errores_global": {
+    "patron": "try-catch en cada fase",
+    "acciones_en_error": [
+      "1. Loguear error si tenemos STEP_ID",
+      "2. Marcar sesion como fallida si tenemos SESSION_ID",
+      "3. Retornar error estructurado con error_phase y error_message"
+    ],
+    "estructura_error": {
+      "success": false,
+      "error_phase": "FASE_X",
+      "error_message": "descripcion",
+      "tracking": {"session_id": "string|null", "status": "failed"}
+    }
+  },
+  "funciones_auxiliares": {
+    "generateConstitutionContent": {
+      "proposito": "Generar contenido markdown del documento de constitucion",
+      "parametros": ["project", "analysis", "description"],
+      "secciones_generadas": [
+        "Prompt Original",
+        "Metadata del Proyecto",
+        "Configuracion",
+        "Limites del Proyecto",
+        "Resumenes por Step (Planner, Implementer, Code Review, QA)"
+      ]
+    },
+    "generateFallbackContent": {
+      "proposito": "Generar contenido placeholder cuando falla busqueda en internet",
+      "parametros": ["doc"],
+      "contenido": "Documento basico con id, prioridad, keywords y nota de actualizacion pendiente"
+    },
+    "validateAgentResponse": {
+      "proposito": "Validar que la respuesta de un agente tiene los campos requeridos",
+      "parametros": ["result", "requiredFields"],
+      "validaciones": [
+        "result no es null",
+        "result.status no es 'error'",
+        "Todos los requiredFields presentes"
+      ]
+    }
+  }
+}

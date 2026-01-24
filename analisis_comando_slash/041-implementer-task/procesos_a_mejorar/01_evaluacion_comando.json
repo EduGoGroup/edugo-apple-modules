@@ -1,0 +1,83 @@
+{
+  "comando": "041-implementer-task",
+  "puntaje": 68,
+  "cumple": [
+    "CMD-001: Frontmatter completo (name, description, allowed-tools)",
+    "CMD-003: FASE -2: Inicializar TODO List",
+    "CMD-004: Validación de input al inicio",
+    "CMD-005: MCPSearch ANTES de usar MCP tools",
+    "CMD-007: Delegación a agentes con JSON.stringify()",
+    "CMD-010: Retorno JSON estructurado y consistente",
+    "CMD-011: Actualizar TODO list en cada fase",
+    "CMD-012: Logging estructurado"
+  ],
+  "no_cumple": [
+    "CMD-008: No valida físicamente archivos creados/modificados por code-executor",
+    "CMD-009: Manejo de errores incompleto - bugs 'throw error' en catch blocks"
+  ],
+  "mejoras": [
+    {
+      "id": "M001",
+      "prioridad": "CRITICA",
+      "archivo": ".claude/commands/041-implementer-task.md",
+      "seccion": "FASE 6: Implementar Código",
+      "problema": "No se valida que los archivos reportados por code-executor-agent existan físicamente",
+      "cambio": "Agregar validación física con Read/Glob después de recibir resultado del agente",
+      "justificacion": "Previene propagación de errores silenciosos"
+    },
+    {
+      "id": "M002",
+      "prioridad": "ALTA",
+      "archivo": ".claude/commands/041-implementer-task.md",
+      "seccion": "FASE 4 - catch block",
+      "problema": "Bug: 'throw error' debería ser 'throw e' (variable undefined)",
+      "cambio": "Cambiar 'throw error' por 'throw e'",
+      "justificacion": "Error de programación que causa undefined exception"
+    },
+    {
+      "id": "M003",
+      "prioridad": "ALTA",
+      "archivo": ".claude/commands/041-implementer-task.md",
+      "seccion": "FASE 6 - catch block",
+      "problema": "Bug: 'throw error' debería ser 'throw e'",
+      "cambio": "Cambiar 'throw error' por 'throw e'",
+      "justificacion": "Mismo bug que M002"
+    },
+    {
+      "id": "M004",
+      "prioridad": "ALTA",
+      "archivo": ".claude/commands/041-implementer-task.md",
+      "seccion": "FASE 8 - catch block",
+      "problema": "Bug: 'throw error' debería ser 'throw e'",
+      "cambio": "Cambiar 'throw error' por 'throw e'",
+      "justificacion": "Mismo bug que M002/M003"
+    },
+    {
+      "id": "M005",
+      "prioridad": "MEDIA",
+      "archivo": ".claude/commands/041-implementer-task.md",
+      "seccion": "FASE 7 - catch block",
+      "problema": "Logging de error genérico, falta detalle de qué falló",
+      "cambio": "Mejorar logging con tipo de error, archivos afectados y código de salida",
+      "justificacion": "Facilita debugging cuando la validación falla"
+    },
+    {
+      "id": "M006",
+      "prioridad": "MEDIA",
+      "archivo": ".claude/commands/041-implementer-task.md",
+      "seccion": "FASE 1 - Preprocesar Input",
+      "problema": "No valida formato de projectId y taskId",
+      "cambio": "Agregar validación de formato con regex",
+      "justificacion": "Fail-fast en entrada inválida"
+    },
+    {
+      "id": "M007",
+      "prioridad": "BAJA",
+      "archivo": ".claude/commands/041-implementer-task.md",
+      "seccion": "FASE -1 - MCPSearch",
+      "problema": "Llamadas MCPSearch secuenciales en lugar de paralelas",
+      "cambio": "Usar Promise.all() para ejecutar en paralelo",
+      "justificacion": "Optimización de rendimiento"
+    }
+  ]
+}

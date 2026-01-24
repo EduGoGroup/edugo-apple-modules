@@ -1,0 +1,202 @@
+{
+  "resumen": {
+    "total_agentes": 7,
+    "puntaje_promedio": 78.6,
+    "mejores": ["mcp-validator (93)", "search-local (93)"],
+    "requieren_mejoras": ["story-creator (68)", "impact-filter (70)", "milestone-analyzer (73)", "flow-creator (73)"]
+  },
+  "evaluaciones": [
+    {
+      "agente": "mcp-validator",
+      "archivo": ".claude/agents/common/mcp-validator.md",
+      "puntaje": 93,
+      "mejoras": []
+    },
+    {
+      "agente": "search-local",
+      "archivo": ".claude/agents/common/search-local.md",
+      "puntaje": 93,
+      "mejoras": [
+        {
+          "id": "SL001",
+          "prioridad": "BAJA",
+          "archivo": ".claude/agents/common/search-local.md",
+          "seccion": "Final del archivo",
+          "problema": "No tiene seccion de Testing con casos de prueba documentados",
+          "cambio": "Agregar seccion Testing con casos de busqueda por entidad, semantica, input invalido, Ollama no disponible",
+          "justificacion": "Todo agente debe tener casos de prueba documentados"
+        }
+      ]
+    },
+    {
+      "agente": "milestone-analyzer",
+      "archivo": ".claude/agents/deep-analysis/milestone-analyzer-agent.md",
+      "puntaje": 73,
+      "mejoras": [
+        {
+          "id": "MA001",
+          "prioridad": "CRITICA",
+          "archivo": ".claude/agents/deep-analysis/milestone-analyzer-agent.md",
+          "seccion": "Despues de Input, antes de Proceso",
+          "problema": "No tiene PASO 0 de parseo y validacion de input",
+          "cambio": "Agregar PASO 0 con validacion de milestone_description y defaults para campos opcionales",
+          "justificacion": "Todo agente debe validar input al inicio para fail-fast"
+        },
+        {
+          "id": "MA002",
+          "prioridad": "ALTA",
+          "archivo": ".claude/agents/deep-analysis/milestone-analyzer-agent.md",
+          "seccion": "Output",
+          "problema": "Output no tiene status field ni estructura de error estandarizada",
+          "cambio": "Agregar status: success/error y ejemplos de output de error con codigos",
+          "justificacion": "Todo output debe tener status field y documentar casos de error"
+        },
+        {
+          "id": "MA003",
+          "prioridad": "BAJA",
+          "archivo": ".claude/agents/deep-analysis/milestone-analyzer-agent.md",
+          "seccion": "Final del archivo",
+          "problema": "No tiene seccion de Testing",
+          "cambio": "Agregar seccion Testing con casos MVP, Enterprise e input invalido",
+          "justificacion": "Todo agente debe documentar casos de prueba"
+        },
+        {
+          "id": "MA004",
+          "prioridad": "MEDIA",
+          "archivo": ".claude/agents/deep-analysis/milestone-analyzer-agent.md",
+          "seccion": "PASO 3 (Explorar Proyecto)",
+          "problema": "Tiene head -50 pero no documenta como limite de performance",
+          "cambio": "Documentar limite de 50 archivos explicita mente con nota de muestra representativa",
+          "justificacion": "Los limites de performance deben estar documentados"
+        }
+      ]
+    },
+    {
+      "agente": "flow-creator",
+      "archivo": ".claude/agents/deep-analysis/flow-creator-agent.md",
+      "puntaje": 73,
+      "mejoras": [
+        {
+          "id": "FC001",
+          "prioridad": "ALTA",
+          "archivo": ".claude/agents/deep-analysis/flow-creator-agent.md",
+          "seccion": "Despues de Input, antes de Proceso",
+          "problema": "No tiene PASO 0 de parseo y validacion de input",
+          "cambio": "Agregar PASO 0 con validacion de project_id, milestone_analysis y defaults",
+          "justificacion": "Todo agente debe validar input al inicio para fail-fast"
+        },
+        {
+          "id": "FC002",
+          "prioridad": "BAJA",
+          "archivo": ".claude/agents/deep-analysis/flow-creator-agent.md",
+          "seccion": "Final del archivo",
+          "problema": "No tiene seccion de Testing",
+          "cambio": "Agregar seccion Testing con casos de creacion exitosa, limite excedido, input invalido",
+          "justificacion": "Todo agente debe documentar casos de prueba"
+        }
+      ]
+    },
+    {
+      "agente": "impact-filter",
+      "archivo": ".claude/agents/deep-analysis/impact-filter-agent.md",
+      "puntaje": 70,
+      "mejoras": [
+        {
+          "id": "IF001",
+          "prioridad": "CRITICA",
+          "archivo": ".claude/agents/deep-analysis/impact-filter-agent.md",
+          "seccion": "Frontmatter",
+          "problema": "tools dice 'ninguno (solo analisis)' pero debe ser tools: []",
+          "cambio": "Cambiar tools: ninguno (solo analisis) a tools: []",
+          "justificacion": "tools debe ser una lista valida. Si no usa herramientas, debe ser []"
+        },
+        {
+          "id": "IF002",
+          "prioridad": "ALTA",
+          "archivo": ".claude/agents/deep-analysis/impact-filter-agent.md",
+          "seccion": "Despues de Input, antes de Proceso",
+          "problema": "No tiene PASO 0 de parseo y validacion de input",
+          "cambio": "Agregar PASO 0 con validacion de project_level, proposed_modules y defaults",
+          "justificacion": "Todo agente debe validar input al inicio"
+        },
+        {
+          "id": "IF003",
+          "prioridad": "ALTA",
+          "archivo": ".claude/agents/deep-analysis/impact-filter-agent.md",
+          "seccion": "Output",
+          "problema": "No tiene documentacion de output de error con codigos estandarizados",
+          "cambio": "Agregar ejemplos de output de error con codigos ERR_INVALID_PROJECT_LEVEL, ERR_NO_MODULES",
+          "justificacion": "Todo agente debe documentar outputs de error con codigos estandarizados"
+        },
+        {
+          "id": "IF004",
+          "prioridad": "BAJA",
+          "archivo": ".claude/agents/deep-analysis/impact-filter-agent.md",
+          "seccion": "Final del archivo",
+          "problema": "Tiene Casos de Estudio pero no Testing formal",
+          "cambio": "Agregar seccion Testing formal con Input y Output Esperado",
+          "justificacion": "Testing debe tener formato estandarizado"
+        }
+      ]
+    },
+    {
+      "agente": "module-creator",
+      "archivo": ".claude/agents/deep-analysis/module-creator-agent.md",
+      "puntaje": 80,
+      "mejoras": [
+        {
+          "id": "MC001",
+          "prioridad": "ALTA",
+          "archivo": ".claude/agents/deep-analysis/module-creator-agent.md",
+          "seccion": "PASO 1",
+          "problema": "PASO 1 valida pero no tiene formato estandarizado de PASO 0 con codigos de error",
+          "cambio": "Reemplazar PASO 1 con PASO 0 estandarizado con ERR_MISSING_FLOW_ID, ERR_NO_MODULES",
+          "justificacion": "La validacion debe ser PASO 0 con formato estandarizado"
+        },
+        {
+          "id": "MC002",
+          "prioridad": "BAJA",
+          "archivo": ".claude/agents/deep-analysis/module-creator-agent.md",
+          "seccion": "Final del archivo",
+          "problema": "Tiene ejemplo de implementacion pero no seccion Testing formal",
+          "cambio": "Agregar seccion Testing separada del ejemplo de implementacion",
+          "justificacion": "Testing debe ser una seccion separada"
+        }
+      ]
+    },
+    {
+      "agente": "story-creator",
+      "archivo": ".claude/agents/deep-analysis/story-creator-agent.md",
+      "puntaje": 68,
+      "mejoras": [
+        {
+          "id": "SC001",
+          "prioridad": "ALTA",
+          "archivo": ".claude/agents/deep-analysis/story-creator-agent.md",
+          "seccion": "Despues de Input, antes de Proceso",
+          "problema": "No tiene PASO 0 de parseo y validacion de input",
+          "cambio": "Agregar PASO 0 con validacion de project_level, flow_rows, flow_row_id de cada item",
+          "justificacion": "Todo agente debe tener PASO 0 de validacion"
+        },
+        {
+          "id": "SC002",
+          "prioridad": "ALTA",
+          "archivo": ".claude/agents/deep-analysis/story-creator-agent.md",
+          "seccion": "Output",
+          "problema": "No tiene documentacion de output de error con codigos estandarizados",
+          "cambio": "Agregar ejemplos de error con ERR_INVALID_PROJECT_LEVEL, ERR_NO_FLOW_ROWS, ERR_STORY_CONSTRAINT_VIOLATION",
+          "justificacion": "Todo agente debe documentar outputs de error"
+        },
+        {
+          "id": "SC003",
+          "prioridad": "BAJA",
+          "archivo": ".claude/agents/deep-analysis/story-creator-agent.md",
+          "seccion": "Final del archivo",
+          "problema": "No tiene seccion de Testing",
+          "cambio": "Agregar seccion Testing con casos de creacion exitosa, consolidacion forzada, input invalido",
+          "justificacion": "Todo agente debe documentar casos de prueba"
+        }
+      ]
+    }
+  ]
+}

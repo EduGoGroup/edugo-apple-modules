@@ -1,0 +1,169 @@
+{
+  "comando": "051-code-review-task",
+  "total_fases": 11,
+  "fases": [
+    {
+      "fase": -2,
+      "nombre": "Inicializar TODO List",
+      "proposito": "Crear TODO list al inicio para dar visibilidad del progreso al usuario mediante TodoWrite",
+      "agente": null,
+      "modelo": null,
+      "mcp_tools": [],
+      "entrada": { "tipo": "ninguno", "campos": [] },
+      "salida": { "campos": ["todo_list_visual"] },
+      "validaciones": [],
+      "errores_posibles": []
+    },
+    {
+      "fase": -1,
+      "nombre": "Cargar Herramientas MCP",
+      "proposito": "Cargar explícitamente TODAS las herramientas MCP requeridas antes de ejecutar cualquier lógica",
+      "agente": null,
+      "modelo": null,
+      "mcp_tools": ["MCPSearch (7 queries select:)"],
+      "entrada": { "tipo": "ninguno", "campos": [] },
+      "salida": { "campos": ["herramientas_cargadas"] },
+      "validaciones": [],
+      "errores_posibles": ["MCP tool no disponible"]
+    },
+    {
+      "fase": 0,
+      "nombre": "Validar MCP",
+      "proposito": "Validar que el servidor MCP MCPEco esté disponible antes de continuar",
+      "agente": "mcp-validator",
+      "modelo": "haiku",
+      "mcp_tools": ["mcp__MCPEco__list_documents (via agente)"],
+      "entrada": { "tipo": "ninguno", "campos": [] },
+      "salida": { "campos": ["status", "suggestion"] },
+      "validaciones": ["mcpValidation.status === 'ok'"],
+      "errores_posibles": ["MCP Server no disponible"]
+    },
+    {
+      "fase": 1,
+      "nombre": "Preprocesar Input",
+      "proposito": "Extraer y validar project_id de ARGUMENTS y task_id de PROMPT",
+      "agente": null,
+      "modelo": null,
+      "mcp_tools": [],
+      "entrada": { "tipo": "cli_arguments", "campos": ["ARGUMENTS (project_id)", "PROMPT (task_id)"] },
+      "salida": { "campos": ["projectId", "taskId"] },
+      "validaciones": ["projectId no vacío", "taskId no vacío"],
+      "errores_posibles": ["Project ID es OBLIGATORIO", "Task ID es OBLIGATORIO"]
+    },
+    {
+      "fase": 2,
+      "nombre": "Iniciar Tracking",
+      "proposito": "Iniciar sesión de tracking para monitorear la ejecución del comando",
+      "agente": null,
+      "modelo": null,
+      "mcp_tools": ["mcp__MCPEco__execution_session_manage(action: start_session)"],
+      "entrada": { "tipo": "variables", "campos": ["projectId", "command", "provider", "trigger_source"] },
+      "salida": { "campos": ["SESSION_ID"] },
+      "validaciones": [],
+      "errores_posibles": ["TRACKING_INIT_FAILED"]
+    },
+    {
+      "fase": 3,
+      "nombre": "Obtener Contexto",
+      "proposito": "Resolver y validar el contexto completo: proyecto, task, flow_row, flow, y validar pertenencia",
+      "agente": null,
+      "modelo": null,
+      "mcp_tools": ["mcp__MCPEco__get_project_info", "mcp__MCPEco__get_task_details", "mcp__MCPEco__get_flow_row", "mcp__MCPEco__get_flow_info"],
+      "entrada": { "tipo": "variables", "campos": ["projectId", "taskId"] },
+      "salida": { "campos": ["project", "task", "flowRow", "flow"] },
+      "validaciones": ["project.success", "task.success", "flowRow existe", "flow.success", "flow.project_id === projectId"],
+      "errores_posibles": ["Proyecto no encontrado", "Task no encontrada", "Flow row no encontrado", "Flow no encontrado", "Task no pertenece al proyecto"]
+    },
+    {
+      "fase": 4,
+      "nombre": "Crear Work Item",
+      "proposito": "Crear work item de tipo code_review para registrar la revisión",
+      "agente": null,
+      "modelo": null,
+      "mcp_tools": ["mcp__MCPEco__create_work_item"],
+      "entrada": { "tipo": "variables", "campos": ["task.flow_row_id", "step_type: code_review", "taskId"] },
+      "salida": { "campos": ["workItem", "workItem.work_item_id"] },
+      "validaciones": [],
+      "errores_posibles": ["Error creando work item"]
+    },
+    {
+      "fase": 5,
+      "nombre": "Obtener Archivos del Implementer",
+      "proposito": "Obtener lista de archivos creados/modificados por el implementer para revisar",
+      "agente": null,
+      "modelo": null,
+      "mcp_tools": ["mcp__MCPEco__list_work_items"],
+      "entrada": { "tipo": "variables", "campos": ["taskId"] },
+      "salida": { "campos": ["filesToReview (array de paths)"] },
+      "validaciones": ["Existe work item del implementer con status completed"],
+      "errores_posibles": ["No se encontró work item del implementer completado"]
+    },
+    {
+      "fase": 6,
+      "nombre": "Ciclo de Revisión con Soft Retry",
+      "proposito": "Ejecutar ciclo iterativo de análisis, validación, cálculo de severity y decisión, aplicando correcciones si es SOFT_RETRY",
+      "agente": "múltiple (orquestación)",
+      "modelo": "sonnet/haiku según agente",
+      "mcp_tools": [],
+      "entrada": { "tipo": "variables", "campos": ["filesToReview", "project.project_path", "project.tech", "project.kind", "project.config"] },
+      "salida": { "campos": ["finalDecision", "finalSeverity", "currentIssues", "correctionCycles", "cycle"] },
+      "validaciones": ["Si filesToReview vacío → APPROVE automático", "Si corrección rompe build → REJECT directo"],
+      "errores_posibles": ["Analyzer fallo", "Validator fallo", "Severity calculator fallo", "Decision maker fallo", "Correction executor fallo"],
+      "subagentes": [
+        { "nombre": "code-analyzer-agent", "modelo": "sonnet", "proposito": "Analizar archivos y detectar issues" },
+        { "nombre": "validator-agent", "modelo": "haiku", "proposito": "Validar compilación y tests" },
+        { "nombre": "severity-calculator-agent", "modelo": "haiku", "proposito": "Calcular severity ponderado" },
+        { "nombre": "decision-maker-agent", "modelo": "haiku", "proposito": "Decidir APPROVE/SOFT_RETRY/REJECT" },
+        { "nombre": "correction-executor-agent", "modelo": "sonnet", "proposito": "Aplicar correcciones automáticas" }
+      ],
+      "configuracion_soft_retry": {
+        "mvp": { "soft_threshold": 25, "max_retries": 2 },
+        "standard": { "soft_threshold": 30, "max_retries": 2 },
+        "enterprise": { "soft_threshold": 35, "max_retries": 3 }
+      }
+    },
+    {
+      "fase": 7,
+      "nombre": "Reportar Resultados",
+      "proposito": "Delegar al agente review-reporter para actualizar BD con resultados finales",
+      "agente": "review-reporter-agent",
+      "modelo": "haiku",
+      "mcp_tools": ["mcp__MCPEco__update_work_item_output", "mcp__MCPEco__evaluate_work_item", "mcp__MCPEco__advance_to_next_step"],
+      "entrada": { "tipo": "json", "campos": ["work_item_id", "task_id", "final_decision", "final_severity", "threshold", "files_reviewed", "issues", "correction_cycles"] },
+      "salida": { "campos": ["evaluation_status", "next_step", "fix_flow_row_id"] },
+      "validaciones": ["reporterData.status !== 'error'"],
+      "errores_posibles": ["Error desconocido en reporter"]
+    },
+    {
+      "fase": 8,
+      "nombre": "Finalizar Tracking",
+      "proposito": "Finalizar la sesión de tracking con resumen de la ejecución",
+      "agente": null,
+      "modelo": null,
+      "mcp_tools": ["mcp__MCPEco__execution_session_manage(action: finish_session)"],
+      "entrada": { "tipo": "variables", "campos": ["SESSION_ID", "summary"] },
+      "salida": { "campos": ["tracking_completed"] },
+      "validaciones": [],
+      "errores_posibles": []
+    }
+  ],
+  "manejo_errores": {
+    "estrategia": "Fail-fast con tracking: cada fase captura errores, llama failSession() para registrar en BD, y lanza throw para detener ejecución",
+    "output_error": {
+      "formato": "throw new Error(mensaje)",
+      "tracking": "failSession(errorMessage) registra en BD antes de throw"
+    }
+  },
+  "funciones_auxiliares": [
+    { "nombre": "startStep", "proposito": "Iniciar un paso de tracking con nombre y orden" },
+    { "nombre": "logStep", "proposito": "Registrar mensaje de log en el paso actual" },
+    { "nombre": "completeStep", "proposito": "Marcar el paso actual como completado" },
+    { "nombre": "failSession", "proposito": "Marcar la sesión como fallida con mensaje de error" },
+    { "nombre": "finishSession", "proposito": "Finalizar la sesión exitosamente con resumen" }
+  ],
+  "variables_globales": [
+    "SESSION_ID", "CURRENT_STEP_ID", "task", "flowRow", "flow", "project",
+    "workItem", "filesToReview", "cycle", "finalDecision", "finalSeverity",
+    "currentIssues", "correctionCycles", "config", "threshold", "reporterData"
+  ]
+}

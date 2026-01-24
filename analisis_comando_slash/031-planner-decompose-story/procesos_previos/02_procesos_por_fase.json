@@ -1,0 +1,193 @@
+{
+  "comando": "031-planner-decompose-story",
+  "descripcion": "Orquestador para descomponer una story en tasks técnicas atómicas",
+  "version": "3.2",
+  "ultima_actualizacion": "2026-01-22",
+  "total_fases": 11,
+  "fases": [
+    {
+      "fase": -2,
+      "nombre": "Inicializar TODO List",
+      "proposito": "Crear TODO list visual para dar visibilidad del progreso al usuario durante la ejecución del comando",
+      "agente": null,
+      "modelo": null,
+      "mcp_tools": [],
+      "herramientas_claude": ["TodoWrite"],
+      "entrada": { "tipo": "ninguna", "campos": [] },
+      "salida": { "campos": ["todos_initialized"] },
+      "validaciones": [],
+      "errores_posibles": []
+    },
+    {
+      "fase": -1,
+      "nombre": "Cargar Herramientas MCP",
+      "proposito": "Cargar explícitamente todas las herramientas MCP requeridas antes de ejecutar cualquier lógica",
+      "agente": null,
+      "modelo": null,
+      "mcp_tools": [],
+      "herramientas_claude": ["MCPSearch"],
+      "entrada": { "tipo": "ninguna", "campos": [] },
+      "salida": { "campos": ["mcp__MCPEco__get_project_info (cargada)", "mcp__MCPEco__get_flow_info (cargada)", "mcp__MCPEco__get_flow_row (cargada)", "mcp__MCPEco__get_story (cargada)", "mcp__MCPEco__execution_session_manage (cargada)"] },
+      "validaciones": [],
+      "errores_posibles": [{ "error": "Tool not found", "causa": "MCP server no configurado en .mcp.json", "manejo": "Error termina el proceso" }]
+    },
+    {
+      "fase": 0,
+      "nombre": "Validar MCP Disponible",
+      "proposito": "Validar que el servidor MCP MCPEco esté disponible y operativo antes de continuar",
+      "agente": "mcp-validator",
+      "modelo": "haiku",
+      "mcp_tools": ["mcp__MCPEco__list_documents (via agente)"],
+      "herramientas_claude": ["Task", "TodoWrite"],
+      "entrada": { "tipo": "ninguna", "campos": [] },
+      "salida": { "campos": ["status", "mcp_available", "message", "suggestion (si error)"] },
+      "validaciones": ["mcpValidation.status === 'ok'"],
+      "errores_posibles": [
+        { "error": "MCP_NOT_AVAILABLE", "causa": "Servidor MCP no disponible", "manejo": "throw Error('MCP Server no disponible')" },
+        { "error": "Tool not found", "causa": "MCP server no registrado", "manejo": "Sugerencia: verificar .mcp.json" },
+        { "error": "Connection refused", "causa": "Servidor no iniciado", "manejo": "Sugerencia: reiniciar Claude Code" }
+      ]
+    },
+    {
+      "fase": 1,
+      "nombre": "Preprocesar Input",
+      "proposito": "Extraer y validar project_id (de ARGUMENTS) y story_id (de PROMPT) como parámetros obligatorios",
+      "agente": null,
+      "modelo": null,
+      "mcp_tools": [],
+      "herramientas_claude": [],
+      "entrada": { "tipo": "del_usuario", "campos": ["ARGUMENTS (project_id)", "PROMPT (story_id)"] },
+      "salida": { "campos": ["projectId", "storyId"] },
+      "validaciones": ["projectId existe y no está vacío", "storyId existe y no está vacío"],
+      "errores_posibles": [
+        { "error": "Project ID es OBLIGATORIO", "causa": "ARGUMENTS vacío o ausente", "manejo": "throw Error con mensaje de uso" },
+        { "error": "Story ID es OBLIGATORIO", "causa": "PROMPT vacío o ausente", "manejo": "throw Error con mensaje de uso" }
+      ]
+    },
+    {
+      "fase": 2,
+      "nombre": "Iniciar Tracking de Ejecución",
+      "proposito": "Iniciar sesión de tracking para monitorear la ejecución del comando y definir helpers de tracking",
+      "agente": null,
+      "modelo": null,
+      "mcp_tools": ["mcp__MCPEco__execution_session_manage"],
+      "herramientas_claude": [],
+      "entrada": { "tipo": "de_fase_anterior", "campos": ["projectId"] },
+      "salida": { "campos": ["SESSION_ID", "CURRENT_STEP_ID", "startStep()", "logStep()", "completeStep()"] },
+      "validaciones": [],
+      "errores_posibles": [{ "error": "Session creation failed", "causa": "Error en MCP al crear sesión", "manejo": "Error propagado" }]
+    },
+    {
+      "fase": 3,
+      "nombre": "Obtener Contexto Completo",
+      "proposito": "Obtener y validar toda la jerarquía de datos: proyecto, story, flow_row y flow, verificando pertenencia correcta",
+      "agente": null,
+      "modelo": null,
+      "mcp_tools": ["mcp__MCPEco__get_project_info", "mcp__MCPEco__get_story", "mcp__MCPEco__get_flow_row", "mcp__MCPEco__get_flow_info"],
+      "herramientas_claude": ["TodoWrite"],
+      "entrada": { "tipo": "de_fase_anterior", "campos": ["projectId", "storyId", "SESSION_ID"] },
+      "salida": { "campos": ["project", "story", "flowRow", "flow"] },
+      "validaciones": ["project existe", "story existe", "flowRow existe", "flow existe", "flow.project_id === projectId"],
+      "errores_posibles": [
+        { "error": "Proyecto no encontrado", "causa": "project_id inválido", "manejo": "completeStep(false), session fail, throw Error" },
+        { "error": "Story no encontrada", "causa": "story_id inválido", "manejo": "completeStep(false), session fail, throw Error" },
+        { "error": "Story no pertenece al proyecto", "causa": "flow.project_id !== projectId", "manejo": "completeStep(false), session fail, throw Error" }
+      ]
+    },
+    {
+      "fase": 4,
+      "nombre": "Buscar Documentación Relevante",
+      "proposito": "Buscar documentación relevante en BD usando búsqueda semántica basada en tech, kind y título de story",
+      "agente": "search-local",
+      "modelo": "sonnet",
+      "mcp_tools": ["mcp__MCPEco__list_documents (via agente)", "mcp__MCPEco__search_documents_semantic (via agente)"],
+      "herramientas_claude": ["Task", "TodoWrite"],
+      "entrada": { "tipo": "de_fase_anterior", "campos": ["project.tech", "project.kind", "story.story_title"] },
+      "salida": { "campos": ["relevantDocs"] },
+      "validaciones": [],
+      "errores_posibles": [{ "error": "Error buscando docs", "causa": "Fallo en búsqueda semántica u Ollama no disponible", "manejo": "NO es fatal, continua sin docs" }]
+    },
+    {
+      "fase": 5,
+      "nombre": "Analizar Story y Generar Plan de Tasks",
+      "proposito": "Analizar la story usando agente especializado que aplica principios de mínima fragmentación y genera tasks atómicas según nivel del proyecto",
+      "agente": "story-analyzer-agent",
+      "modelo": "sonnet",
+      "mcp_tools": [],
+      "herramientas_claude": ["Task", "TodoWrite"],
+      "entrada": { "tipo": "de_fase_anterior", "campos": ["storyId", "story.story_title", "story.story_content", "story.acceptance_criteria", "project.project_level", "project.tech", "project.kind", "flowRow.flow_row_type", "relevantDocs"] },
+      "salida": { "campos": ["analysisResult.status", "analysisResult.proposed_tasks", "analysisResult.total_estimated_hours", "analysisResult.validation"] },
+      "validaciones": ["status === 'success'", "proposed_tasks existe y es array", "proposed_tasks.length > 0"],
+      "errores_posibles": [
+        { "error": "Analysis failed", "causa": "Agente retornó status !== 'success'", "manejo": "completeStep(false), session fail, throw Error" },
+        { "error": "proposed_tasks faltante", "causa": "Respuesta inválida del analyzer", "manejo": "completeStep(false), session fail, throw Error" },
+        { "error": "El analyzer no generó ninguna task", "causa": "proposed_tasks.length === 0", "manejo": "completeStep(false), session fail, throw Error" }
+      ]
+    },
+    {
+      "fase": 6,
+      "nombre": "Crear Tasks en BD",
+      "proposito": "Insertar las tasks propuestas en la base de datos usando agente especializado, con validación robusta de 6 niveles",
+      "agente": "task-creator-agent",
+      "modelo": "sonnet",
+      "mcp_tools": ["mcp__MCPEco__create_tasks_batch (via agente)", "mcp__MCPEco__create_task (via agente, fallback)", "mcp__MCPEco__get_task_details (validación)"],
+      "herramientas_claude": ["Task", "TodoWrite"],
+      "entrada": { "tipo": "de_fase_anterior", "campos": ["storyId", "analysisResult.proposed_tasks"] },
+      "salida": { "campos": ["creatorResult.status", "creatorResult.tasks_created", "creatorResult.task_ids", "creatorResult.message"] },
+      "validaciones": [
+        "Nivel 1: creatorResult no es null/undefined",
+        "Nivel 2: creatorResult.status === 'success'",
+        "Nivel 3: tasks_created existe y > 0",
+        "Nivel 4: task_ids existe y es array válido",
+        "Nivel 5: task_ids.length === tasks_created",
+        "Nivel 6: Verificar primera task EXISTE en BD via get_task_details"
+      ],
+      "errores_posibles": [
+        { "error": "task-creator retornó null/undefined", "causa": "Agente no retornó respuesta", "manejo": "completeStep(false), session fail, throw Error" },
+        { "error": "task-creator falló", "causa": "status !== 'success'", "manejo": "completeStep(false), session fail, throw Error" },
+        { "error": "0 tasks creadas", "causa": "tasks_created === 0", "manejo": "completeStep(false), session fail, throw Error" },
+        { "error": "Task no existe en BD", "causa": "Agente reportó éxito pero no insertó realmente", "manejo": "completeStep(false), session fail, throw Error" }
+      ]
+    },
+    {
+      "fase": 7,
+      "nombre": "Finalizar Tracking",
+      "proposito": "Cerrar la sesión de tracking con estado de éxito y resumen de la operación",
+      "agente": null,
+      "modelo": null,
+      "mcp_tools": ["mcp__MCPEco__execution_session_manage"],
+      "herramientas_claude": [],
+      "entrada": { "tipo": "de_fase_anterior", "campos": ["SESSION_ID", "story.story_title", "creatorResult.tasks_created", "analysisResult.total_estimated_hours"] },
+      "salida": { "campos": ["session_completed"] },
+      "validaciones": [],
+      "errores_posibles": []
+    },
+    {
+      "fase": 8,
+      "nombre": "Retornar Resultado Final",
+      "proposito": "Consolidar y retornar JSON estructurado con toda la información de la descomposición",
+      "agente": null,
+      "modelo": null,
+      "mcp_tools": [],
+      "herramientas_claude": [],
+      "entrada": { "tipo": "de_fase_anterior", "campos": ["storyId", "story.story_title", "projectId", "project.project_name", "project.project_level", "flow.flow_id", "flow.flow_name", "creatorResult.tasks_created", "creatorResult.task_ids", "analysisResult"] },
+      "salida": { "campos": ["success", "story_id", "story_title", "project_id", "project_name", "flow_id", "flow_name", "project_level", "tasks_created", "task_ids", "total_estimated_hours", "analysis", "documents_used", "tracking", "next_steps"] },
+      "validaciones": [],
+      "errores_posibles": []
+    }
+  ],
+  "manejo_errores": {
+    "estrategia": "Try-catch con logging y session fail. Cada fase crítica usa completeStep(false, errorMessage) y luego execution_session_manage con action='fail' antes de hacer throw Error",
+    "output_error": {
+      "success": false,
+      "error": "<mensaje descriptivo del error>",
+      "tracking": { "session_id": "<SESSION_ID>", "status": "failed" }
+    },
+    "fases_no_fatales": ["FASE 4 (búsqueda de docs) - continúa sin documentos si falla"]
+  },
+  "funciones_auxiliares": [
+    { "nombre": "startStep", "proposito": "Inicia tracking de un step, registra step_name y step_order, guarda step_id en CURRENT_STEP_ID", "parametros": ["stepName: string", "stepOrder: number"], "retorna": "step_id" },
+    { "nombre": "logStep", "proposito": "Registra un mensaje de log en el step actual", "parametros": ["message: string", "level: 'info' | 'warn' | 'error'"], "retorna": "void" },
+    { "nombre": "completeStep", "proposito": "Marca el step actual como completado (éxito o fallo)", "parametros": ["success: boolean", "errorMessage: string | null"], "retorna": "void" }
+  ]
+}

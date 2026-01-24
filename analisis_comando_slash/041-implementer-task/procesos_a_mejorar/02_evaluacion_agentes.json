@@ -1,0 +1,60 @@
+{
+  "resumen": {
+    "total_agentes": 5,
+    "puntaje_promedio": 72.4
+  },
+  "evaluaciones": [
+    {
+      "agente": "mcp-validator",
+      "archivo": ".claude/agents/common/mcp-validator.md",
+      "puntaje": 90,
+      "mejoras": [
+        {"id": "MV001", "prioridad": "BAJA", "problema": "Falta success_code en output éxito"},
+        {"id": "MV002", "prioridad": "BAJA", "problema": "Falta version en frontmatter"}
+      ]
+    },
+    {
+      "agente": "search-local",
+      "archivo": ".claude/agents/common/search-local.md",
+      "puntaje": 92,
+      "mejoras": [
+        {"id": "SL001", "prioridad": "BAJA", "problema": "Falta fallback cuando semántica retorna 0 resultados"},
+        {"id": "SL002", "prioridad": "BAJA", "problema": "Falta version en frontmatter"}
+      ]
+    },
+    {
+      "agente": "code-executor-agent",
+      "archivo": ".claude/agents/implementer/code-executor-agent.md",
+      "puntaje": 52,
+      "mejoras": [
+        {"id": "CE001", "prioridad": "CRITICA", "problema": "Frontmatter incompleto - faltan subagent_type, tools, color"},
+        {"id": "CE002", "prioridad": "CRITICA", "problema": "Validación de input insuficiente"},
+        {"id": "CE003", "prioridad": "ALTA", "problema": "Sin manejo de errores en Write/Edit"},
+        {"id": "CE004", "prioridad": "CRITICA", "problema": "Falta schema de error estructurado"},
+        {"id": "CE005", "prioridad": "MEDIA", "problema": "Falta sección Testing"}
+      ]
+    },
+    {
+      "agente": "validator-agent",
+      "archivo": ".claude/agents/implementer/validator-agent.md",
+      "puntaje": 85,
+      "mejoras": [
+        {"id": "VA001", "prioridad": "BAJA", "problema": "Falta color en frontmatter"},
+        {"id": "VA002", "prioridad": "MEDIA", "problema": "No valida project_path absoluto"},
+        {"id": "VA003", "prioridad": "BAJA", "problema": "Falta sección Testing"}
+      ]
+    },
+    {
+      "agente": "result-reporter-agent",
+      "archivo": ".claude/agents/implementer/result-reporter-agent.md",
+      "puntaje": 43,
+      "mejoras": [
+        {"id": "RR001", "prioridad": "CRITICA", "problema": "Frontmatter incompleto"},
+        {"id": "RR002", "prioridad": "CRITICA", "problema": "Validación de input no implementada"},
+        {"id": "RR003", "prioridad": "ALTA", "problema": "Sin manejo de errores en llamadas MCP"},
+        {"id": "RR004", "prioridad": "CRITICA", "problema": "Falta schema de Output"},
+        {"id": "RR005", "prioridad": "MEDIA", "problema": "Falta sección Testing"}
+      ]
+    }
+  ]
+}

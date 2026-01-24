@@ -1,0 +1,193 @@
+{
+  "comando": "041-implementer-task",
+  "total_fases": 13,
+  "fases": [
+    {
+      "fase": -2,
+      "nombre": "Inicializar TODO List",
+      "proposito": "Crear TODO list al inicio para dar visibilidad del progreso al usuario mediante tracking visual",
+      "agente": null,
+      "modelo": null,
+      "mcp_tools": [],
+      "entrada": { "tipo": "ninguno", "campos": [] },
+      "salida": { "campos": ["todos array con 8 items iniciales"] },
+      "validaciones": [],
+      "errores_posibles": []
+    },
+    {
+      "fase": -1,
+      "nombre": "Cargar Herramientas MCP",
+      "proposito": "Cargar explícitamente todas las herramientas MCP requeridas antes de ejecutar cualquier lógica",
+      "agente": null,
+      "modelo": null,
+      "mcp_tools": [
+        "MCPSearch (select:mcp__MCPEco__get_project_info)",
+        "MCPSearch (select:mcp__MCPEco__get_flow_info)",
+        "MCPSearch (select:mcp__MCPEco__get_flow_row)",
+        "MCPSearch (select:mcp__MCPEco__get_task_details)",
+        "MCPSearch (select:mcp__MCPEco__execution_session_manage)",
+        "MCPSearch (select:mcp__MCPEco__create_work_item)"
+      ],
+      "entrada": { "tipo": "ninguno", "campos": [] },
+      "salida": { "campos": ["confirmación de herramientas cargadas"] },
+      "validaciones": [],
+      "errores_posibles": [{ "tipo": "MCP_TOOL_NOT_FOUND", "descripcion": "Herramienta MCP no existe" }]
+    },
+    {
+      "fase": 0,
+      "nombre": "Validar MCP",
+      "proposito": "Validar que el servidor MCP MCPEco esté disponible antes de continuar",
+      "agente": "mcp-validator",
+      "modelo": "haiku",
+      "mcp_tools": [],
+      "entrada": { "tipo": "prompt string", "campos": ["Valida que el servidor MCP MCPEco esté disponible"] },
+      "salida": { "campos": ["status (ok/error)", "suggestion"] },
+      "validaciones": ["mcpValidation.status === 'ok'"],
+      "errores_posibles": [{ "tipo": "MCP_SERVER_UNAVAILABLE", "descripcion": "MCP Server no disponible", "manejo": "throw new Error" }]
+    },
+    {
+      "fase": 1,
+      "nombre": "Preprocesar Input",
+      "proposito": "Extraer y validar project_id desde ARGUMENTS y task_id desde PROMPT",
+      "agente": null,
+      "modelo": null,
+      "mcp_tools": [],
+      "entrada": { "tipo": "variables globales", "campos": ["ARGUMENTS (project_id)", "PROMPT (task_id)"] },
+      "salida": { "campos": ["projectId", "taskId"] },
+      "validaciones": ["projectId no vacío", "taskId no vacío"],
+      "errores_posibles": [
+        { "tipo": "MISSING_PROJECT_ID", "descripcion": "Project ID es OBLIGATORIO" },
+        { "tipo": "MISSING_TASK_ID", "descripcion": "Task ID es OBLIGATORIO" }
+      ]
+    },
+    {
+      "fase": 2,
+      "nombre": "Iniciar Tracking",
+      "proposito": "Iniciar sesión de tracking para monitorear la ejecución del comando",
+      "agente": null,
+      "modelo": null,
+      "mcp_tools": ["mcp__MCPEco__execution_session_manage (action: start_session)"],
+      "entrada": { "tipo": "parámetros de sesión", "campos": ["command", "provider", "trigger_source", "project_id"] },
+      "salida": { "campos": ["SESSION_ID", "funciones helper (startStep, logStep, completeStep)"] },
+      "validaciones": [],
+      "errores_posibles": [{ "tipo": "SESSION_START_FAILED", "descripcion": "No se pudo iniciar la sesión de tracking" }]
+    },
+    {
+      "fase": 3,
+      "nombre": "Obtener Contexto",
+      "proposito": "Resolver contexto completo de la task: proyecto, task, flow_row y flow, validando pertenencia",
+      "agente": null,
+      "modelo": null,
+      "mcp_tools": [
+        "mcp__MCPEco__get_project_info",
+        "mcp__MCPEco__get_task_details",
+        "mcp__MCPEco__get_flow_row",
+        "mcp__MCPEco__get_flow_info"
+      ],
+      "entrada": { "tipo": "IDs", "campos": ["projectId", "taskId"] },
+      "salida": { "campos": ["project", "task", "flowRow", "flow"] },
+      "validaciones": ["project.success", "task.success", "flowRow.success", "flow.success", "flow.project_id === projectId"],
+      "errores_posibles": [
+        { "tipo": "PROJECT_NOT_FOUND", "descripcion": "Proyecto no encontrado", "fatal": true },
+        { "tipo": "TASK_NOT_FOUND", "descripcion": "Task no encontrada", "fatal": true },
+        { "tipo": "FLOW_ROW_NOT_FOUND", "descripcion": "Flow row no encontrado", "fatal": true },
+        { "tipo": "FLOW_NOT_FOUND", "descripcion": "Flow no encontrado", "fatal": true },
+        { "tipo": "TASK_PROJECT_MISMATCH", "descripcion": "Task no pertenece al proyecto especificado", "fatal": true }
+      ]
+    },
+    {
+      "fase": 4,
+      "nombre": "Crear Work Item",
+      "proposito": "Crear work item en la BD para trackear la implementación de esta task",
+      "agente": null,
+      "modelo": null,
+      "mcp_tools": ["mcp__MCPEco__create_work_item"],
+      "entrada": { "tipo": "parámetros de work item", "campos": ["flow_row_id", "step_type", "task_id"] },
+      "salida": { "campos": ["workItem.work_item_id"] },
+      "validaciones": [],
+      "errores_posibles": [{ "tipo": "WORK_ITEM_CREATION_FAILED", "descripcion": "No se pudo crear el work item", "fatal": true }]
+    },
+    {
+      "fase": 5,
+      "nombre": "Buscar Documentación",
+      "proposito": "Buscar documentación relevante usando búsqueda semántica local",
+      "agente": "search-local",
+      "modelo": "sonnet",
+      "mcp_tools": [],
+      "entrada": { "tipo": "JSON prompt", "campos": ["query", "step_type", "entity_type", "entity_id", "top_k"] },
+      "salida": { "campos": ["relevantDocs (array con title, summary)"] },
+      "validaciones": [],
+      "errores_posibles": [{ "tipo": "SEARCH_FAILED", "descripcion": "Error buscando documentación", "fatal": false }]
+    },
+    {
+      "fase": 6,
+      "nombre": "Implementar Código",
+      "proposito": "Delegar la implementación real del código al agente code-executor-agent",
+      "agente": "code-executor-agent",
+      "modelo": "sonnet",
+      "mcp_tools": [],
+      "entrada": { "tipo": "JSON prompt", "campos": ["task_title", "task_description", "project_path", "tech", "kind", "project_level", "relevant_docs"] },
+      "salida": { "campos": ["status", "files_created", "files_modified", "total_lines_added", "total_lines_deleted", "implementation_summary"] },
+      "validaciones": ["executorResult.status === 'success'"],
+      "errores_posibles": [{ "tipo": "IMPLEMENTATION_FAILED", "descripcion": "El agente de implementación falló", "fatal": true }]
+    },
+    {
+      "fase": 7,
+      "nombre": "Validar Código",
+      "proposito": "Delegar la validación del código (compilación y tests) al validator-agent",
+      "agente": "validator-agent",
+      "modelo": "haiku",
+      "mcp_tools": [],
+      "entrada": { "tipo": "JSON prompt", "campos": ["project_path", "tech", "files_to_validate"] },
+      "salida": { "campos": ["validation.compiles", "validation.tests_pass", "validation_error"] },
+      "validaciones": [],
+      "errores_posibles": [{ "tipo": "VALIDATION_FAILED", "descripcion": "Validación del código falló", "fatal": false }]
+    },
+    {
+      "fase": 8,
+      "nombre": "Reportar Resultados",
+      "proposito": "Reportar resultados a la BD y avanzar la task al siguiente paso del workflow",
+      "agente": "result-reporter-agent",
+      "modelo": "haiku",
+      "mcp_tools": [],
+      "entrada": { "tipo": "JSON prompt", "campos": ["work_item_id", "task_id", "current_step", "execution_result", "action"] },
+      "salida": { "campos": ["next_step", "evaluation_status"] },
+      "validaciones": [],
+      "errores_posibles": [{ "tipo": "REPORT_FAILED", "descripcion": "No se pudieron reportar los resultados", "fatal": true }]
+    },
+    {
+      "fase": 9,
+      "nombre": "Finalizar Tracking",
+      "proposito": "Finalizar la sesión de tracking con un resumen de la ejecución",
+      "agente": null,
+      "modelo": null,
+      "mcp_tools": ["mcp__MCPEco__execution_session_manage (action: finish_session)"],
+      "entrada": { "tipo": "parámetros de cierre", "campos": ["session_id", "summary"] },
+      "salida": { "campos": [] },
+      "validaciones": [],
+      "errores_posibles": [{ "tipo": "TRACKING_FINISH_FAILED", "descripcion": "No se pudo finalizar el tracking", "fatal": false }]
+    },
+    {
+      "fase": 10,
+      "nombre": "Retornar Resultado",
+      "proposito": "Construir y retornar JSON consolidado con todos los resultados de la implementación",
+      "agente": null,
+      "modelo": null,
+      "mcp_tools": [],
+      "entrada": { "tipo": "variables acumuladas", "campos": ["todas las variables de fases anteriores"] },
+      "salida": { "campos": ["success", "task_id", "task_title", "work_item_id", "project_id", "project_name", "next_step", "evaluation_status", "metrics", "tracking", "summary"] },
+      "validaciones": [],
+      "errores_posibles": []
+    }
+  ],
+  "manejo_errores": {
+    "estrategia": "Try-catch por fase con fail de sesión y re-throw. Errores fatales terminan la ejecución. Algunos errores son no-fatales (búsqueda de docs, validación de código).",
+    "output_error": { "success": false, "error": "CONTEXT_RESOLUTION_FAILED (ejemplo)" },
+    "patron": "En fases críticas (3, 4, 6, 8): completeStep(false, error) -> fail_session -> throw. En fases opcionales (5, 7): log warning -> completeStep(true) -> continuar"
+  },
+  "funciones_auxiliares": [
+    { "nombre": "startStep", "proposito": "Iniciar un nuevo paso en el tracking de la sesión", "parametros": ["stepName", "stepOrder"], "retorno": "step_id" },
+    { "nombre": "logStep", "proposito": "Registrar un mensaje de log en el paso actual", "parametros": ["message", "level"], "retorno": "void" },
+    { "nombre": "completeStep", "proposito": "Marcar el paso actual como completado (exitoso o fallido)", "parametros": ["success", "errorMessage"], "retorno": "void" }
+  ]
+}

@@ -1,0 +1,513 @@
+{
+  "comando": "011-constitution-create-project",
+  "version": "1.3",
+  "total_agentes": 8,
+  "agentes": {
+    "mcp_validator": {
+      "nombre": "mcp-validator",
+      "ubicacion": "common/mcp-validator",
+      "version": "2.0",
+      "modelo": "haiku",
+      "color": "blue",
+      "responsabilidad": "Validar que el servidor MCP MCPEco esta disponible y operativo. Ejecutar UNA validacion de conectividad y retornar resultado estructurado.",
+      "regla_de_oro": "Si el MCP responde -> status: ok. Si no responde -> status: error y terminar. NO intentar solucionarlo.",
+      "tools_permitidos": ["mcp__MCPEco__list_documents"],
+      "prohibiciones": [
+        "NO usar Bash, Read, Write, Edit, TodoWrite, Task",
+        "NO crear documentos o proyectos de prueba",
+        "NO intentar solucionar errores del MCP (solo reportar)",
+        "NO hacer multiples reintentos",
+        "NO ejecutar comandos de sistema"
+      ],
+      "input": {
+        "tipo": "ninguno",
+        "descripcion": "No requiere parametros de entrada"
+      },
+      "output": {
+        "exito": {
+          "status": "ok",
+          "mcp_available": true,
+          "message": "MCP server MCPEco operativo"
+        },
+        "error": {
+          "status": "error",
+          "mcp_available": false,
+          "error_code": "MCP_NOT_AVAILABLE",
+          "error_message": "<descripcion especifica>",
+          "suggestion": "Verificar configuracion en .mcp.json"
+        }
+      },
+      "errores_posibles": [
+        {"error": "Tool not found", "causa": "MCP server no registrado", "sugerencia": "Verificar .mcp.json"},
+        {"error": "Connection refused", "causa": "Servidor no iniciado", "sugerencia": "Reiniciar Claude Code"},
+        {"error": "Timeout", "causa": "Servidor lento o caido", "sugerencia": "Esperar y reintentar"},
+        {"error": "Permission denied", "causa": "Configuracion incorrecta", "sugerencia": "Revisar permisos"}
+      ]
+    },
+    "analyzer_agent": {
+      "nombre": "analyzer-agent",
+      "ubicacion": "constitution/analyzer-agent",
+      "version": "2.0",
+      "modelo": "opus",
+      "responsabilidad": "Analizar descripciones de proyectos para inferir metadata tecnica, requisitos y complejidad. Retornar tech, kind, level, requirements, complexity y configuracion.",
+      "caracteristica_clave": "NO hace llamadas MCP. Solo analiza texto usando inferencia libre.",
+      "tools_permitidos": [],
+      "prohibiciones": [
+        "NO llames MCP tools",
+        "NO uses Task()",
+        "NO uses Bash",
+        "NO uses TodoWrite",
+        "NO uses formulas rigidas para complexity",
+        "NO uses listas fijas de requirements",
+        "NO ignores la validacion de coherencia"
+      ],
+      "input": {
+        "project_description": "string - descripcion del proyecto",
+        "folder_path": "string - ruta de la carpeta"
+      },
+      "output": {
+        "status": "success",
+        "analysis": {
+          "tech": "string - tecnologia inferida",
+          "kind": "string - tipo de proyecto",
+          "level": "string - mvp|standard|enterprise",
+          "project_name": "string",
+          "project_slug": "string",
+          "folder_path": "string",
+          "complexity": {
+            "score": "number 0-100",
+            "classification": "baja|media|alta",
+            "factors": "object",
+            "justification": "string"
+          },
+          "requirements": "object - inferido libremente",
+          "config": "object - segun nivel",
+          "limits": "object - segun nivel",
+          "validation": "object - coherencia"
+        }
+      },
+      "logica_inferencia": {
+        "paso_1_inferTech": "Detectar tecnologia/lenguaje de menciones explicitas o frameworks",
+        "paso_2_inferKind": "Detectar tipo (api, web, mobile, cli, desktop, service, library)",
+        "paso_3_extractRequirements": "Inferir libremente sin lista fija - detectar explicito e implicito",
+        "paso_4_estimateComplexity": "Evaluar dominio, requisitos, integraciones, escalabilidad, incertidumbre",
+        "paso_5_mapComplexityToLevel": "baja->mvp, media->standard, alta->enterprise",
+        "paso_6_validateCoherence": "Forzar MVP si descripcion corta o palabras clave simples. Degradar enterprise si no hay keywords explicitos",
+        "paso_7_getLevelConfig": "Obtener thresholds y limits segun nivel final"
+      },
+      "errores_posibles": [
+        {"error": "No se pudo inferir tech", "causa": "Descripcion muy vaga"},
+        {"error": "No se pudo inferir kind", "causa": "Tipo de proyecto no claro"}
+      ]
+    },
+    "project_creator_agent": {
+      "nombre": "project-creator-agent",
+      "ubicacion": "constitution/project-creator-agent",
+      "version": "1.3",
+      "modelo": "opus",
+      "responsabilidad": "Crear proyectos en la base de datos MCPGenerator. Solo hace DOS cosas: cargar MCP tool con MCPSearch y llamar mcp__MCPEco__create_project.",
+      "advertencia_critica": "NUNCA omitir MCPSearch. NUNCA inventar resultados. Validar project_id con regex para detectar alucinaciones.",
+      "tools_permitidos": ["MCPSearch", "mcp__MCPEco__create_project", "mcp__MCPEco__set_active_project"],
+      "prohibiciones": [
+        "NO omitir MCPSearch",
+        "NO saltar pasos del flujo",
+        "NO inventar o alucinar resultados",
+        "NO retornar success sin validacion",
+        "NO analizar descripcion (eso es del analyzer)",
+        "NO crear documentos (eso es del document-loader)",
+        "NO usar Task() para delegar",
+        "NO usar TodoWrite"
+      ],
+      "input": {
+        "analysis": {
+          "tech": "string",
+          "kind": "string",
+          "level": "string",
+          "project_name": "string",
+          "project_slug": "string",
+          "folder_path": "string",
+          "provider": "string - optional (claude|gemini|copilot)",
+          "config": "object",
+          "limits": "object"
+        }
+      },
+      "output": {
+        "exito": {
+          "status": "success",
+          "project": {
+            "project_id": "proj-<19-digit-timestamp>",
+            "project_slug": "string",
+            "project_name": "string",
+            "tech": "string",
+            "kind": "string",
+            "project_level": "string",
+            "folder_path": "string"
+          }
+        },
+        "error": {
+          "status": "error",
+          "error_code": "MCP_CREATE_FAILED|INVALID_PROJECT_ID|HALLUCINATION_DETECTED",
+          "message": "string"
+        }
+      },
+      "flujo_obligatorio": {
+        "paso_1": "Cargar MCP tool con MCPSearch(select:mcp__MCPEco__create_project)",
+        "paso_2": "Validar input (analysis, project_slug, project_name, tech, kind, level)",
+        "paso_3": "Construir parametros para create_project",
+        "paso_4": "Llamar mcp__MCPEco__create_project (CRITICO: no omitir ni simular)",
+        "paso_5": "Validar project_id con regex /^proj-\\d{19}$/",
+        "paso_6": "Retornar resultado estructurado"
+      },
+      "errores_posibles": [
+        {"error": "MCP_NO_RESULT", "causa": "MCP tool no retorno resultado"},
+        {"error": "MCP_NO_PROJECT_ID", "causa": "MCP no retorno project_id"},
+        {"error": "INVALID_PROJECT_ID", "causa": "project_id no cumple formato (posible alucinacion)"},
+        {"error": "HALLUCINATION_DETECTED", "causa": "Agente detecto que iba a inventar resultado"}
+      ]
+    },
+    "document_finder_agent": {
+      "nombre": "document-finder-agent",
+      "ubicacion": "constitution/document-finder-agent",
+      "version": "1.0",
+      "modelo": "haiku",
+      "responsabilidad": "Determinar que documentos necesita un proyecto segun su nivel. Retornar lista de documentos requeridos y queries de busqueda. NO ejecuta busquedas.",
+      "tools_permitidos": [],
+      "prohibiciones": [
+        "NO ejecutes busquedas",
+        "NO llames MCP tools",
+        "NO uses Task()",
+        "NO crees documentos"
+      ],
+      "input": {
+        "project": {
+          "project_id": "string",
+          "project_name": "string",
+          "tech": "string",
+          "kind": "string",
+          "project_level": "string"
+        }
+      },
+      "output": {
+        "status": "success",
+        "required_documents": [
+          {
+            "id": "string",
+            "title": "string",
+            "keywords": "array",
+            "priority": "number",
+            "search_queries": {
+              "local": {"query": "string", "min_similarity": "number"},
+              "internet": {"library_hint": "string", "query": "string"}
+            }
+          }
+        ],
+        "constitution_document": {
+          "title": "string",
+          "should_create": true,
+          "tags": "array"
+        }
+      },
+      "documentos_por_nivel": {
+        "mvp": [
+          {"id": "estructura-basica", "title": "Guia de Estructura Basica", "priority": 1},
+          {"id": "testing-minimo", "title": "Guia de Testing Minimo", "priority": 2}
+        ],
+        "standard": [
+          {"id": "arquitectura", "title": "Guia de Arquitectura", "priority": 1},
+          {"id": "estandares-codigo", "title": "Estandares de Codigo", "priority": 2},
+          {"id": "testing", "title": "Guia de Testing", "priority": 3}
+        ],
+        "enterprise": [
+          {"id": "arquitectura-enterprise", "title": "Guia de Arquitectura Enterprise", "priority": 1},
+          {"id": "estandares-codigo", "title": "Estandares de Codigo", "priority": 2},
+          {"id": "testing-avanzado", "title": "Guia de Testing Avanzado", "priority": 3},
+          {"id": "seguridad", "title": "Guia de Seguridad", "priority": 4},
+          {"id": "observabilidad", "title": "Guia de Observabilidad", "priority": 5}
+        ]
+      },
+      "errores_posibles": [
+        {"error": "Invalid project_level", "causa": "Nivel no reconocido"}
+      ]
+    },
+    "search_local": {
+      "nombre": "search-local",
+      "ubicacion": "common/search-local",
+      "version": "2.5",
+      "modelo": "sonnet",
+      "color": "orange",
+      "responsabilidad": "Buscar documentacion en BD local. Soporta busqueda por entidad, semantica (RAG) y metadata. Gestiona Ollama automaticamente.",
+      "restriccion_critica": "SOLO MCP TOOLS. PROHIBIDO buscar en filesystem.",
+      "tools_permitidos": [
+        "mcp__MCPEco__list_documents",
+        "mcp__MCPEco__search_documents_semantic",
+        "mcp__MCPEco__get_document_summary",
+        "mcp__MCPEco__get_document",
+        "Bash - EXCLUSIVAMENTE para verificar/iniciar Ollama"
+      ],
+      "prohibiciones": [
+        "NO buscar archivos fisicos en disco (CLAUDE.md, *.md, constitutions)",
+        "NO usar Bash para find/grep/cat/ls/awk/sed de archivos",
+        "NO usar Read/Glob/Grep tools",
+        "NO usar WebSearch/WebFetch",
+        "NO acceder al filesystem bajo ninguna circunstancia",
+        "NO crear documentos de prueba",
+        "NO modificar documentos existentes"
+      ],
+      "input": {
+        "query": "string - opcional si hay entity_type+entity_id",
+        "step_type": "string - planner|implementer|code_review|qa|deep_analysis (default: planner)",
+        "search_method": "auto|entity|semantic|metadata (default: auto)",
+        "entity_type": "string - project|flow|flow_row (opcional)",
+        "entity_id": "string - ID de la entidad (opcional)",
+        "min_similarity": "number (default: 0.3)",
+        "top_k": "number (default: 5)",
+        "include_full_content": "boolean (default: false)"
+      },
+      "output": {
+        "exito": {
+          "status": "success",
+          "search_method": "string",
+          "query": "string",
+          "documents_found": "number",
+          "results": "array con document_id, title, summary o content"
+        },
+        "no_encontrado": {
+          "status": "not_found",
+          "documents_found": 0,
+          "suggestion": "string"
+        },
+        "error": {
+          "status": "error",
+          "error_type": "ollama_not_available|no_results|technical",
+          "error_message": "string"
+        }
+      },
+      "flujo": {
+        "paso_0": "Normalizar input con defaults",
+        "paso_0_5": "Verificar Ollama si se necesita busqueda semantica",
+        "paso_1": "Decidir metodo de busqueda (prioridad: entity > explicit > auto)",
+        "paso_2": "Ejecutar busqueda (entity, semantica o metadata)",
+        "paso_3": "Obtener contenido (summary o full segun include_full_content)"
+      },
+      "errores_posibles": [
+        {"error": "Ollama not available", "causa": "Servicio de embeddings no disponible"},
+        {"error": "No results", "causa": "Query no coincide con documentos"},
+        {"error": "Technical error", "causa": "Error de BD o MCP"}
+      ]
+    },
+    "search_internet": {
+      "nombre": "search-internet",
+      "ubicacion": "common/search-internet",
+      "version": "1.0",
+      "modelo": "haiku",
+      "color": "green",
+      "responsabilidad": "Buscar documentacion en internet usando Context7 (docs oficiales) o WebSearch (busqueda general). Retornar JSON estructurado.",
+      "tools_permitidos": [
+        "mcp__mcp-server-context7__resolve-library-id",
+        "mcp__mcp-server-context7__query-docs",
+        "WebSearch"
+      ],
+      "prohibiciones": [
+        "NO hacer fallback automatico",
+        "NO usar WebFetch (excepto caso critico, max 1 URL)",
+        "NO generar codigo o soluciones",
+        "NO hacer multiples busquedas (1 query = 1 busqueda)",
+        "NO interpretar contexto del workflow"
+      ],
+      "input": {
+        "query": "string - requerido",
+        "context": "string - opcional",
+        "library_hint": "string - opcional",
+        "search_type": "auto|context7|websearch (default: auto)"
+      },
+      "output": {
+        "exito": {
+          "status": "success",
+          "tool_used": "context7|websearch",
+          "query": "string",
+          "results": {
+            "content": "string - max 1000 palabras",
+            "urls": "array",
+            "summary": "string - 2-3 lineas"
+          }
+        },
+        "error": {
+          "status": "error",
+          "tool_used": "string",
+          "error_type": "library_not_found|no_results|technical",
+          "error_message": "string"
+        }
+      },
+      "tabla_decision": {
+        "1": "search_type explicito -> usar especificado",
+        "2": "Query con vs/comparar/benchmark -> WebSearch",
+        "3": "Concepto general -> WebSearch",
+        "4": "como hacer sin tecnologia -> WebSearch",
+        "5": "library_hint presente -> Context7",
+        "6": "Menciona libreria conocida -> Context7",
+        "7": "Pide docs/API/reference -> Context7",
+        "8": "Menciona version especifica -> Context7",
+        "9": "Default (ambiguo) -> WebSearch"
+      },
+      "errores_posibles": [
+        {"error": "library_not_found", "causa": "Context7 no encontro la libreria"},
+        {"error": "no_results", "causa": "Busqueda no retorno resultados"},
+        {"error": "technical", "causa": "Error de conexion o servicio"}
+      ]
+    },
+    "document_loader": {
+      "nombre": "document-loader",
+      "ubicacion": "common/document-loader",
+      "version": "2.3",
+      "modelo": "sonnet",
+      "responsabilidad": "Analizar documentos markdown, inferir metadata (tags, steps, kinds), generar summaries personalizados por rol, y crear el documento en MCP.",
+      "advertencia_critica": "DEBE crear el documento en MCP. Si solo genera metadata sin crear, es ERROR.",
+      "tools_permitidos": [
+        "Read",
+        "mcp__MCPEco__create_document",
+        "mcp__MCPEco__create_tag",
+        "mcp__MCPEco__list_tags",
+        "mcp__MCPEco__list_steps",
+        "mcp__MCPEco__list_kinds",
+        "mcp__MCPEco__generate_summary_embeddings"
+      ],
+      "prohibiciones": [
+        "NO uses Bash para llamar MCP",
+        "NO generes document_id (MCP lo genera)",
+        "NO uses Write/Edit para crear archivos",
+        "NO uses TodoWrite",
+        "NO uses Task() para delegar",
+        "NO uses plantillas fijas para summaries",
+        "NO copies contenido completo como summary"
+      ],
+      "input": {
+        "opcion_1_archivo": {"file_path": "string"},
+        "opcion_2_contenido": {"content": "string", "title": "string - opcional"},
+        "opcion_3_con_metadata": {
+          "file_path": "string",
+          "tags": "array",
+          "applies_to_steps": "array"
+        }
+      },
+      "output": {
+        "status": "success",
+        "result": {
+          "document_id": "string",
+          "title": "string",
+          "version": "string",
+          "metadata": {
+            "tags": "array",
+            "steps": "array",
+            "kinds": "array"
+          },
+          "tags_created": "array - tags que no existian",
+          "summaries": {
+            "planner": "string",
+            "implementer": "string",
+            "code_review": "string",
+            "qa": "string"
+          },
+          "stats": {
+            "content_length": "number",
+            "summaries_generated": "number",
+            "tags_created": "number"
+          }
+        }
+      },
+      "flujo_ejecucion": {
+        "fase_1": "Obtener contenido (Read si file_path, usar directo si content)",
+        "fase_2": "Consultar catalogos MCP (tags, steps, kinds disponibles)",
+        "fase_3": "Inferir metadata del contenido",
+        "fase_4": "Generar summaries por step (inferencia libre, no plantillas)",
+        "fase_5": "Validar y crear tags faltantes (con manejo de duplicados)",
+        "fase_6": "CREAR documento via mcp__MCPEco__create_document (OBLIGATORIO)",
+        "fase_7": "Generar embeddings con generate_summary_embeddings"
+      },
+      "generacion_summaries": {
+        "planner": "Que decisiones arquitectonicas tomar? Que patrones seguir?",
+        "implementer": "Como escribir el codigo? Que APIs usar? Donde poner cada cosa?",
+        "code_review": "Que verificar? Que errores evitar? Que estandares cumplir?",
+        "qa": "Que testear? Que casos cubrir? Que criterios de aceptacion?"
+      },
+      "errores_posibles": [
+        {"error": "File not found", "causa": "Ruta de archivo invalida"},
+        {"error": "Document creation failed", "causa": "Error al crear en BD"},
+        {"error": "Duplicate tag", "causa": "Race condition (manejado automaticamente)"},
+        {"error": "No document_id returned", "causa": "MCP no retorno ID"}
+      ]
+    },
+    "document_associator_agent": {
+      "nombre": "document-associator-agent",
+      "ubicacion": "constitution/document-associator-agent",
+      "version": "1.1",
+      "modelo": "haiku",
+      "responsabilidad": "Asociar documentos existentes y creados a un proyecto. Solo llama mcp__MCPEco__associate_document por cada documento.",
+      "tools_permitidos": ["mcp__MCPEco__associate_document"],
+      "prohibiciones": [
+        "NO crees documentos",
+        "NO busques documentos",
+        "NO uses Task()",
+        "NO uses TodoWrite"
+      ],
+      "input": {
+        "project_id": "string",
+        "project_level": "string",
+        "documents": [
+          {
+            "document_id": "string",
+            "title": "string",
+            "source": "created|existing",
+            "priority": "number",
+            "applies_to_steps": "array - opcional"
+          }
+        ]
+      },
+      "output": {
+        "exito": {
+          "status": "success",
+          "associated": {
+            "total": "number",
+            "successful": "number",
+            "failed": "number",
+            "documents": "array con status por documento"
+          }
+        },
+        "parcial": {
+          "status": "partial",
+          "associated": {
+            "total": "number",
+            "successful": "number",
+            "failed": "number",
+            "documents": "array con status y error por documento"
+          }
+        }
+      },
+      "limites_por_nivel": {
+        "mvp": 5,
+        "standard": 10,
+        "enterprise": 20
+      },
+      "logica": {
+        "1": "Obtener MAX_DOCS segun project_level",
+        "2": "Ordenar documentos por prioridad",
+        "3": "Limitar a maxDocs",
+        "4": "Iterar y llamar associate_document por cada uno",
+        "5": "Retornar resultados agregados"
+      },
+      "errores_posibles": [
+        {"error": "Document not found", "causa": "document_id no existe"},
+        {"error": "Project not found", "causa": "project_id no existe"},
+        {"error": "Association failed", "causa": "Error de BD"}
+      ]
+    }
+  },
+  "resumen_modelos": {
+    "opus": ["analyzer-agent", "project-creator-agent"],
+    "sonnet": ["search-local", "document-loader"],
+    "haiku": ["mcp-validator", "document-finder-agent", "search-internet", "document-associator-agent"]
+  },
+  "resumen_con_mcp_tools": {
+    "con_tools": ["mcp-validator", "project-creator-agent", "search-local", "document-loader", "document-associator-agent"],
+    "sin_tools": ["analyzer-agent", "document-finder-agent", "search-internet"]
+  }
+}

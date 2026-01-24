@@ -1,0 +1,59 @@
+{
+  "comando": "051-code-review-task",
+  "version": "2.0.0",
+  "descripcion": "Orquestador para ejecutar revisión de código de una tarea del workflow",
+  "frontmatter": {
+    "name": "051-code-review-task",
+    "description": "Orquestador para ejecutar revisión de código de una tarea del workflow",
+    "allowed_tools": [
+      "Task",
+      "TodoWrite",
+      "MCPSearch",
+      "mcp__MCPEco__get_project_info",
+      "mcp__MCPEco__get_flow_info",
+      "mcp__MCPEco__get_flow_row",
+      "mcp__MCPEco__get_task_details",
+      "mcp__MCPEco__execution_session_manage",
+      "mcp__MCPEco__create_work_item",
+      "mcp__MCPEco__list_work_items"
+    ]
+  },
+  "total_fases": 11,
+  "fases": [
+    { "orden": -2, "nombre": "Inicializar TODO List", "agente": null },
+    { "orden": -1, "nombre": "Cargar Herramientas MCP", "agente": null },
+    { "orden": 0, "nombre": "Validar MCP", "agente": "mcp-validator" },
+    { "orden": 1, "nombre": "Preprocesar Input", "agente": null },
+    { "orden": 2, "nombre": "Iniciar Tracking", "agente": null },
+    { "orden": 3, "nombre": "Obtener Contexto", "agente": null },
+    { "orden": 4, "nombre": "Crear Work Item", "agente": null },
+    { "orden": 5, "nombre": "Obtener Archivos del Implementer", "agente": null },
+    { "orden": 6, "nombre": "Ciclo de Revisión con Soft Retry", "agente": "code-analyzer-agent, validator-agent, severity-calculator-agent, decision-maker-agent, correction-executor-agent" },
+    { "orden": 7, "nombre": "Reportar Resultados", "agente": "review-reporter-agent" },
+    { "orden": 8, "nombre": "Finalizar Tracking", "agente": null }
+  ],
+  "subagent_types": [
+    "mcp-validator",
+    "code-analyzer-agent",
+    "validator-agent",
+    "severity-calculator-agent",
+    "decision-maker-agent",
+    "correction-executor-agent",
+    "review-reporter-agent"
+  ],
+  "herramientas_mcp": [
+    "mcp__MCPEco__get_project_info",
+    "mcp__MCPEco__get_flow_info",
+    "mcp__MCPEco__get_flow_row",
+    "mcp__MCPEco__get_task_details",
+    "mcp__MCPEco__execution_session_manage",
+    "mcp__MCPEco__create_work_item",
+    "mcp__MCPEco__list_work_items"
+  ],
+  "advertencias_criticas": [
+    "ERROR CRÍTICO: MCP Server no disponible (FASE 0) - detiene ejecución inmediatamente",
+    "Task ID es OBLIGATORIO - Uso: /051-code-review-task <project-id> <task-id>",
+    "Validación de pertenencia: task debe pertenecer al proyecto correcto (FASE 3)",
+    "Si corrección rompe build → REJECT directo sin más soft retries"
+  ]
+}

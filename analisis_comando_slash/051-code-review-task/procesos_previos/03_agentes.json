@@ -1,0 +1,143 @@
+{
+  "comando": "051-code-review-task",
+  "total_agentes": 7,
+  "agentes": [
+    {
+      "nombre": "mcp-validator",
+      "archivo": ".claude/agents/common/mcp-validator.md",
+      "modelo": "haiku",
+      "responsabilidad": "Valida conectividad del servidor MCP MCPEco. Ejecuta UNA validación y retorna resultado estructurado.",
+      "tools_permitidos": ["mcp__MCPEco__list_documents"],
+      "prohibiciones": [
+        "NO usar Bash, Read, Write, Edit, TodoWrite, Task",
+        "NO crear documentos o proyectos de prueba",
+        "NO intentar solucionar errores del MCP",
+        "NO hacer múltiples reintentos"
+      ],
+      "input": { "requiere_parametros": false, "campos": [] },
+      "output": {
+        "exito": { "status": "ok", "mcp_available": true, "message": "MCP server MCPEco operativo" },
+        "error": { "status": "error", "mcp_available": false, "error_code": "MCP_NOT_AVAILABLE", "error_message": "..." }
+      },
+      "errores_posibles": ["MCP_NOT_AVAILABLE", "MCP_TIMEOUT", "MCP_NOT_FOUND", "MCP_CONNECTION_REFUSED"]
+    },
+    {
+      "nombre": "code-analyzer-agent",
+      "archivo": ".claude/agents/code-review/code-analyzer-agent.md",
+      "modelo": "sonnet",
+      "responsabilidad": "Análisis estático de código. Lee archivos y detecta issues de seguridad, calidad y estilo, categorizándolos por severity.",
+      "tools_permitidos": ["Read"],
+      "prohibiciones": ["No usar Write", "No usar Edit", "No usar Bash", "No usar MCP", "No modificar archivos"],
+      "input": {
+        "requiere_parametros": true,
+        "campos": ["files_to_review", "project_path", "tech", "kind", "project_level"]
+      },
+      "output": {
+        "exito": { "status": "success", "files_analyzed": "number", "total_issues": "number", "issues": "array", "summary": "object" },
+        "error": { "status": "error", "error_code": "string", "error_message": "string" }
+      },
+      "errores_posibles": ["NO_FILES", "FILE_NOT_FOUND"]
+    },
+    {
+      "nombre": "validator-agent",
+      "archivo": ".claude/agents/implementer/validator-agent.md",
+      "modelo": "haiku",
+      "responsabilidad": "Ejecutar compilación/build y tests según tech, parsear resultados y reportar estado de validación.",
+      "tools_permitidos": ["Bash"],
+      "prohibiciones": [
+        "NUNCA modificar archivos",
+        "NUNCA llamar MCP tools",
+        "NUNCA ejecutar comandos destructivos",
+        "NUNCA instalar dependencias"
+      ],
+      "input": {
+        "requiere_parametros": true,
+        "campos": ["project_path", "tech", "files_to_validate (opcional)"]
+      },
+      "output": {
+        "exito": { "status": "success", "validation": { "compiles": "boolean", "tests_pass": "boolean", "tests_skipped": "boolean" } },
+        "error": { "status": "error", "error_code": "string", "error_message": "string" }
+      },
+      "errores_posibles": ["MISSING_PROJECT_PATH", "INVALID_PATH_FORMAT", "SYNTAX_ERROR", "BUILD_TIMEOUT", "PROJECT_NOT_FOUND"]
+    },
+    {
+      "nombre": "severity-calculator-agent",
+      "archivo": ".claude/agents/code-review/severity-calculator-agent.md",
+      "modelo": "haiku",
+      "responsabilidad": "Calcula severity score ponderado aplicando filtros según nivel del proyecto (MVP/Standard/Enterprise).",
+      "tools_permitidos": [],
+      "prohibiciones": ["NO usar herramientas - Solo cálculo puro", "NO texto conversacional"],
+      "input": {
+        "requiere_parametros": true,
+        "campos": ["issues", "project_level", "threshold_code_review"]
+      },
+      "output": {
+        "exito": { "status": "success", "severity": "number", "filtered_issues_count": "number", "summary": "object", "weights_applied": "object" },
+        "error": { "status": "error", "error_code": "string", "error_message": "string" }
+      },
+      "errores_posibles": ["INVALID_INPUT"]
+    },
+    {
+      "nombre": "decision-maker-agent",
+      "archivo": ".claude/agents/code-review/decision-maker-agent.md",
+      "modelo": "haiku",
+      "responsabilidad": "Toma decisión de APPROVE, SOFT_RETRY o REJECT basado en severity y thresholds. Lógica pura sin tools.",
+      "tools_permitidos": [],
+      "prohibiciones": ["NO usar herramientas", "NO texto conversacional"],
+      "input": {
+        "requiere_parametros": true,
+        "campos": ["severity", "threshold_code_review", "soft_threshold", "current_cycle", "max_soft_retries", "compiles", "tests_pass"]
+      },
+      "output": {
+        "exito": { "status": "success", "decision": "APPROVE|SOFT_RETRY|REJECT", "reason": "string", "should_correct": "boolean", "final": "boolean" },
+        "error": { "status": "error", "error_code": "string", "error_message": "string" }
+      },
+      "errores_posibles": ["INVALID_INPUT"]
+    },
+    {
+      "nombre": "correction-executor-agent",
+      "archivo": ".claude/agents/implementer/correction-executor-agent.md",
+      "modelo": "sonnet",
+      "responsabilidad": "Recibir lista de issues con ubicaciones y sugerencias, aplicar correcciones línea por línea.",
+      "tools_permitidos": ["Read", "Edit"],
+      "prohibiciones": [
+        "NUNCA llamar MCP tools",
+        "NUNCA usar Bash",
+        "NUNCA crear archivos nuevos",
+        "NUNCA modificar archivos fuera de project_path"
+      ],
+      "input": {
+        "requiere_parametros": true,
+        "campos": ["project_path", "tech (opcional)", "issues_to_fix"]
+      },
+      "output": {
+        "exito": { "status": "success", "files_modified": "array", "corrections_applied": "number", "corrections_failed": "number" },
+        "error": { "status": "error", "error_message": "string" }
+      },
+      "errores_posibles": ["FILE_NOT_FOUND", "READ_ERROR", "WRITE_ERROR", "LINE_OUT_OF_RANGE", "PATTERN_NOT_FOUND"]
+    },
+    {
+      "nombre": "review-reporter-agent",
+      "archivo": ".claude/agents/code-review/review-reporter-agent.md",
+      "modelo": "haiku",
+      "responsabilidad": "Actualiza work_item con resultados, evalúa decisión y avanza workflow o crea fix_flow_row si rechazado.",
+      "tools_permitidos": ["mcp__MCPEco__update_work_item_output", "mcp__MCPEco__evaluate_work_item", "mcp__MCPEco__advance_to_next_step"],
+      "prohibiciones": ["No usar Read", "No usar Write", "No usar Bash", "No acceso a filesystem", "No reintentar si MCP falla"],
+      "input": {
+        "requiere_parametros": true,
+        "campos": ["work_item_id", "task_id", "current_step", "final_decision", "final_severity", "threshold", "files_reviewed", "issues", "correction_cycles"]
+      },
+      "output": {
+        "exito_approve": { "status": "success", "evaluation_status": "approved", "next_step": "qa", "fix_flow_row_id": null },
+        "exito_reject": { "status": "success", "evaluation_status": "rejected", "next_step": null, "fix_flow_row_id": "string" },
+        "error": { "status": "error", "error_code": "string", "partial_state": "object" }
+      },
+      "errores_posibles": ["MCP_UPDATE_FAILED", "MCP_EVALUATE_FAILED", "MCP_ADVANCE_FAILED"]
+    }
+  ],
+  "resumen_modelos": {
+    "opus": [],
+    "sonnet": ["code-analyzer-agent", "correction-executor-agent"],
+    "haiku": ["mcp-validator", "validator-agent", "severity-calculator-agent", "decision-maker-agent", "review-reporter-agent"]
+  }
+}

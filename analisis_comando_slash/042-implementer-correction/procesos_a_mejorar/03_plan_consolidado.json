@@ -1,0 +1,43 @@
+{
+  "plan_mejoras": {
+    "total_mejoras": 21,
+    "por_prioridad": {"CRITICA": 6, "ALTA": 6, "MEDIA": 8, "BAJA": 1},
+    "archivos_afectados": [
+      ".claude/commands/042-implementer-correction.md",
+      ".claude/agents/common/mcp-validator.md",
+      ".claude/agents/implementer/correction-executor-agent.md",
+      ".claude/agents/implementer/validator-agent.md"
+    ]
+  },
+  "fases_ejecucion": [
+    {"fase": 1, "nombre": "Correcciones Críticas", "mejoras": ["M001", "M002", "MV002", "CE001", "CE002", "VA001", "VA002"]},
+    {"fase": 2, "nombre": "Alta Prioridad", "mejoras": ["MV001", "MV003", "CE004", "CE005", "VA004", "VA005"]},
+    {"fase": 3, "nombre": "Media Prioridad", "mejoras": ["MV004", "CE003", "CE006", "CE007", "VA003", "VA006", "VA007"]},
+    {"fase": 4, "nombre": "Baja Prioridad", "mejoras": ["M003"]}
+  ],
+  "mejoras_comando": [
+    {"id": "M001", "prioridad": "CRITICA", "archivo": ".claude/commands/042-implementer-correction.md", "seccion": "Nota sobre Pseudocódigo", "problema": "Usa pseudocódigo para MCP tools en lugar de invocar realmente", "cambio": "Agregar nota: 'EXCEPCIÓN CRÍTICA: Las llamadas a mcp__MCPEco__* NO son pseudocódigo. El LLM DEBE invocarlas realmente.'", "justificacion": "CMD-008"},
+    {"id": "M002", "prioridad": "CRITICA", "archivo": ".claude/commands/042-implementer-correction.md", "seccion": "FASE 3", "problema": "No valida físicamente resultados de subagentes", "cambio": "Agregar FASE 2.5 (verificar archivos modificados) y FASE 3.5 (verificar compilación)", "justificacion": "CMD-010"},
+    {"id": "M003", "prioridad": "BAJA", "archivo": ".claude/commands/042-implementer-correction.md", "seccion": "Después de Output Esperado", "problema": "Sin ejemplos de flujo", "cambio": "Agregar sección Ejemplos de Flujo con 3 casos", "justificacion": "CMD-019"}
+  ],
+  "mejoras_agentes": [
+    {"id": "MV001", "prioridad": "ALTA", "archivo": ".claude/agents/common/mcp-validator.md", "seccion": "Input", "problema": "No documenta input JSON", "cambio": "Agregar ejemplo JSON vacío", "justificacion": "AGT-007"},
+    {"id": "MV002", "prioridad": "CRITICA", "archivo": ".claude/agents/common/mcp-validator.md", "seccion": "Proceso PASO 0", "problema": "Validación implícita", "cambio": "Agregar validación explícita", "justificacion": "AGT-008"},
+    {"id": "MV003", "prioridad": "ALTA", "archivo": ".claude/agents/common/mcp-validator.md", "seccion": "Nueva sección", "problema": "Sin límites performance", "cambio": "Agregar sección Performance", "justificacion": "AGT-027"},
+    {"id": "MV004", "prioridad": "MEDIA", "archivo": ".claude/agents/common/mcp-validator.md", "seccion": "Nueva sección", "problema": "No menciona tech-agnostic", "cambio": "Agregar sección Contexto Tech", "justificacion": "AGT-028"},
+    {"id": "CE001", "prioridad": "CRITICA", "archivo": ".claude/agents/implementer/correction-executor-agent.md", "seccion": "PASO 1", "problema": "Validación no exhaustiva", "cambio": "Expandir validación input", "justificacion": "AGT-008"},
+    {"id": "CE002", "prioridad": "CRITICA", "archivo": ".claude/agents/implementer/correction-executor-agent.md", "seccion": "PASO 1", "problema": "Sin tabla campos requeridos", "cambio": "Agregar tabla campos", "justificacion": "AGT-009"},
+    {"id": "CE003", "prioridad": "MEDIA", "archivo": ".claude/agents/implementer/correction-executor-agent.md", "seccion": "PASO 3", "problema": "Resiliencia implícita", "cambio": "Documentar estrategia", "justificacion": "AGT-022"},
+    {"id": "CE004", "prioridad": "ALTA", "archivo": ".claude/agents/implementer/correction-executor-agent.md", "seccion": "Output", "problema": "Sin error_code", "cambio": "Agregar error_code a failures", "justificacion": "AGT-026"},
+    {"id": "CE005", "prioridad": "ALTA", "archivo": ".claude/agents/implementer/correction-executor-agent.md", "seccion": "Nueva sección", "problema": "Sin límites", "cambio": "Agregar sección Límites", "justificacion": "AGT-027"},
+    {"id": "CE006", "prioridad": "MEDIA", "archivo": ".claude/agents/implementer/correction-executor-agent.md", "seccion": "Testing", "problema": "Sin ejemplos testing", "cambio": "Agregar ejemplos input/output", "justificacion": "AGT-029"},
+    {"id": "CE007", "prioridad": "MEDIA", "archivo": ".claude/agents/implementer/correction-executor-agent.md", "seccion": "Output Parcial", "problema": "No documenta success con warnings", "cambio": "Agregar nota explicativa", "justificacion": "AGT-030"},
+    {"id": "VA001", "prioridad": "CRITICA", "archivo": ".claude/agents/implementer/validator-agent.md", "seccion": "PASO 1", "problema": "Validación no exhaustiva", "cambio": "Expandir validación", "justificacion": "AGT-008"},
+    {"id": "VA002", "prioridad": "CRITICA", "archivo": ".claude/agents/implementer/validator-agent.md", "seccion": "Entrada", "problema": "Sin tabla campos", "cambio": "Agregar tabla campos", "justificacion": "AGT-009"},
+    {"id": "VA003", "prioridad": "MEDIA", "archivo": ".claude/agents/implementer/validator-agent.md", "seccion": "PASO 2", "problema": "Estrategia errores implícita", "cambio": "Documentar estrategia", "justificacion": "AGT-022"},
+    {"id": "VA004", "prioridad": "ALTA", "archivo": ".claude/agents/implementer/validator-agent.md", "seccion": "Output", "problema": "Sin error_code/warning_code", "cambio": "Agregar códigos", "justificacion": "AGT-026"},
+    {"id": "VA005", "prioridad": "ALTA", "archivo": ".claude/agents/implementer/validator-agent.md", "seccion": "Nueva sección", "problema": "Sin límites archivos", "cambio": "Agregar sección Límites", "justificacion": "AGT-027"},
+    {"id": "VA006", "prioridad": "MEDIA", "archivo": ".claude/agents/implementer/validator-agent.md", "seccion": "Testing", "problema": "Casos incompletos", "cambio": "Expandir 4 casos", "justificacion": "AGT-029"},
+    {"id": "VA007", "prioridad": "MEDIA", "archivo": ".claude/agents/implementer/validator-agent.md", "seccion": "Output", "problema": "No explica success con errores", "cambio": "Agregar nota", "justificacion": "AGT-030"}
+  ]
+}

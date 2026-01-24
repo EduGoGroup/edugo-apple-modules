@@ -1,0 +1,41 @@
+{
+  "fecha": "2026-01-23T12:00:00Z",
+  "comando": "031-planner-decompose-story",
+  "total_aplicadas": 28,
+  "por_prioridad": {
+    "CRITICA": 8,
+    "ALTA": 10,
+    "MEDIA": 9,
+    "BAJA": 1
+  },
+  "mejoras": [
+    {"id": "M001", "prioridad": "CRITICA", "archivo": ".claude/commands/031-planner-decompose-story.md", "resultado": "Agregado MCPSearch a allowed-tools"},
+    {"id": "M002", "prioridad": "CRITICA", "archivo": ".claude/commands/031-planner-decompose-story.md", "resultado": "Agregado mcp__MCPEco__get_task_details a allowed-tools"},
+    {"id": "M003", "prioridad": "CRITICA", "archivo": ".claude/commands/031-planner-decompose-story.md", "resultado": "Agregado MCPSearch para get_task_details en FASE -1"},
+    {"id": "M004", "prioridad": "CRITICA", "archivo": ".claude/commands/031-planner-decompose-story.md", "resultado": "Corregido formato markdown de FASE -1"},
+    {"id": "SA001", "prioridad": "CRITICA", "archivo": ".claude/agents/planner/story-analyzer-agent.md", "resultado": "Agregado subagent_type al frontmatter"},
+    {"id": "SA002", "prioridad": "CRITICA", "archivo": ".claude/agents/planner/story-analyzer-agent.md", "resultado": "Agregada tabla de herramientas disponibles"},
+    {"id": "TC001", "prioridad": "CRITICA", "archivo": ".claude/agents/planner/task-creator-agent.md", "resultado": "Agregado subagent_type al frontmatter"},
+    {"id": "TC002", "prioridad": "CRITICA", "archivo": ".claude/agents/planner/task-creator-agent.md", "resultado": "Agregada tabla de herramientas disponibles/prohibidas"},
+    {"id": "M005", "prioridad": "ALTA", "archivo": ".claude/commands/031-planner-decompose-story.md", "resultado": "Verificado path search-local correcto"},
+    {"id": "M006", "prioridad": "ALTA", "archivo": ".claude/commands/031-planner-decompose-story.md", "resultado": "Corregido subagent_type a story-analyzer-agent"},
+    {"id": "M007", "prioridad": "ALTA", "archivo": ".claude/commands/031-planner-decompose-story.md", "resultado": "Corregido subagent_type a task-creator-agent"},
+    {"id": "M008", "prioridad": "ALTA", "archivo": ".claude/commands/031-planner-decompose-story.md", "resultado": "Verificado path mcp-validator correcto"},
+    {"id": "MV001", "prioridad": "ALTA", "archivo": ".claude/agents/common/mcp-validator.md", "resultado": "Documentada validacion fail-fast"},
+    {"id": "MV002", "prioridad": "ALTA", "archivo": ".claude/agents/common/mcp-validator.md", "resultado": "Documentado manejo de errores"},
+    {"id": "SA003", "prioridad": "ALTA", "archivo": ".claude/agents/planner/story-analyzer-agent.md", "resultado": "Mejorada validacion de input"},
+    {"id": "SA004", "prioridad": "ALTA", "archivo": ".claude/agents/planner/story-analyzer-agent.md", "resultado": "Documentado manejo de errores helpers"},
+    {"id": "SA005", "prioridad": "ALTA", "archivo": ".claude/agents/planner/story-analyzer-agent.md", "resultado": "Documentado manejo de errores Task"},
+    {"id": "TC003", "prioridad": "ALTA", "archivo": ".claude/agents/planner/task-creator-agent.md", "resultado": "Mejorada validacion de input"},
+    {"id": "M009", "prioridad": "MEDIA", "archivo": ".claude/commands/031-planner-decompose-story.md", "resultado": "Actualizada tabla de agentes"},
+    {"id": "M010", "prioridad": "MEDIA", "archivo": ".claude/commands/031-planner-decompose-story.md", "resultado": "Verificado separador visual"},
+    {"id": "MV003", "prioridad": "MEDIA", "archivo": ".claude/agents/common/mcp-validator.md", "resultado": "Agregada tabla output fields"},
+    {"id": "MV004", "prioridad": "MEDIA", "archivo": ".claude/agents/common/mcp-validator.md", "resultado": "Agregadas consideraciones de performance"},
+    {"id": "SL001", "prioridad": "MEDIA", "archivo": ".claude/agents/common/search-local.md", "resultado": "Agregada nota timeouts Ollama"},
+    {"id": "SA006", "prioridad": "MEDIA", "archivo": ".claude/agents/planner/story-analyzer-agent.md", "resultado": "Agregada tabla campos input"},
+    {"id": "SA007", "prioridad": "MEDIA", "archivo": ".claude/agents/planner/story-analyzer-agent.md", "resultado": "Agregadas consideraciones de performance"},
+    {"id": "TC004", "prioridad": "MEDIA", "archivo": ".claude/agents/planner/task-creator-agent.md", "resultado": "Agregada tabla campos input"},
+    {"id": "TC005", "prioridad": "MEDIA", "archivo": ".claude/agents/planner/task-creator-agent.md", "resultado": "Agregadas consideraciones de performance"},
+    {"id": "SL002", "prioridad": "BAJA", "archivo": ".claude/agents/common/search-local.md", "resultado": "Agregado limite MAX_DOCS_TO_FETCH"}
+  ]
+}

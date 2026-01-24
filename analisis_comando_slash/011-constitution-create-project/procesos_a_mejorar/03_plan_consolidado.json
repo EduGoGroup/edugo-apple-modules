@@ -1,0 +1,418 @@
+{
+  "plan_mejoras": {
+    "total_mejoras": 39,
+    "por_prioridad": { "CRITICA": 5, "ALTA": 12, "MEDIA": 15, "BAJA": 7 },
+    "archivos_afectados": [
+      ".claude/commands/011-constitution-create-project.md",
+      ".claude/agents/common/mcp-validator.md",
+      ".claude/agents/constitution/analyzer-agent.md",
+      ".claude/agents/constitution/project-creator-agent.md",
+      ".claude/agents/constitution/document-finder-agent.md",
+      ".claude/agents/common/search-local.md",
+      ".claude/agents/common/search-internet.md",
+      ".claude/agents/common/document-loader.md",
+      ".claude/agents/constitution/document-associator-agent.md"
+    ]
+  },
+  "fases_ejecucion": [
+    {
+      "fase": 1,
+      "nombre": "Correcciones Críticas",
+      "esfuerzo": "medio",
+      "minutos": 30,
+      "mejoras": ["M001", "M002", "M003", "DF001", "DF002"]
+    },
+    {
+      "fase": 2,
+      "nombre": "Alta Prioridad - Comando",
+      "esfuerzo": "medio",
+      "minutos": 25,
+      "mejoras": ["M004", "M005", "M006"]
+    },
+    {
+      "fase": 3,
+      "nombre": "Alta Prioridad - Agentes",
+      "esfuerzo": "alto",
+      "minutos": 45,
+      "mejoras": [
+        "AA001",
+        "AA002",
+        "DF003",
+        "DF004",
+        "SI001",
+        "SI002",
+        "DL001",
+        "DA001",
+        "DA002"
+      ]
+    },
+    {
+      "fase": 4,
+      "nombre": "Media Prioridad - Comando",
+      "esfuerzo": "medio",
+      "minutos": 30,
+      "mejoras": ["M007", "M008", "M009", "M010"]
+    },
+    {
+      "fase": 5,
+      "nombre": "Media Prioridad - Agentes",
+      "esfuerzo": "alto",
+      "minutos": 40,
+      "mejoras": [
+        "AA003",
+        "AA004",
+        "PC001",
+        "DF005",
+        "SI003",
+        "DL002",
+        "DL003",
+        "DA003",
+        "DA004"
+      ]
+    },
+    {
+      "fase": 6,
+      "nombre": "Baja Prioridad - Opcionales",
+      "esfuerzo": "bajo",
+      "minutos": 25,
+      "mejoras": ["M011", "M012", "M013", "MV001", "DF006", "SL001", "DL004"]
+    }
+  ],
+  "mejoras_comando": [
+    {
+      "id": "M001",
+      "prioridad": "CRITICA",
+      "archivo": ".claude/commands/011-constitution-create-project.md",
+      "seccion": "frontmatter (allowed-tools)",
+      "problema": "El comando usa mcp__MCPEco__get_document en FASE 8 pero NO está declarada en allowed-tools",
+      "cambio": "Agregar a allowed-tools: mcp__MCPEco__get_document, MCPSearch, TodoWrite",
+      "justificacion": "Best practices: TODAS las herramientas deben declararse explícitamente en allowed-tools"
+    },
+    {
+      "id": "M002",
+      "prioridad": "CRITICA",
+      "archivo": ".claude/commands/011-constitution-create-project.md",
+      "seccion": "Nueva FASE -1 (antes de FASE 0)",
+      "problema": "No inicializa TODO List para tracking visual del usuario",
+      "cambio": "Agregar FASE -1 que use TodoWrite para crear lista con las 12 fases como items pending",
+      "justificacion": "Best practices OBLIGA inicializar TODO list para tracking visual"
+    },
+    {
+      "id": "M003",
+      "prioridad": "CRITICA",
+      "archivo": ".claude/commands/011-constitution-create-project.md",
+      "seccion": "FASE 0 - Validar MCP",
+      "problema": "Usa agente mcp-validator cuando debería usar MCPSearch directamente",
+      "cambio": "Reemplazar Task(mcp-validator) por MCPSearch({ query: 'select:mcp__MCPEco__create_project' })",
+      "justificacion": "Best practices indica usar MCPSearch antes de cualquier herramienta MCP"
+    },
+    {
+      "id": "M004",
+      "prioridad": "ALTA",
+      "archivo": ".claude/commands/011-constitution-create-project.md",
+      "seccion": "FASE 8",
+      "problema": "Invoca mcp__MCPEco__get_document directamente sin haberla cargado con MCPSearch",
+      "cambio": "Mover carga de get_document a FASE 0 o delegar verificación al agente document-loader",
+      "justificacion": "Consistencia: todas las herramientas MCP deben cargarse antes de usarse"
+    },
+    {
+      "id": "M005",
+      "prioridad": "ALTA",
+      "archivo": ".claude/commands/011-constitution-create-project.md",
+      "seccion": "Manejo de Errores (todas las fases)",
+      "problema": "Formato de error JSON no estandarizado - algunos no tienen error_code",
+      "cambio": "Estandarizar a: {success: false, error_code: 'ERR_XXX', error_message: '...', suggestion: '...'}",
+      "justificacion": "Best practices define estructura de error consistente"
+    },
+    {
+      "id": "M006",
+      "prioridad": "ALTA",
+      "archivo": ".claude/commands/011-constitution-create-project.md",
+      "seccion": "FASE 2",
+      "problema": "Usa execution_session_manage sin cargarlo primero con MCPSearch",
+      "cambio": "Agregar MCPSearch para cargar execution_session_manage en FASE 0",
+      "justificacion": "execution_session_manage es herramienta MCP que debe cargarse explícitamente"
+    },
+    {
+      "id": "M007",
+      "prioridad": "MEDIA",
+      "archivo": ".claude/commands/011-constitution-create-project.md",
+      "seccion": "Logging entre fases",
+      "problema": "Console.log no usa formato estructurado con separadores visuales",
+      "cambio": "Agregar separadores ═══ al inicio/fin del comando y formato [FASE N] consistente",
+      "justificacion": "Mejora legibilidad del output"
+    },
+    {
+      "id": "M008",
+      "prioridad": "MEDIA",
+      "archivo": ".claude/commands/011-constitution-create-project.md",
+      "seccion": "FASE 1 - Preprocesar Input",
+      "problema": "No valida explícitamente que $ARGUMENTS no sea vacío",
+      "cambio": "Agregar: if (!$ARGUMENTS?.trim()) throw new Error('❌ ERROR: Argumento requerido\\n💡 Uso: /011-constitution-create-project <descripción>')",
+      "justificacion": "Fail-fast pattern para inputs vacíos"
+    },
+    {
+      "id": "M009",
+      "prioridad": "MEDIA",
+      "archivo": ".claude/commands/011-constitution-create-project.md",
+      "seccion": "Nueva sección después de Output",
+      "problema": "No tiene checklist de mejores prácticas documentado",
+      "cambio": "Agregar sección '## Checklist de Mejores Prácticas' con items verificables",
+      "justificacion": "Facilita auditorías futuras y mantenimiento"
+    },
+    {
+      "id": "M010",
+      "prioridad": "MEDIA",
+      "archivo": ".claude/commands/011-constitution-create-project.md",
+      "seccion": "FASE 7-8",
+      "problema": "No tiene límite de documentos a procesar",
+      "cambio": "Agregar const MAX_DOCUMENTS = 10 y validar antes de crear documentos",
+      "justificacion": "Previene timeouts en proyectos con muchos documentos"
+    },
+    {
+      "id": "M011",
+      "prioridad": "BAJA",
+      "archivo": ".claude/commands/011-constitution-create-project.md",
+      "seccion": "frontmatter (allowed-tools)",
+      "problema": "No incluye Glob/Grep para validaciones físicas",
+      "cambio": "Agregar Glob, Grep a allowed-tools",
+      "justificacion": "Útiles para validaciones de archivos locales"
+    },
+    {
+      "id": "M012",
+      "prioridad": "BAJA",
+      "archivo": ".claude/commands/011-constitution-create-project.md",
+      "seccion": "FASE 11 - Output final",
+      "problema": "Falta campo timestamp en el JSON de output",
+      "cambio": "Agregar: timestamp: new Date().toISOString()",
+      "justificacion": "Facilita debugging y trazabilidad"
+    },
+    {
+      "id": "M013",
+      "prioridad": "BAJA",
+      "archivo": ".claude/commands/011-constitution-create-project.md",
+      "seccion": "Nueva sección al final",
+      "problema": "No tiene sección de Testing",
+      "cambio": "Agregar '## Testing' con casos de prueba y outputs esperados",
+      "justificacion": "Documentación de testing para validar cambios"
+    }
+  ],
+  "mejoras_agentes": [
+    {
+      "id": "MV001",
+      "prioridad": "BAJA",
+      "archivo": ".claude/agents/common/mcp-validator.md",
+      "seccion": "Nueva sección al final",
+      "problema": "No tiene sección de testing",
+      "cambio": "Agregar '## Testing' con ejemplos de validación exitosa y fallida",
+      "justificacion": "Documentación para probar el validador"
+    },
+    {
+      "id": "AA001",
+      "prioridad": "ALTA",
+      "archivo": ".claude/agents/constitution/analyzer-agent.md",
+      "seccion": "frontmatter",
+      "problema": "Falta subagent_type en frontmatter",
+      "cambio": "Agregar: subagent_type: analyzer-agent",
+      "justificacion": "Requerido para que Task() identifique el agente correctamente"
+    },
+    {
+      "id": "AA002",
+      "prioridad": "ALTA",
+      "archivo": ".claude/agents/constitution/analyzer-agent.md",
+      "seccion": "frontmatter",
+      "problema": "No declara tools (aunque no use ninguna)",
+      "cambio": "Agregar: tools: [] o tools: ninguno con comentario explicando que es agente de inferencia pura",
+      "justificacion": "Declaración explícita mejora comprensión"
+    },
+    {
+      "id": "AA003",
+      "prioridad": "MEDIA",
+      "archivo": ".claude/agents/constitution/analyzer-agent.md",
+      "seccion": "Input",
+      "problema": "No tiene validación explícita de campos requeridos",
+      "cambio": "Agregar código de validación: if (!project_description) return {status: 'error', error_message: 'project_description requerido'}",
+      "justificacion": "Fail-fast para inputs inválidos"
+    },
+    {
+      "id": "AA004",
+      "prioridad": "MEDIA",
+      "archivo": ".claude/agents/constitution/analyzer-agent.md",
+      "seccion": "Output",
+      "problema": "No documenta formato de output de error",
+      "cambio": "Agregar sección 'Output de Error' con estructura JSON",
+      "justificacion": "Estandariza manejo de errores"
+    },
+    {
+      "id": "PC001",
+      "prioridad": "MEDIA",
+      "archivo": ".claude/agents/constitution/project-creator-agent.md",
+      "seccion": "frontmatter",
+      "problema": "Falta subagent_type",
+      "cambio": "Agregar: subagent_type: project-creator-agent",
+      "justificacion": "Consistencia con patrón de agentes"
+    },
+    {
+      "id": "DF001",
+      "prioridad": "CRITICA",
+      "archivo": ".claude/agents/constitution/document-finder-agent.md",
+      "seccion": "frontmatter",
+      "problema": "Falta subagent_type - CRÍTICO para que Task() funcione",
+      "cambio": "Agregar: subagent_type: document-finder-agent",
+      "justificacion": "Sin subagent_type, el sistema de orquestación no puede invocar el agente"
+    },
+    {
+      "id": "DF002",
+      "prioridad": "CRITICA",
+      "archivo": ".claude/agents/constitution/document-finder-agent.md",
+      "seccion": "frontmatter",
+      "problema": "No declara tools - puede causar confusión sobre capacidades",
+      "cambio": "Agregar: tools: [] con comentario 'Agente de inferencia - no usa herramientas'",
+      "justificacion": "Declaración explícita previene errores de uso"
+    },
+    {
+      "id": "DF003",
+      "prioridad": "ALTA",
+      "archivo": ".claude/agents/constitution/document-finder-agent.md",
+      "seccion": "Input",
+      "problema": "No valida campos requeridos (project_level, tech, kind)",
+      "cambio": "Agregar validación explícita con retorno de error si faltan campos",
+      "justificacion": "Previene errores en runtime"
+    },
+    {
+      "id": "DF004",
+      "prioridad": "ALTA",
+      "archivo": ".claude/agents/constitution/document-finder-agent.md",
+      "seccion": "Flujo",
+      "problema": "No tiene flujo numerado - solo lógica estática",
+      "cambio": "Convertir a pasos: 1. Validar input, 2. Determinar nivel, 3. Generar lista documentos, 4. Generar queries, 5. Retornar",
+      "justificacion": "Flujo numerado mejora claridad y debugging"
+    },
+    {
+      "id": "DF005",
+      "prioridad": "MEDIA",
+      "archivo": ".claude/agents/constitution/document-finder-agent.md",
+      "seccion": "Output",
+      "problema": "No documenta output de error",
+      "cambio": "Agregar formato: {status: 'error', error_message: '...', suggestion: '...'}",
+      "justificacion": "Estandariza errores"
+    },
+    {
+      "id": "DF006",
+      "prioridad": "BAJA",
+      "archivo": ".claude/agents/constitution/document-finder-agent.md",
+      "seccion": "Lógica de queries",
+      "problema": "Queries de búsqueda son estáticas, no consideran tech/kind",
+      "cambio": "Agregar inferencia de queries basada en tecnología del proyecto",
+      "justificacion": "Mejora calidad de búsquedas"
+    },
+    {
+      "id": "SL001",
+      "prioridad": "BAJA",
+      "archivo": ".claude/agents/common/search-local.md",
+      "seccion": "Input",
+      "problema": "Validación de input implícita",
+      "cambio": "Hacer validación más explícita con código de ejemplo",
+      "justificacion": "Mejora claridad"
+    },
+    {
+      "id": "SI001",
+      "prioridad": "ALTA",
+      "archivo": ".claude/agents/common/search-internet.md",
+      "seccion": "frontmatter",
+      "problema": "Falta subagent_type",
+      "cambio": "Agregar: subagent_type: search-internet",
+      "justificacion": "Requerido para invocación via Task()"
+    },
+    {
+      "id": "SI002",
+      "prioridad": "ALTA",
+      "archivo": ".claude/agents/common/search-internet.md",
+      "seccion": "Input",
+      "problema": "No valida que query sea requerido",
+      "cambio": "Agregar validación: if (!query) return {status: 'error', error_message: 'query es requerido'}",
+      "justificacion": "Fail-fast para inputs inválidos"
+    },
+    {
+      "id": "SI003",
+      "prioridad": "MEDIA",
+      "archivo": ".claude/agents/common/search-internet.md",
+      "seccion": "Manejo de Errores",
+      "problema": "Solo dice 'reportar error y terminar' - muy genérico",
+      "cambio": "Definir tipos de error: TIMEOUT, NO_RESULTS, RATE_LIMITED, NETWORK_ERROR",
+      "justificacion": "Errores específicos facilitan debugging"
+    },
+    {
+      "id": "DL001",
+      "prioridad": "ALTA",
+      "archivo": ".claude/agents/common/document-loader.md",
+      "seccion": "frontmatter",
+      "problema": "Usa 'allowed-tools' en vez de 'tools' - inconsistente",
+      "cambio": "Cambiar 'allowed-tools' a 'tools' para seguir convención",
+      "justificacion": "Consistencia entre agentes"
+    },
+    {
+      "id": "DL002",
+      "prioridad": "MEDIA",
+      "archivo": ".claude/agents/common/document-loader.md",
+      "seccion": "frontmatter",
+      "problema": "Falta subagent_type",
+      "cambio": "Agregar: subagent_type: document-loader",
+      "justificacion": "Mejora trazabilidad"
+    },
+    {
+      "id": "DL003",
+      "prioridad": "MEDIA",
+      "archivo": ".claude/agents/common/document-loader.md",
+      "seccion": "Input",
+      "problema": "Validación de input no explícita en código",
+      "cambio": "Agregar código de validación para file_path o content",
+      "justificacion": "Claridad en requisitos"
+    },
+    {
+      "id": "DL004",
+      "prioridad": "BAJA",
+      "archivo": ".claude/agents/common/document-loader.md",
+      "seccion": "Output",
+      "problema": "Output de error implícito en FASE 6",
+      "cambio": "Agregar sección dedicada 'Output de Error' con códigos: DOC_NOT_FOUND, CREATE_FAILED, INVALID_FORMAT",
+      "justificacion": "Códigos específicos facilitan debugging"
+    },
+    {
+      "id": "DA001",
+      "prioridad": "ALTA",
+      "archivo": ".claude/agents/constitution/document-associator-agent.md",
+      "seccion": "frontmatter",
+      "problema": "Falta subagent_type",
+      "cambio": "Agregar: subagent_type: document-associator-agent",
+      "justificacion": "Requerido para Task()"
+    },
+    {
+      "id": "DA002",
+      "prioridad": "ALTA",
+      "archivo": ".claude/agents/constitution/document-associator-agent.md",
+      "seccion": "Input",
+      "problema": "No valida project_id y documents requeridos",
+      "cambio": "Agregar validación explícita con error si faltan",
+      "justificacion": "Previene errores de asociación"
+    },
+    {
+      "id": "DA003",
+      "prioridad": "MEDIA",
+      "archivo": ".claude/agents/constitution/document-associator-agent.md",
+      "seccion": "Flujo",
+      "problema": "No tiene pasos numerados - solo código",
+      "cambio": "Convertir a: 1. Validar input, 2. Verificar proyecto, 3. Verificar documentos, 4. Asociar, 5. Retornar",
+      "justificacion": "Flujo claro mejora mantenibilidad"
+    },
+    {
+      "id": "DA004",
+      "prioridad": "MEDIA",
+      "archivo": ".claude/agents/constitution/document-associator-agent.md",
+      "seccion": "Output",
+      "problema": "Solo documenta 'success' y 'partial', falta 'error'",
+      "cambio": "Agregar output de error con failed_documents detallados",
+      "justificacion": "Completitud en documentación"
+    }
+  ]
+}

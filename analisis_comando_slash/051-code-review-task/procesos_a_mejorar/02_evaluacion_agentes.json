@@ -1,0 +1,103 @@
+{
+  "resumen": {
+    "total_agentes": 7,
+    "puntaje_promedio": 76,
+    "criticas": 2,
+    "altas": 12,
+    "medias": 10,
+    "bajas": 5
+  },
+  "evaluaciones": [
+    {
+      "agente": "mcp-validator",
+      "archivo": ".claude/agents/common/mcp-validator.md",
+      "puntaje": 92,
+      "cumple": ["Frontmatter completo", "tools declarado", "model especificado", "Prohibiciones explícitas", "Testing documentado"],
+      "no_cumple": ["status: ok en lugar de status: success"],
+      "mejoras": [
+        {"id": "MV001", "prioridad": "MEDIA", "archivo": ".claude/agents/common/mcp-validator.md", "seccion": "Output - Exito", "problema": "Usa status: ok en lugar de status: success", "cambio": "Cambiar a status: success para consistencia", "justificacion": "Consistencia en todo el ecosistema"},
+        {"id": "MV002", "prioridad": "BAJA", "archivo": ".claude/agents/common/mcp-validator.md", "seccion": "Input", "problema": "Falta tabla de campos aunque no requiere parámetros", "cambio": "Agregar tabla indicando que no hay campos", "justificacion": "Claridad documental"}
+      ]
+    },
+    {
+      "agente": "code-analyzer-agent",
+      "archivo": ".claude/agents/code-review/code-analyzer-agent.md",
+      "puntaje": 62,
+      "cumple": ["Frontmatter básico", "subagent_type declarado", "Output documentado"],
+      "no_cumple": ["tools NO declarado", "Falta Responsabilidad Única", "Falta Prohibiciones", "Falta Testing"],
+      "mejoras": [
+        {"id": "CA001", "prioridad": "CRITICA", "archivo": ".claude/agents/code-review/code-analyzer-agent.md", "seccion": "Frontmatter", "problema": "tools no declarado pero usa Read", "cambio": "Agregar tools: Read en frontmatter", "justificacion": "Herramientas DEBEN estar en frontmatter"},
+        {"id": "CA002", "prioridad": "ALTA", "archivo": ".claude/agents/code-review/code-analyzer-agent.md", "seccion": "Responsabilidad Única", "problema": "No existe sección", "cambio": "Agregar sección con regla de oro", "justificacion": "Mejores prácticas"},
+        {"id": "CA003", "prioridad": "ALTA", "archivo": ".claude/agents/code-review/code-analyzer-agent.md", "seccion": "Prohibiciones", "problema": "No hay sección explícita", "cambio": "Agregar sección de prohibiciones", "justificacion": "Mejores prácticas"},
+        {"id": "CA004", "prioridad": "ALTA", "archivo": ".claude/agents/code-review/code-analyzer-agent.md", "seccion": "Validación Input", "problema": "Validación mínima", "cambio": "Expandir validación exhaustiva", "justificacion": "Mejores prácticas"},
+        {"id": "CA005", "prioridad": "MEDIA", "archivo": ".claude/agents/code-review/code-analyzer-agent.md", "seccion": "Testing", "problema": "No existe sección", "cambio": "Agregar casos de testing", "justificacion": "Mejores prácticas"},
+        {"id": "CA006", "prioridad": "MEDIA", "archivo": ".claude/agents/code-review/code-analyzer-agent.md", "seccion": "Performance", "problema": "No existe sección", "cambio": "Agregar límites de performance", "justificacion": "Mejores prácticas"}
+      ]
+    },
+    {
+      "agente": "validator-agent",
+      "archivo": ".claude/agents/implementer/validator-agent.md",
+      "puntaje": 95,
+      "cumple": ["Frontmatter completo", "tools declarado", "Validación exhaustiva", "Prohibiciones explícitas", "Testing completo"],
+      "no_cumple": ["Falta Performance explícita"],
+      "mejoras": [
+        {"id": "VA001", "prioridad": "BAJA", "archivo": ".claude/agents/implementer/validator-agent.md", "seccion": "Performance", "problema": "Falta sección explícita", "cambio": "Renombrar Límites a Performance y Límites", "justificacion": "Consistencia"}
+      ]
+    },
+    {
+      "agente": "severity-calculator-agent",
+      "archivo": ".claude/agents/code-review/severity-calculator-agent.md",
+      "puntaje": 68,
+      "cumple": ["Frontmatter básico", "subagent_type declarado", "Output documentado", "Lógica clara"],
+      "no_cumple": ["Falta Responsabilidad Única", "Falta Prohibiciones", "Falta Validación Input", "Falta Testing"],
+      "mejoras": [
+        {"id": "SC001", "prioridad": "ALTA", "archivo": ".claude/agents/code-review/severity-calculator-agent.md", "seccion": "Responsabilidad Única", "problema": "No existe", "cambio": "Agregar con regla de oro", "justificacion": "Mejores prácticas"},
+        {"id": "SC002", "prioridad": "ALTA", "archivo": ".claude/agents/code-review/severity-calculator-agent.md", "seccion": "Prohibiciones", "problema": "No existe", "cambio": "Agregar sección explícita", "justificacion": "Mejores prácticas"},
+        {"id": "SC003", "prioridad": "ALTA", "archivo": ".claude/agents/code-review/severity-calculator-agent.md", "seccion": "Validación Input", "problema": "No documentada", "cambio": "Agregar validación exhaustiva", "justificacion": "Mejores prácticas"},
+        {"id": "SC004", "prioridad": "MEDIA", "archivo": ".claude/agents/code-review/severity-calculator-agent.md", "seccion": "Testing", "problema": "No existe", "cambio": "Agregar casos de testing", "justificacion": "Mejores prácticas"},
+        {"id": "SC005", "prioridad": "BAJA", "archivo": ".claude/agents/code-review/severity-calculator-agent.md", "seccion": "Performance", "problema": "No existe", "cambio": "Agregar aunque sea trivial", "justificacion": "Consistencia"}
+      ]
+    },
+    {
+      "agente": "decision-maker-agent",
+      "archivo": ".claude/agents/code-review/decision-maker-agent.md",
+      "puntaje": 70,
+      "cumple": ["Frontmatter básico", "subagent_type declarado", "Árbol de decisión claro", "Output documentado"],
+      "no_cumple": ["Falta Responsabilidad Única", "Falta Prohibiciones", "Falta Validación Input", "Falta Testing"],
+      "mejoras": [
+        {"id": "DM001", "prioridad": "ALTA", "archivo": ".claude/agents/code-review/decision-maker-agent.md", "seccion": "Responsabilidad Única", "problema": "No existe", "cambio": "Agregar con regla de oro", "justificacion": "Mejores prácticas"},
+        {"id": "DM002", "prioridad": "ALTA", "archivo": ".claude/agents/code-review/decision-maker-agent.md", "seccion": "Prohibiciones", "problema": "No existe", "cambio": "Agregar sección explícita", "justificacion": "Mejores prácticas"},
+        {"id": "DM003", "prioridad": "ALTA", "archivo": ".claude/agents/code-review/decision-maker-agent.md", "seccion": "Validación Input", "problema": "No documentada", "cambio": "Agregar al inicio de Lógica de Decisión", "justificacion": "Mejores prácticas"},
+        {"id": "DM004", "prioridad": "MEDIA", "archivo": ".claude/agents/code-review/decision-maker-agent.md", "seccion": "Testing", "problema": "No existe", "cambio": "Agregar casos de testing", "justificacion": "Mejores prácticas"},
+        {"id": "DM005", "prioridad": "BAJA", "archivo": ".claude/agents/code-review/decision-maker-agent.md", "seccion": "Performance", "problema": "No existe", "cambio": "Agregar aunque sea trivial", "justificacion": "Consistencia"}
+      ]
+    },
+    {
+      "agente": "correction-executor-agent",
+      "archivo": ".claude/agents/implementer/correction-executor-agent.md",
+      "puntaje": 90,
+      "cumple": ["Frontmatter completo", "tools declarado", "Validación exhaustiva", "Prohibiciones explícitas", "Testing completo"],
+      "no_cumple": ["error_code falta en errores de validación", "Falta Performance explícita"],
+      "mejoras": [
+        {"id": "CE001", "prioridad": "MEDIA", "archivo": ".claude/agents/implementer/correction-executor-agent.md", "seccion": "Validación PASO 1", "problema": "Errors sin error_code", "cambio": "Agregar error_code a todos los returns de error", "justificacion": "Procesamiento automático"},
+        {"id": "CE002", "prioridad": "BAJA", "archivo": ".claude/agents/implementer/correction-executor-agent.md", "seccion": "Performance", "problema": "Falta sección explícita", "cambio": "Expandir Límites Operacionales", "justificacion": "Consistencia"}
+      ]
+    },
+    {
+      "agente": "review-reporter-agent",
+      "archivo": ".claude/agents/code-review/review-reporter-agent.md",
+      "puntaje": 55,
+      "cumple": ["Frontmatter básico", "subagent_type declarado", "Flujo numerado", "Output documentado"],
+      "no_cumple": ["tools NO declarado", "Falta Responsabilidad Única", "Falta Prohibiciones", "Falta Validación Input", "Falta Testing"],
+      "mejoras": [
+        {"id": "RR001", "prioridad": "CRITICA", "archivo": ".claude/agents/code-review/review-reporter-agent.md", "seccion": "Frontmatter", "problema": "tools no declarado pero usa 3 MCP tools", "cambio": "Agregar tools: mcp__MCPEco__update_work_item_output, mcp__MCPEco__evaluate_work_item, mcp__MCPEco__advance_to_next_step", "justificacion": "Herramientas DEBEN estar en frontmatter"},
+        {"id": "RR002", "prioridad": "ALTA", "archivo": ".claude/agents/code-review/review-reporter-agent.md", "seccion": "Responsabilidad Única", "problema": "No existe", "cambio": "Agregar con regla de oro", "justificacion": "Mejores prácticas"},
+        {"id": "RR003", "prioridad": "ALTA", "archivo": ".claude/agents/code-review/review-reporter-agent.md", "seccion": "Prohibiciones", "problema": "No existe", "cambio": "Agregar sección explícita", "justificacion": "Mejores prácticas"},
+        {"id": "RR004", "prioridad": "ALTA", "archivo": ".claude/agents/code-review/review-reporter-agent.md", "seccion": "Validación Input", "problema": "No documentada", "cambio": "Agregar antes de Flujo de Ejecución", "justificacion": "Mejores prácticas"},
+        {"id": "RR005", "prioridad": "MEDIA", "archivo": ".claude/agents/code-review/review-reporter-agent.md", "seccion": "Caso Error", "problema": "Falta suggestion en errores", "cambio": "Agregar suggestion a cada caso de error", "justificacion": "Mejores prácticas"},
+        {"id": "RR006", "prioridad": "MEDIA", "archivo": ".claude/agents/code-review/review-reporter-agent.md", "seccion": "Testing", "problema": "No existe", "cambio": "Agregar casos de testing", "justificacion": "Mejores prácticas"},
+        {"id": "RR007", "prioridad": "MEDIA", "archivo": ".claude/agents/code-review/review-reporter-agent.md", "seccion": "Performance", "problema": "No existe", "cambio": "Agregar límites de tiempo", "justificacion": "Mejores prácticas"}
+      ]
+    }
+  ]
+}

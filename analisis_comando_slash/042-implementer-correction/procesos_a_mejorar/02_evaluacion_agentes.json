@@ -1,0 +1,50 @@
+{
+  "resumen": {"total_agentes": 3, "puntaje_promedio": 73},
+  "evaluaciones": [
+    {
+      "agente": "mcp-validator",
+      "archivo": ".claude/agents/common/mcp-validator.md",
+      "puntaje": 85,
+      "cumple": ["AGT-001", "AGT-002", "AGT-003", "AGT-004", "AGT-005", "AGT-006", "AGT-009", "AGT-010", "AGT-011", "AGT-016", "AGT-020", "AGT-021", "AGT-022", "AGT-023", "AGT-024", "AGT-025", "AGT-026", "AGT-029", "AGT-030"],
+      "no_cumple": ["AGT-007", "AGT-008", "AGT-027", "AGT-028"],
+      "mejoras": [
+        {"id": "MV001", "prioridad": "ALTA", "archivo": ".claude/agents/common/mcp-validator.md", "seccion": "## Input", "problema": "No documenta estructura de entrada con JSON explícito", "cambio": "Agregar ejemplo JSON: // Este agente NO requiere input: {}", "justificacion": "AGT-007"},
+        {"id": "MV002", "prioridad": "CRITICA", "archivo": ".claude/agents/common/mcp-validator.md", "seccion": "## Proceso - PASO 0", "problema": "Validación de input implícita", "cambio": "Agregar validación explícita que rechace inputs no vacíos con error_code INVALID_INPUT", "justificacion": "AGT-008"},
+        {"id": "MV003", "prioridad": "ALTA", "archivo": ".claude/agents/common/mcp-validator.md", "seccion": "Nueva sección Performance", "problema": "No documenta límites de performance", "cambio": "Agregar sección '## Consideraciones de Performance' explicando que usa limit:1 y hace 1 sola llamada MCP", "justificacion": "AGT-027"},
+        {"id": "MV004", "prioridad": "MEDIA", "archivo": ".claude/agents/common/mcp-validator.md", "seccion": "Nueva sección antes de Testing", "problema": "No menciona que es tech-agnostic", "cambio": "Agregar sección '## Contexto de Uso por Tech' explicando que es tech-agnostic", "justificacion": "AGT-028"}
+      ]
+    },
+    {
+      "agente": "correction-executor-agent",
+      "archivo": ".claude/agents/implementer/correction-executor-agent.md",
+      "puntaje": 70,
+      "cumple": ["AGT-001", "AGT-002", "AGT-003", "AGT-004", "AGT-005", "AGT-006", "AGT-007", "AGT-010", "AGT-011", "AGT-016", "AGT-020", "AGT-021", "AGT-023", "AGT-024", "AGT-025", "AGT-028"],
+      "no_cumple": ["AGT-008", "AGT-009", "AGT-022", "AGT-026", "AGT-027", "AGT-029", "AGT-030"],
+      "mejoras": [
+        {"id": "CE001", "prioridad": "CRITICA", "archivo": ".claude/agents/implementer/correction-executor-agent.md", "seccion": "## Flujo de Ejecución - PASO 1", "problema": "Validación de input no exhaustiva - no valida tipos, formatos de issues_to_fix, ni que project_path sea absoluto", "cambio": "Expandir validación con: verificar project_path empieza con /, tech es requerido, issues_to_fix es array, cada issue tiene 'file' string", "justificacion": "AGT-008"},
+        {"id": "CE002", "prioridad": "CRITICA", "archivo": ".claude/agents/implementer/correction-executor-agent.md", "seccion": "## Flujo de Ejecución - PASO 1", "problema": "No documenta tabla de campos requeridos", "cambio": "Agregar tabla: project_path (requerido, ruta absoluta), tech (requerido), issues_to_fix (requerido, array). Tabla de campos de cada Issue: file (requerido), line (opcional, number)", "justificacion": "AGT-009"},
+        {"id": "CE003", "prioridad": "MEDIA", "archivo": ".claude/agents/implementer/correction-executor-agent.md", "seccion": "## Flujo de Ejecución - PASO 3", "problema": "No documenta estrategia de resiliencia explícitamente", "cambio": "Agregar al inicio de PASO 3: 'Estrategia de resiliencia: Si archivo falla → Registrar en failures_detail y CONTINUAR. NUNCA detener ejecución por errores individuales.'", "justificacion": "AGT-022"},
+        {"id": "CE004", "prioridad": "ALTA", "archivo": ".claude/agents/implementer/correction-executor-agent.md", "seccion": "## Output Esperado", "problema": "failures_detail no incluye error_code consistentemente", "cambio": "Actualizar ejemplos de failures_detail agregando error_code: FILE_NOT_FOUND, AMBIGUOUS_SUGGESTION, etc.", "justificacion": "AGT-026"},
+        {"id": "CE005", "prioridad": "ALTA", "archivo": ".claude/agents/implementer/correction-executor-agent.md", "seccion": "Nueva sección después de Prioridad de Correcciones", "problema": "No documenta límites para evitar timeouts", "cambio": "Agregar sección '## Límites y Performance': Máximo 100 issues, 50 archivos. Si excede → error LIMIT_EXCEEDED", "justificacion": "AGT-027"},
+        {"id": "CE006", "prioridad": "MEDIA", "archivo": ".claude/agents/implementer/correction-executor-agent.md", "seccion": "Nueva sección Testing", "problema": "No incluye ejemplos input/output para testing automatizado", "cambio": "Agregar sección '## Ejemplos de Input/Output para Testing' con 2 casos: éxito en golang y input inválido", "justificacion": "AGT-029"},
+        {"id": "CE007", "prioridad": "MEDIA", "archivo": ".claude/agents/implementer/correction-executor-agent.md", "seccion": "## Output Esperado - Éxito Parcial", "problema": "No documenta que retorna success con warnings", "cambio": "Agregar nota: 'El agente retorna status: success incluso si algunas correcciones fallan, siempre que input sea válido y se procesen todos los issues'", "justificacion": "AGT-030"}
+      ]
+    },
+    {
+      "agente": "validator-agent",
+      "archivo": ".claude/agents/implementer/validator-agent.md",
+      "puntaje": 65,
+      "cumple": ["AGT-001", "AGT-002", "AGT-003", "AGT-004", "AGT-005", "AGT-006", "AGT-007", "AGT-010", "AGT-011", "AGT-016", "AGT-020", "AGT-021", "AGT-023", "AGT-024", "AGT-025", "AGT-028"],
+      "no_cumple": ["AGT-008", "AGT-009", "AGT-022", "AGT-026", "AGT-027", "AGT-029", "AGT-030"],
+      "mejoras": [
+        {"id": "VA001", "prioridad": "CRITICA", "archivo": ".claude/agents/implementer/validator-agent.md", "seccion": "## Flujo de Ejecución - PASO 1", "problema": "Validación de input no exhaustiva - no valida tipos de files_to_validate ni que project_path sea absoluto", "cambio": "Expandir validación: verificar project_path empieza con /, tech requerido, files_to_validate si presente debe ser array de strings", "justificacion": "AGT-008"},
+        {"id": "VA002", "prioridad": "CRITICA", "archivo": ".claude/agents/implementer/validator-agent.md", "seccion": "## Entrada Esperada", "problema": "No documenta claramente campos requeridos vs opcionales con validación de tipos", "cambio": "Agregar tabla: project_path (requerido, absoluto), tech (requerido), files_to_validate (opcional, array de strings)", "justificacion": "AGT-009"},
+        {"id": "VA003", "prioridad": "MEDIA", "archivo": ".claude/agents/implementer/validator-agent.md", "seccion": "## Flujo de Ejecución - PASO 2", "problema": "No documenta estrategia de manejo de errores por archivo", "cambio": "Agregar al inicio de PASO 2: 'Estrategia: Si build falla → Registrar en validation.build_output, marcar compiles:false, NO detener. SIEMPRE retornar status:success excepto por input inválido.'", "justificacion": "AGT-022"},
+        {"id": "VA004", "prioridad": "ALTA", "archivo": ".claude/agents/implementer/validator-agent.md", "seccion": "## Output Esperado", "problema": "Los outputs no incluyen error_code en arrays de errors/warnings", "cambio": "Actualizar ejemplos: errors[] debe incluir error_code (COMPILATION_ERROR), warnings[] debe incluir warning_code (TEST_FAILURE)", "justificacion": "AGT-026"},
+        {"id": "VA005", "prioridad": "ALTA", "archivo": ".claude/agents/implementer/validator-agent.md", "seccion": "Nueva sección después de Timeouts por Tech", "problema": "No documenta límites de archivos para evitar timeouts", "cambio": "Agregar sección '## Límites y Performance': Máximo 200 archivos en files_to_validate. Si excede → error TOO_MANY_FILES", "justificacion": "AGT-027"},
+        {"id": "VA006", "prioridad": "MEDIA", "archivo": ".claude/agents/implementer/validator-agent.md", "seccion": "## Testing", "problema": "Casos de testing no incluyen ejemplos input/output completos", "cambio": "Expandir sección Testing con 4 casos completos: éxito, error compilación, sin tests, input inválido (path relativo)", "justificacion": "AGT-029"},
+        {"id": "VA007", "prioridad": "MEDIA", "archivo": ".claude/agents/implementer/validator-agent.md", "seccion": "## Output Esperado", "problema": "No documenta que retorna success incluso con errores de compilación/tests", "cambio": "Agregar nota: 'SIEMPRE retorna status:success excepto por input inválido. Problemas se reportan en validation.compiles, validation.tests_pass, errors[], warnings[]'", "justificacion": "AGT-030"}
+      ]
+    }
+  ]
+}

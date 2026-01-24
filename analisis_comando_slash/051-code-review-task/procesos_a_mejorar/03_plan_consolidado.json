@@ -1,0 +1,66 @@
+{
+  "plan_mejoras": {
+    "total_mejoras": 37,
+    "por_prioridad": {
+      "CRITICA": 2,
+      "ALTA": 14,
+      "MEDIA": 14,
+      "BAJA": 7
+    },
+    "archivos_afectados": [
+      ".claude/commands/051-code-review-task.md",
+      ".claude/agents/common/mcp-validator.md",
+      ".claude/agents/code-review/code-analyzer-agent.md",
+      ".claude/agents/implementer/validator-agent.md",
+      ".claude/agents/code-review/severity-calculator-agent.md",
+      ".claude/agents/code-review/decision-maker-agent.md",
+      ".claude/agents/implementer/correction-executor-agent.md",
+      ".claude/agents/code-review/review-reporter-agent.md"
+    ]
+  },
+  "fases_ejecucion": [
+    {
+      "fase": 1,
+      "nombre": "Correcciones Críticas",
+      "descripcion": "tools faltantes en frontmatter de agentes",
+      "mejoras": ["CA001", "RR001"],
+      "minutos_estimados": 5
+    },
+    {
+      "fase": 2,
+      "nombre": "Alta Prioridad - Comando",
+      "descripcion": "MCPSearch y try-catch global",
+      "mejoras": ["M002", "M006"],
+      "minutos_estimados": 15
+    },
+    {
+      "fase": 3,
+      "nombre": "Alta Prioridad - Agentes",
+      "descripcion": "Secciones Responsabilidad, Prohibiciones, Validación Input",
+      "mejoras": ["CA002", "CA003", "CA004", "SC001", "SC002", "SC003", "DM001", "DM002", "DM003", "RR002", "RR003", "RR004"],
+      "minutos_estimados": 45
+    },
+    {
+      "fase": 4,
+      "nombre": "Media Prioridad - Comando",
+      "descripcion": "Numeración, Read en allowed-tools, comentarios",
+      "mejoras": ["M001", "M003", "M005", "M008"],
+      "minutos_estimados": 10
+    },
+    {
+      "fase": 5,
+      "nombre": "Media Prioridad - Agentes",
+      "descripcion": "Testing, Performance, error_codes",
+      "mejoras": ["MV001", "CA005", "CA006", "SC004", "DM004", "CE001", "RR005", "RR006", "RR007"],
+      "minutos_estimados": 30
+    },
+    {
+      "fase": 6,
+      "nombre": "Baja Prioridad - Opcionales",
+      "descripcion": "Mejoras menores de documentación",
+      "mejoras": ["M004", "M007", "MV002", "VA001", "SC005", "DM005", "CE002"],
+      "minutos_estimados": 20
+    }
+  ],
+  "tiempo_total_estimado": "2 horas 5 minutos"
+}

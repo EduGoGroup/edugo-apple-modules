@@ -1,0 +1,54 @@
+{
+  "plan_mejoras": {
+    "total_mejoras": 28,
+    "por_prioridad": {"CRITICA": 8, "ALTA": 10, "MEDIA": 9, "BAJA": 1},
+    "archivos_afectados": [
+      ".claude/commands/031-planner-decompose-story.md",
+      ".claude/agents/common/mcp-validator.md",
+      ".claude/agents/common/search-local.md",
+      ".claude/agents/planner/story-analyzer-agent.md",
+      ".claude/agents/planner/task-creator-agent.md"
+    ]
+  },
+  "fases_ejecucion": [
+    {"fase": 1, "nombre": "Correcciones Criticas", "mejoras": ["M001", "M002", "M003", "M004", "SA001", "SA002", "TC001", "TC002"], "minutos_estimados": 25},
+    {"fase": 2, "nombre": "Alta Prioridad - Comando", "mejoras": ["M005", "M006", "M007", "M008"], "minutos_estimados": 10},
+    {"fase": 3, "nombre": "Alta Prioridad - Agentes", "mejoras": ["MV001", "MV002", "SA003", "SA004", "SA005", "TC003"], "minutos_estimados": 20},
+    {"fase": 4, "nombre": "Media Prioridad - Comando", "mejoras": ["M009", "M010"], "minutos_estimados": 5},
+    {"fase": 5, "nombre": "Media Prioridad - Agentes", "mejoras": ["MV003", "MV004", "SL001", "SA006", "SA007", "TC004", "TC005"], "minutos_estimados": 20},
+    {"fase": 6, "nombre": "Baja Prioridad", "mejoras": ["SL002"], "minutos_estimados": 5}
+  ],
+  "tiempo_total_estimado_minutos": 85,
+  "mejoras_comando": [
+    {"id": "M001", "prioridad": "CRITICA", "descripcion": "Agregar mcp__MCPEco__get_task_details a allowed-tools"},
+    {"id": "M002", "prioridad": "CRITICA", "descripcion": "Agregar MCPSearch a allowed-tools"},
+    {"id": "M003", "prioridad": "CRITICA", "descripcion": "Cargar get_task_details en FASE -1"},
+    {"id": "M004", "prioridad": "CRITICA", "descripcion": "Corregir formato markdown FASE -1"},
+    {"id": "M005", "prioridad": "ALTA", "descripcion": "Corregir path search-local"},
+    {"id": "M006", "prioridad": "ALTA", "descripcion": "Corregir path story-analyzer-agent"},
+    {"id": "M007", "prioridad": "ALTA", "descripcion": "Corregir path task-creator-agent"},
+    {"id": "M008", "prioridad": "ALTA", "descripcion": "Corregir path mcp-validator"},
+    {"id": "M009", "prioridad": "MEDIA", "descripcion": "Actualizar tabla de agentes"},
+    {"id": "M010", "prioridad": "MEDIA", "descripcion": "Agregar separador visual"}
+  ],
+  "mejoras_agentes": [
+    {"id": "MV001", "agente": "mcp-validator", "prioridad": "ALTA", "descripcion": "Documentar validacion fail-fast"},
+    {"id": "MV002", "agente": "mcp-validator", "prioridad": "ALTA", "descripcion": "Agregar try-catch"},
+    {"id": "MV003", "agente": "mcp-validator", "prioridad": "MEDIA", "descripcion": "Tabla output fields"},
+    {"id": "MV004", "agente": "mcp-validator", "prioridad": "MEDIA", "descripcion": "Consideraciones performance"},
+    {"id": "SL001", "agente": "search-local", "prioridad": "MEDIA", "descripcion": "Timeout Ollama"},
+    {"id": "SL002", "agente": "search-local", "prioridad": "BAJA", "descripcion": "Limite documentos"},
+    {"id": "SA001", "agente": "story-analyzer-agent", "prioridad": "CRITICA", "descripcion": "Agregar subagent_type"},
+    {"id": "SA002", "agente": "story-analyzer-agent", "prioridad": "CRITICA", "descripcion": "Tabla herramientas"},
+    {"id": "SA003", "agente": "story-analyzer-agent", "prioridad": "ALTA", "descripcion": "Validacion input"},
+    {"id": "SA004", "agente": "story-analyzer-agent", "prioridad": "ALTA", "descripcion": "Manejo errores helpers"},
+    {"id": "SA005", "agente": "story-analyzer-agent", "prioridad": "ALTA", "descripcion": "Manejo errores Task"},
+    {"id": "SA006", "agente": "story-analyzer-agent", "prioridad": "MEDIA", "descripcion": "Tabla campos input"},
+    {"id": "SA007", "agente": "story-analyzer-agent", "prioridad": "MEDIA", "descripcion": "Consideraciones performance"},
+    {"id": "TC001", "agente": "task-creator-agent", "prioridad": "CRITICA", "descripcion": "Agregar subagent_type"},
+    {"id": "TC002", "agente": "task-creator-agent", "prioridad": "CRITICA", "descripcion": "Tabla herramientas"},
+    {"id": "TC003", "agente": "task-creator-agent", "prioridad": "ALTA", "descripcion": "Validacion input"},
+    {"id": "TC004", "agente": "task-creator-agent", "prioridad": "MEDIA", "descripcion": "Tabla campos input"},
+    {"id": "TC005", "agente": "task-creator-agent", "prioridad": "MEDIA", "descripcion": "Consideraciones performance"}
+  ]
+}

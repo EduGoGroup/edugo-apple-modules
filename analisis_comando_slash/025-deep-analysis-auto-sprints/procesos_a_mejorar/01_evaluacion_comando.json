@@ -1,0 +1,97 @@
+{
+  "comando": "025-deep-analysis-auto-sprints",
+  "puntaje": 52,
+  "cumple": [
+    "Frontmatter completo (name, description, allowed-tools)",
+    "MCPSearch antes de usar herramientas MCP (FASE -1)",
+    "Invocación real de herramientas MCP (no simuladas)",
+    "Validación de input al inicio (FASE 1)",
+    "Delegación a subagentes correcta (Task con subagent_type, description, prompt)",
+    "Validación física de resultados de agentes (exhaustiva)",
+    "Manejo de errores (throw Error, mensajes descriptivos, circuit breaker)",
+    "Logging estructurado (execution_session_manage con action: log)",
+    "Documentación de input/output"
+  ],
+  "no_cumple": [
+    "allowed-tools no incluye MCPSearch ni TodoWrite",
+    "No hay TODO List al inicio del flujo",
+    "Retorno JSON sin estructura estandarizada completa (falta error_code)",
+    "No se actualiza TODO List durante ejecución",
+    "Falta sección de testing/casos de prueba",
+    "FASE -1 no incluye MCPSearch para get_flow_row"
+  ],
+  "mejoras": [
+    {
+      "id": "M001",
+      "prioridad": "CRITICA",
+      "archivo": ".claude/commands/025-deep-analysis-auto-sprints.md",
+      "seccion": "Frontmatter (lineas 1-5)",
+      "problema": "El allowed-tools no incluye MCPSearch ni TodoWrite que son herramientas fundamentales",
+      "cambio": "---\nname: 025-deep-analysis-auto-sprints\ndescription: Generar automaticamente todos los sprints de un proyecto\nallowed-tools: MCPSearch, TodoWrite, Task, mcp__MCPEco__get_project_info, mcp__MCPEco__execution_session_manage, mcp__MCPEco__list_flows, mcp__MCPEco__get_flow_row\n---",
+      "justificacion": "Segun mejores practicas, allowed-tools DEBE incluir TODAS las herramientas que el comando usa"
+    },
+    {
+      "id": "M002",
+      "prioridad": "ALTA",
+      "archivo": ".claude/commands/025-deep-analysis-auto-sprints.md",
+      "seccion": "FASE -1 (despues de linea 51)",
+      "problema": "No hay inicializacion de TODO List al inicio del flujo",
+      "cambio": "### FASE -1.5: Inicializar TODO List\n\n```typescript\nawait TodoWrite({\n  todos: [\n    { content: \"Cargar herramientas MCP\", activeForm: \"Cargando herramientas MCP\", status: \"completed\" },\n    { content: \"Validar input y obtener proyecto\", activeForm: \"Validando input y obteniendo proyecto\", status: \"pending\" },\n    { content: \"Inicializar sesion de ejecucion\", activeForm: \"Inicializando sesion de ejecucion\", status: \"pending\" },\n    { content: \"Verificar sprints existentes\", activeForm: \"Verificando sprints existentes\", status: \"pending\" },\n    { content: \"Leer constitucion del proyecto\", activeForm: \"Leyendo constitucion del proyecto\", status: \"pending\" },\n    { content: \"Planear sprints basado en constitucion\", activeForm: \"Planeando sprints\", status: \"pending\" },\n    { content: \"Crear sprints en loop\", activeForm: \"Creando sprints\", status: \"pending\" },\n    { content: \"Finalizar y retornar resultado\", activeForm: \"Finalizando proceso\", status: \"pending\" }\n  ]\n})\n```",
+      "justificacion": "Comandos multi-fase DEBEN usar TodoWrite al inicio para tracking de progreso"
+    },
+    {
+      "id": "M003",
+      "prioridad": "ALTA",
+      "archivo": ".claude/commands/025-deep-analysis-auto-sprints.md",
+      "seccion": "Cada fase del comando",
+      "problema": "No se actualiza el TODO List cuando se completa cada fase",
+      "cambio": "Al final de cada fase, agregar: await TodoWrite({ todos: [...actualizados con status completed para fase actual, in_progress para siguiente] })",
+      "justificacion": "El TODO List debe ser actualizado consistentemente en cada transicion de fase"
+    },
+    {
+      "id": "M004",
+      "prioridad": "ALTA",
+      "archivo": ".claude/commands/025-deep-analysis-auto-sprints.md",
+      "seccion": "Retorno JSON (final de FASE 6)",
+      "problema": "El retorno JSON no sigue estructura estandarizada completa",
+      "cambio": "return JSON.stringify({\n  success: successCount > 0,\n  error_code: successCount === 0 ? \"SPRINT_CREATION_FAILED\" : (failureCount > 0 ? \"PARTIAL_SUCCESS\" : null),\n  error_message: successCount === 0 ? \"No se pudo crear ningun sprint\" : null,\n  timestamp: new Date().toISOString(),\n  command: \"025-deep-analysis-auto-sprints\",\n  data: { project_id, session_id, total_planned, total_created, total_failed, results }\n}, null, 2)",
+      "justificacion": "El retorno debe tener estructura consistente con success, error_code, error_message, timestamp"
+    },
+    {
+      "id": "M005",
+      "prioridad": "MEDIA",
+      "archivo": ".claude/commands/025-deep-analysis-auto-sprints.md",
+      "seccion": "Final del archivo",
+      "problema": "No hay seccion de testing/casos de prueba documentada",
+      "cambio": "Agregar seccion Testing con tabla de casos de prueba y verificacion manual",
+      "justificacion": "La documentacion de testing permite validar que el comando funciona correctamente"
+    },
+    {
+      "id": "M006",
+      "prioridad": "MEDIA",
+      "archivo": ".claude/commands/025-deep-analysis-auto-sprints.md",
+      "seccion": "FASE -1 (linea 45-51)",
+      "problema": "FASE -1 no incluye MCPSearch para get_flow_row que se usa en FASE 5.4.1",
+      "cambio": "Agregar: await MCPSearch({ query: \"select:mcp__MCPEco__get_flow_row\" })",
+      "justificacion": "TODAS las herramientas MCP usadas deben ser cargadas en FASE -1"
+    },
+    {
+      "id": "M007",
+      "prioridad": "MEDIA",
+      "archivo": ".claude/commands/025-deep-analysis-auto-sprints.md",
+      "seccion": "Todas las fases",
+      "problema": "Las fases no actualizan el TODO List al iniciar/completar",
+      "cambio": "Agregar TodoWrite al inicio y final de cada fase con estados actualizados",
+      "justificacion": "El TODO List debe ser actualizado consistentemente para tracking visual"
+    },
+    {
+      "id": "M008",
+      "prioridad": "BAJA",
+      "archivo": ".claude/commands/025-deep-analysis-auto-sprints.md",
+      "seccion": "Seccion Input",
+      "problema": "La documentacion de input no incluye formato esperado completo",
+      "cambio": "Agregar formato de session_id y output esperado detallado",
+      "justificacion": "Documentar el formato de input/output completo ayuda a integraciones y debugging"
+    }
+  ]
+}

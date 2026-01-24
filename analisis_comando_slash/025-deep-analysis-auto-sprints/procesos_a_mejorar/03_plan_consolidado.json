@@ -1,0 +1,262 @@
+{
+  "plan_mejoras": {
+    "total_mejoras": 23,
+    "por_prioridad": {
+      "CRITICA": 3,
+      "ALTA": 11,
+      "MEDIA": 4,
+      "BAJA": 5
+    },
+    "archivos_afectados": [
+      ".claude/commands/025-deep-analysis-auto-sprints.md",
+      ".claude/agents/common/search-local.md",
+      ".claude/agents/deep-analysis/milestone-analyzer-agent.md",
+      ".claude/agents/deep-analysis/flow-creator-agent.md",
+      ".claude/agents/deep-analysis/impact-filter-agent.md",
+      ".claude/agents/deep-analysis/module-creator-agent.md",
+      ".claude/agents/deep-analysis/story-creator-agent.md"
+    ],
+    "tiempo_estimado_minutos": 90
+  },
+  "fases_ejecucion": [
+    {
+      "fase": 1,
+      "nombre": "Correcciones Críticas",
+      "descripcion": "Correcciones que bloquean funcionamiento correcto",
+      "mejoras": ["M001", "MA001", "IF001"],
+      "minutos_estimados": 15
+    },
+    {
+      "fase": 2,
+      "nombre": "Alta Prioridad - Comando",
+      "descripcion": "Mejoras altas del comando principal",
+      "mejoras": ["M002", "M003", "M004"],
+      "minutos_estimados": 20
+    },
+    {
+      "fase": 3,
+      "nombre": "Alta Prioridad - Agentes",
+      "descripcion": "Mejoras altas de todos los agentes",
+      "mejoras": ["MA002", "FC001", "IF002", "IF003", "MC001", "SC001", "SC002"],
+      "minutos_estimados": 25
+    },
+    {
+      "fase": 4,
+      "nombre": "Media Prioridad",
+      "descripcion": "Mejoras de calidad y documentación",
+      "mejoras": ["M005", "M006", "M007", "MA004"],
+      "minutos_estimados": 15
+    },
+    {
+      "fase": 5,
+      "nombre": "Baja Prioridad - Opcionales",
+      "descripcion": "Testing y documentación adicional",
+      "mejoras": ["M008", "SL001", "MA003", "FC002", "IF004", "MC002", "SC003"],
+      "minutos_estimados": 15
+    }
+  ],
+  "mejoras_comando": [
+    {
+      "id": "M001",
+      "prioridad": "CRITICA",
+      "archivo": ".claude/commands/025-deep-analysis-auto-sprints.md",
+      "seccion": "Frontmatter",
+      "problema": "allowed-tools no incluye MCPSearch ni TodoWrite",
+      "cambio": "Agregar MCPSearch y TodoWrite al frontmatter",
+      "justificacion": "allowed-tools DEBE incluir TODAS las herramientas usadas"
+    },
+    {
+      "id": "M002",
+      "prioridad": "ALTA",
+      "archivo": ".claude/commands/025-deep-analysis-auto-sprints.md",
+      "seccion": "FASE -1",
+      "problema": "No hay TODO List al inicio",
+      "cambio": "Agregar FASE -1.5 con TodoWrite inicial",
+      "justificacion": "Comandos multi-fase DEBEN usar TodoWrite"
+    },
+    {
+      "id": "M003",
+      "prioridad": "ALTA",
+      "archivo": ".claude/commands/025-deep-analysis-auto-sprints.md",
+      "seccion": "Cada fase",
+      "problema": "No se actualiza TODO List",
+      "cambio": "Agregar TodoWrite al final de cada fase",
+      "justificacion": "TODO List debe actualizarse en cada transicion"
+    },
+    {
+      "id": "M004",
+      "prioridad": "ALTA",
+      "archivo": ".claude/commands/025-deep-analysis-auto-sprints.md",
+      "seccion": "FASE 6",
+      "problema": "Retorno JSON sin estructura estandarizada",
+      "cambio": "Agregar error_code, timestamp, command a retorno",
+      "justificacion": "Retorno debe tener estructura consistente"
+    },
+    {
+      "id": "M005",
+      "prioridad": "MEDIA",
+      "archivo": ".claude/commands/025-deep-analysis-auto-sprints.md",
+      "seccion": "Final",
+      "problema": "Falta seccion Testing",
+      "cambio": "Agregar seccion Testing con casos de prueba",
+      "justificacion": "Documentacion de testing permite validar funcionamiento"
+    },
+    {
+      "id": "M006",
+      "prioridad": "MEDIA",
+      "archivo": ".claude/commands/025-deep-analysis-auto-sprints.md",
+      "seccion": "FASE -1",
+      "problema": "Falta MCPSearch para get_flow_row",
+      "cambio": "Agregar MCPSearch para get_flow_row en FASE -1",
+      "justificacion": "TODAS las herramientas MCP deben cargarse"
+    },
+    {
+      "id": "M007",
+      "prioridad": "MEDIA",
+      "archivo": ".claude/commands/025-deep-analysis-auto-sprints.md",
+      "seccion": "Todas las fases",
+      "problema": "Fases no actualizan TODO List",
+      "cambio": "Agregar TodoWrite al inicio y final de cada fase",
+      "justificacion": "Tracking visual consistente"
+    },
+    {
+      "id": "M008",
+      "prioridad": "BAJA",
+      "archivo": ".claude/commands/025-deep-analysis-auto-sprints.md",
+      "seccion": "Input",
+      "problema": "Documentacion input incompleta",
+      "cambio": "Agregar formato session_id y output esperado",
+      "justificacion": "Ayuda integraciones y debugging"
+    }
+  ],
+  "mejoras_agentes": [
+    {
+      "id": "SL001",
+      "prioridad": "BAJA",
+      "agente": "search-local",
+      "archivo": ".claude/agents/common/search-local.md",
+      "problema": "Falta seccion Testing",
+      "cambio": "Agregar seccion Testing con casos de prueba"
+    },
+    {
+      "id": "MA001",
+      "prioridad": "CRITICA",
+      "agente": "milestone-analyzer",
+      "archivo": ".claude/agents/deep-analysis/milestone-analyzer-agent.md",
+      "problema": "Falta PASO 0 validacion input",
+      "cambio": "Agregar PASO 0 con validacion y defaults"
+    },
+    {
+      "id": "MA002",
+      "prioridad": "ALTA",
+      "agente": "milestone-analyzer",
+      "archivo": ".claude/agents/deep-analysis/milestone-analyzer-agent.md",
+      "problema": "Output sin status ni error codes",
+      "cambio": "Agregar status y ejemplos de error"
+    },
+    {
+      "id": "MA003",
+      "prioridad": "BAJA",
+      "agente": "milestone-analyzer",
+      "archivo": ".claude/agents/deep-analysis/milestone-analyzer-agent.md",
+      "problema": "Falta seccion Testing",
+      "cambio": "Agregar seccion Testing"
+    },
+    {
+      "id": "MA004",
+      "prioridad": "MEDIA",
+      "agente": "milestone-analyzer",
+      "archivo": ".claude/agents/deep-analysis/milestone-analyzer-agent.md",
+      "problema": "Limite performance no documentado",
+      "cambio": "Documentar limite de 50 archivos"
+    },
+    {
+      "id": "FC001",
+      "prioridad": "ALTA",
+      "agente": "flow-creator",
+      "archivo": ".claude/agents/deep-analysis/flow-creator-agent.md",
+      "problema": "Falta PASO 0 validacion",
+      "cambio": "Agregar PASO 0 con validacion"
+    },
+    {
+      "id": "FC002",
+      "prioridad": "BAJA",
+      "agente": "flow-creator",
+      "archivo": ".claude/agents/deep-analysis/flow-creator-agent.md",
+      "problema": "Falta seccion Testing",
+      "cambio": "Agregar seccion Testing"
+    },
+    {
+      "id": "IF001",
+      "prioridad": "CRITICA",
+      "agente": "impact-filter",
+      "archivo": ".claude/agents/deep-analysis/impact-filter-agent.md",
+      "problema": "tools: ninguno incorrecto",
+      "cambio": "Cambiar a tools: []"
+    },
+    {
+      "id": "IF002",
+      "prioridad": "ALTA",
+      "agente": "impact-filter",
+      "archivo": ".claude/agents/deep-analysis/impact-filter-agent.md",
+      "problema": "Falta PASO 0 validacion",
+      "cambio": "Agregar PASO 0 con validacion"
+    },
+    {
+      "id": "IF003",
+      "prioridad": "ALTA",
+      "agente": "impact-filter",
+      "archivo": ".claude/agents/deep-analysis/impact-filter-agent.md",
+      "problema": "Falta output de error",
+      "cambio": "Agregar ejemplos de error"
+    },
+    {
+      "id": "IF004",
+      "prioridad": "BAJA",
+      "agente": "impact-filter",
+      "archivo": ".claude/agents/deep-analysis/impact-filter-agent.md",
+      "problema": "Testing no formal",
+      "cambio": "Agregar seccion Testing formal"
+    },
+    {
+      "id": "MC001",
+      "prioridad": "ALTA",
+      "agente": "module-creator",
+      "archivo": ".claude/agents/deep-analysis/module-creator-agent.md",
+      "problema": "PASO 1 sin formato PASO 0",
+      "cambio": "Reemplazar con PASO 0 estandarizado"
+    },
+    {
+      "id": "MC002",
+      "prioridad": "BAJA",
+      "agente": "module-creator",
+      "archivo": ".claude/agents/deep-analysis/module-creator-agent.md",
+      "problema": "Testing no separado",
+      "cambio": "Agregar seccion Testing separada"
+    },
+    {
+      "id": "SC001",
+      "prioridad": "ALTA",
+      "agente": "story-creator",
+      "archivo": ".claude/agents/deep-analysis/story-creator-agent.md",
+      "problema": "Falta PASO 0 validacion",
+      "cambio": "Agregar PASO 0 con validacion"
+    },
+    {
+      "id": "SC002",
+      "prioridad": "ALTA",
+      "agente": "story-creator",
+      "archivo": ".claude/agents/deep-analysis/story-creator-agent.md",
+      "problema": "Falta output de error",
+      "cambio": "Agregar ejemplos de error"
+    },
+    {
+      "id": "SC003",
+      "prioridad": "BAJA",
+      "agente": "story-creator",
+      "archivo": ".claude/agents/deep-analysis/story-creator-agent.md",
+      "problema": "Falta seccion Testing",
+      "cambio": "Agregar seccion Testing"
+    }
+  ]
+}

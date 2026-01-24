@@ -1,0 +1,191 @@
+{
+  "comando": "031-planner-decompose-story",
+  "total_agentes": 4,
+  "agentes": [
+    {
+      "nombre": "mcp-validator",
+      "archivo": ".claude/agents/common/mcp-validator.md",
+      "modelo": "haiku",
+      "version": "2.1",
+      "responsabilidad": "Ejecutar UNA validación de conectividad del servidor MCP MCPEco y retornar resultado estructurado (ok o error).",
+      "tools_permitidos": ["mcp__MCPEco__list_documents"],
+      "prohibiciones": [
+        "NO usar Bash, Read, Write, Edit, TodoWrite, Task",
+        "NO crear documentos o proyectos de prueba",
+        "NO intentar solucionar errores del MCP (solo reportar)",
+        "NO hacer múltiples reintentos",
+        "NO ejecutar comandos de sistema"
+      ],
+      "input": {
+        "requiere_parametros": false,
+        "campos_requeridos": [],
+        "campos_opcionales": []
+      },
+      "output": {
+        "exito": { "status": "ok", "mcp_available": true, "message": "MCP server MCPEco operativo" },
+        "error": { "status": "error", "mcp_available": false, "error_code": "MCP_NOT_AVAILABLE", "error_message": "<descripción específica del error>", "suggestion": "Verificar que el servidor MCP esté configurado en .mcp.json y reiniciar Claude Code si es necesario" }
+      },
+      "errores_posibles": [
+        { "error_code": "MCP_NOT_AVAILABLE", "causa": "Tool not found - MCP server no registrado" },
+        { "error_code": "MCP_NOT_AVAILABLE", "causa": "Connection refused - Servidor no iniciado" },
+        { "error_code": "MCP_NOT_AVAILABLE", "causa": "Timeout - Servidor lento o caído" }
+      ],
+      "flujo": [
+        "PASO 0: Verificar contexto de ejecución",
+        "PASO 1: Ejecutar mcp__MCPEco__list_documents({ limit: 1 })",
+        "PASO 2: Interpretar respuesta",
+        "PASO 3: Retornar JSON estructurado"
+      ],
+      "dependencias": ["MCP Server MCPEco"]
+    },
+    {
+      "nombre": "search-local",
+      "archivo": ".claude/agents/common/search-local.md",
+      "modelo": "sonnet",
+      "version": "2.6",
+      "responsabilidad": "Buscar documentación en la base de datos local del MCP usando búsqueda por entidad, semántica (RAG) o metadata. Gestiona Ollama automáticamente.",
+      "tools_permitidos": [
+        "mcp__MCPEco__list_documents",
+        "mcp__MCPEco__search_documents_semantic",
+        "mcp__MCPEco__get_document_summary",
+        "mcp__MCPEco__get_document",
+        "Bash (EXCLUSIVAMENTE para verificar/iniciar Ollama)"
+      ],
+      "prohibiciones": [
+        "NO buscar archivos físicos en disco",
+        "NO usar Bash para find/grep/cat/ls",
+        "NO usar Read/Glob/Grep tools",
+        "NO usar WebSearch/WebFetch",
+        "NO acceder al filesystem",
+        "NO crear o modificar documentos",
+        "NO hacer múltiples búsquedas"
+      ],
+      "input": {
+        "requiere_parametros": true,
+        "campos_requeridos": ["query O (entity_type + entity_id)"],
+        "campos_opcionales": ["step_type", "search_method", "min_similarity", "top_k", "include_full_content"]
+      },
+      "output": {
+        "exito": { "status": "success", "search_method": "...", "documents_found": 2, "results": [] },
+        "no_encontrado": { "status": "not_found", "documents_found": 0, "suggestion": "..." },
+        "error": { "status": "error", "error_type": "...", "error_message": "..." }
+      },
+      "errores_posibles": [
+        { "error_code": "ERR_INVALID_INPUT", "causa": "Input no es JSON válido" },
+        { "error_code": "ERR_MISSING_SEARCH_PARAMS", "causa": "Falta query o entity_type+entity_id" },
+        { "error_code": "ollama_not_available", "causa": "Ollama no está corriendo" }
+      ],
+      "flujo": [
+        "PASO 0.A: Validar input",
+        "PASO 0.B: Aplicar defaults",
+        "PASO 0.5: Verificar/iniciar Ollama",
+        "PASO 1: Decidir método de búsqueda",
+        "PASO 2: Ejecutar búsqueda",
+        "PASO 3: Obtener contenido"
+      ],
+      "dependencias": ["MCP Server MCPEco", "Ollama (para búsqueda semántica)"]
+    },
+    {
+      "nombre": "story-analyzer-agent",
+      "archivo": ".claude/agents/planner/story-analyzer-agent.md",
+      "modelo": "sonnet",
+      "version": "1.1",
+      "responsabilidad": "Analizar una user story y generar un plan de tasks técnicas atómicas, respetando el nivel del proyecto (mvp/standard/enterprise).",
+      "tools_permitidos": [
+        "Read",
+        "Task (SOLO para search-local si relevant_docs está vacío)"
+      ],
+      "prohibiciones": [
+        "NO llamar MCP tools directamente",
+        "NO usar Task() para otra cosa que NO sea search-local",
+        "NO usar Bash, Write, Edit",
+        "NO usar TodoWrite",
+        "NO manejar tracking de sesiones",
+        "NO crear tasks en BD"
+      ],
+      "input": {
+        "requiere_parametros": true,
+        "campos_requeridos": ["story_title", "story_content"],
+        "campos_opcionales": ["story_id", "acceptance_criteria", "project_level", "tech", "kind", "flow_row_type", "relevant_docs"]
+      },
+      "output": {
+        "exito": { "status": "success", "story_id": "...", "proposed_tasks": [], "tasks_count": 2, "total_estimated_hours": 6, "validation": {} },
+        "error": { "status": "error", "error_code": "...", "error_message": "...", "validation": {} }
+      },
+      "errores_posibles": [
+        { "error_code": "INVALID_INPUT", "causa": "story_title o story_content faltantes" },
+        { "error_code": "VALIDATION_FAILED", "causa": "max_tasks_exceeded, dependency_cycle, task_too_large" }
+      ],
+      "flujo": [
+        "PASO 1: Parsear y validar input JSON",
+        "PASO 2: Cargar helpers de descomposición",
+        "PASO 2.1: Buscar documentación via search-local (si needed)",
+        "PASO 3: Obtener configuración de nivel",
+        "PASO 4: Aplicar principio de mínima fragmentación",
+        "PASO 5: Analizar story y generar tasks",
+        "PASO 6: Estructurar tasks con formato completo",
+        "PASO 7: Validar descomposición",
+        "PASO 8: Retornar resultado JSON"
+      ],
+      "dependencias": [
+        "search-local (subagente, opcional)",
+        ".claude/helpers/planner-helper.md",
+        ".claude/helpers/impact-analysis-helper.md",
+        ".claude/helpers/levels-helper.md"
+      ]
+    },
+    {
+      "nombre": "task-creator-agent",
+      "archivo": ".claude/agents/planner/task-creator-agent.md",
+      "modelo": "sonnet",
+      "version": "1.2",
+      "responsabilidad": "Insertar tasks en la base de datos usando MCP tools (create_tasks_batch preferido o create_task individual). Solo inserta, no analiza ni modifica.",
+      "tools_permitidos": [
+        "mcp__MCPEco__create_tasks_batch",
+        "mcp__MCPEco__create_task",
+        "mcp__MCPEco__get_task_details (solo para validación post-inserción)"
+      ],
+      "prohibiciones": [
+        "NO analizar o modificar el plan de tasks",
+        "NO llamar MCP de lectura (excepto get_task_details para validación)",
+        "NO usar Task() para delegar",
+        "NO usar Bash, Read, Write, Edit",
+        "NO usar TodoWrite",
+        "NO manejar tracking de sesiones"
+      ],
+      "input": {
+        "requiere_parametros": true,
+        "campos_requeridos": ["story_id", "tasks"],
+        "campos_opcionales": []
+      },
+      "output": {
+        "exito": { "status": "success", "story_id": "...", "tasks_created": 2, "task_ids": [], "message": "..." },
+        "parcial": { "status": "partial", "tasks_created": 1, "task_ids": [], "errors": [] },
+        "error": { "status": "error", "error_code": "...", "error_message": "...", "tasks_created": 0 }
+      },
+      "errores_posibles": [
+        { "error_code": "MISSING_STORY_ID", "causa": "story_id no proporcionado" },
+        { "error_code": "NO_TASKS", "causa": "Array de tasks vacío" },
+        { "error_code": "INVALID_TASK", "causa": "Task sin task_title o task_description" },
+        { "error_code": "INSERT_FAILED", "causa": "Error de MCP al insertar" },
+        { "error_code": "NO_TASKS_CREATED", "causa": "MCP retornó success pero no creó task_ids" },
+        { "error_code": "TASKS_NOT_PERSISTED", "causa": "Tasks reportadas como creadas pero no existen en BD" }
+      ],
+      "flujo": [
+        "PASO 1: Parsear y validar input JSON",
+        "PASO 2: Preparar tasks con valores por defecto",
+        "PASO 3: Insertar usando create_tasks_batch",
+        "PASO 3.1: Validar task_ids en respuesta",
+        "PASO 3.2: Verificar primera task existe en BD",
+        "PASO 3 (ALT): Si batch falla, insertar individualmente",
+        "Retornar: JSON con status y task_ids"
+      ],
+      "dependencias": ["MCP Server MCPEco", "Base de Datos PostgreSQL"]
+    }
+  ],
+  "resumen_modelos": {
+    "opus": [],
+    "sonnet": ["search-local", "story-analyzer-agent", "task-creator-agent"],
+    "haiku": ["mcp-validator"]
+  }
+}

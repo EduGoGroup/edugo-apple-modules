@@ -1,0 +1,19 @@
+{
+  "resumen": {
+    "total_agentes": 8,
+    "puntaje_promedio": 81,
+    "agentes_excelentes": ["project-creator-agent", "search-local", "mcp-validator"],
+    "agentes_requieren_atencion": ["document-finder-agent", "document-associator-agent"]
+  },
+  "evaluaciones": [
+    {"agente": "mcp-validator", "puntaje": 90, "mejoras": 1},
+    {"agente": "analyzer-agent", "puntaje": 78, "mejoras": 4},
+    {"agente": "project-creator-agent", "puntaje": 95, "mejoras": 1},
+    {"agente": "document-finder-agent", "puntaje": 62, "mejoras": 6},
+    {"agente": "search-local", "puntaje": 92, "mejoras": 1},
+    {"agente": "search-internet", "puntaje": 75, "mejoras": 3},
+    {"agente": "document-loader", "puntaje": 85, "mejoras": 4},
+    {"agente": "document-associator-agent", "puntaje": 72, "mejoras": 4}
+  ],
+  "patron_faltante_comun": "subagent_type en frontmatter (6 de 8 agentes)"
+}

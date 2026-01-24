@@ -1,0 +1,98 @@
+{
+  "comando": "031-planner-decompose-story",
+  "puntaje": 72,
+  "cumple": ["CMD001", "CMD003", "CMD004", "CMD007", "CMD008", "CMD009", "CMD010", "CMD011", "CMD012", "CMD013", "CMD015"],
+  "no_cumple": ["CMD002", "CMD005", "CMD006", "CMD014"],
+  "mejoras": [
+    {
+      "id": "M001",
+      "prioridad": "CRITICA",
+      "archivo": ".claude/commands/031-planner-decompose-story.md",
+      "seccion": "Frontmatter (allowed-tools)",
+      "problema": "Falta herramienta mcp__MCPEco__get_task_details en allowed-tools",
+      "cambio": "Agregar mcp__MCPEco__get_task_details y MCPSearch a allowed-tools",
+      "justificacion": "CMD014: Cada herramienta MCP que se invoca debe estar declarada en allowed-tools"
+    },
+    {
+      "id": "M002",
+      "prioridad": "CRITICA",
+      "archivo": ".claude/commands/031-planner-decompose-story.md",
+      "seccion": "Frontmatter (allowed-tools)",
+      "problema": "Falta MCPSearch en allowed-tools",
+      "cambio": "Agregar MCPSearch a allowed-tools",
+      "justificacion": "CMD002/CMD005: MCPSearch permite cargar herramientas MCP"
+    },
+    {
+      "id": "M003",
+      "prioridad": "CRITICA",
+      "archivo": ".claude/commands/031-planner-decompose-story.md",
+      "seccion": "FASE -1: Cargar Herramientas MCP",
+      "problema": "Falta cargar mcp__MCPEco__get_task_details que se usa en FASE 6",
+      "cambio": "Agregar: await MCPSearch({ query: 'select:mcp__MCPEco__get_task_details' })",
+      "justificacion": "CMD005: Todas las herramientas MCP deben cargarse con MCPSearch ANTES de usarse"
+    },
+    {
+      "id": "M004",
+      "prioridad": "CRITICA",
+      "archivo": ".claude/commands/031-planner-decompose-story.md",
+      "seccion": "FASE -1: Cargar Herramientas MCP",
+      "problema": "El bloque de codigo de FASE -1 no tiene cierre de backticks",
+      "cambio": "Cerrar bloque con ``` y agregar separador ---",
+      "justificacion": "CMD006: El bloque de codigo malformado puede causar problemas de interpretacion"
+    },
+    {
+      "id": "M005",
+      "prioridad": "ALTA",
+      "archivo": ".claude/commands/031-planner-decompose-story.md",
+      "seccion": "FASE 4: Buscar Documentacion Relevante",
+      "problema": "subagent_type incorrecto para search-local",
+      "cambio": "Cambiar 'search-local' a 'common/search-local'",
+      "justificacion": "CMD015: Los subagentes deben referenciarse con path completo"
+    },
+    {
+      "id": "M006",
+      "prioridad": "ALTA",
+      "archivo": ".claude/commands/031-planner-decompose-story.md",
+      "seccion": "FASE 5: Analizar Story",
+      "problema": "subagent_type sin path completo para story-analyzer",
+      "cambio": "Cambiar 'story-analyzer' a 'planner/story-analyzer-agent'",
+      "justificacion": "CMD015: Los subagentes deben referenciarse con path completo"
+    },
+    {
+      "id": "M007",
+      "prioridad": "ALTA",
+      "archivo": ".claude/commands/031-planner-decompose-story.md",
+      "seccion": "FASE 6: Crear Tasks en BD",
+      "problema": "subagent_type sin path completo para task-creator",
+      "cambio": "Cambiar 'task-creator' a 'planner/task-creator-agent'",
+      "justificacion": "CMD015: Los subagentes deben referenciarse con path completo"
+    },
+    {
+      "id": "M008",
+      "prioridad": "ALTA",
+      "archivo": ".claude/commands/031-planner-decompose-story.md",
+      "seccion": "FASE 0: Validar MCP Disponible",
+      "problema": "subagent_type sin path completo para mcp-validator",
+      "cambio": "Cambiar 'mcp-validator' a 'common/mcp-validator'",
+      "justificacion": "CMD015: Los subagentes deben referenciarse con path completo"
+    },
+    {
+      "id": "M009",
+      "prioridad": "MEDIA",
+      "archivo": ".claude/commands/031-planner-decompose-story.md",
+      "seccion": "Tabla de Agentes Utilizados",
+      "problema": "Paths incorrectos en tabla de documentacion",
+      "cambio": "Actualizar nombres a story-analyzer-agent y task-creator-agent",
+      "justificacion": "CMD012: La documentacion debe ser precisa"
+    },
+    {
+      "id": "M010",
+      "prioridad": "MEDIA",
+      "archivo": ".claude/commands/031-planner-decompose-story.md",
+      "seccion": "FASE -2: Inicializar TODO List",
+      "problema": "Falta separador visual entre FASE -2 y FASE -1",
+      "cambio": "Agregar separador --- despues de FASE -2",
+      "justificacion": "CMD004: El TODO list debe estar visualmente separado"
+    }
+  ]
+}

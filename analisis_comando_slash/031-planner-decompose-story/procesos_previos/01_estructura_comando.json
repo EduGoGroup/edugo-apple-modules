@@ -1,0 +1,52 @@
+{
+  "comando": "031-planner-decompose-story",
+  "version": "3.2",
+  "descripcion": "Orquestador para descomponer una story en tasks técnicas atómicas",
+  "frontmatter": {
+    "name": "031-planner-decompose-story",
+    "description": "Orquestador para descomponer una story en tasks técnicas atómicas",
+    "color": "blue",
+    "allowed_tools": [
+      "Task",
+      "TodoWrite",
+      "mcp__MCPEco__get_project_info",
+      "mcp__MCPEco__get_flow_info",
+      "mcp__MCPEco__get_flow_row",
+      "mcp__MCPEco__get_story",
+      "mcp__MCPEco__execution_session_manage"
+    ]
+  },
+  "total_fases": 11,
+  "fases": [
+    { "orden": -2, "nombre": "Inicializar TODO List", "agente": null },
+    { "orden": -1, "nombre": "Cargar Herramientas MCP", "agente": null },
+    { "orden": 0, "nombre": "Validar MCP Disponible", "agente": "mcp-validator" },
+    { "orden": 1, "nombre": "Preprocesar Input", "agente": null },
+    { "orden": 2, "nombre": "Iniciar Tracking de Ejecución", "agente": null },
+    { "orden": 3, "nombre": "Obtener Contexto Completo", "agente": null },
+    { "orden": 4, "nombre": "Buscar Documentación Relevante", "agente": "search-local" },
+    { "orden": 5, "nombre": "Analizar Story y Generar Plan de Tasks", "agente": "story-analyzer-agent" },
+    { "orden": 6, "nombre": "Crear Tasks en BD", "agente": "task-creator-agent" },
+    { "orden": 7, "nombre": "Finalizar Tracking", "agente": null },
+    { "orden": 8, "nombre": "Retornar Resultado Final", "agente": null }
+  ],
+  "subagent_types": [
+    "mcp-validator",
+    "search-local",
+    "story-analyzer-agent",
+    "task-creator-agent"
+  ],
+  "herramientas_mcp": [
+    "mcp__MCPEco__get_project_info",
+    "mcp__MCPEco__get_flow_info",
+    "mcp__MCPEco__get_flow_row",
+    "mcp__MCPEco__get_story",
+    "mcp__MCPEco__execution_session_manage",
+    "mcp__MCPEco__get_task_details"
+  ],
+  "advertencias_criticas": [
+    "ERROR CRÍTICO: MCP Server no disponible - se debe abortar si la validación de MCP falla",
+    "CRÍTICO: Agregada validación robusta de 6 niveles en FASE 6 (patrón ERROR 7 del comando 025)",
+    "CRÍTICO: Verificar que la primera task REALMENTE existe en BD - si task-creator reportó éxito pero la task no existe en BD, se genera error crítico"
+  ]
+}

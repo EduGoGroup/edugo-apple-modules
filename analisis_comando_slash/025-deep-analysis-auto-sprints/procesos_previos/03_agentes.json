@@ -1,0 +1,143 @@
+{
+  "comando": "025-deep-analysis-auto-sprints",
+  "total_agentes": 7,
+  "agentes": [
+    {
+      "nombre": "mcp-validator",
+      "archivo": ".claude/agents/common/mcp-validator.md",
+      "modelo": "haiku",
+      "version": "2.1",
+      "responsabilidad": "Ejecutar UNA validación de conectividad del servidor MCP y retornar resultado estructurado",
+      "tools_permitidos": ["mcp__MCPEco__list_documents"],
+      "prohibiciones": ["NO usar Bash, Read, Write, Edit, TodoWrite, Task", "NO crear documentos o proyectos de prueba", "NO intentar solucionar errores del MCP", "NO hacer múltiples reintentos"],
+      "input": { "requiere_parametros": false, "campos": [] },
+      "output": {
+        "exito": { "status": "ok", "mcp_available": true, "message": "MCP server MCPEco operativo" },
+        "error": { "status": "error", "mcp_available": false, "error_code": "MCP_NOT_AVAILABLE", "error_message": "<descripción>" }
+      },
+      "errores_posibles": ["Tool not found", "Connection refused", "Timeout", "Permission denied"],
+      "flujo": ["PASO 1: Ejecutar mcp__MCPEco__list_documents({ limit: 1 })", "PASO 2: Retornar JSON estructurado según resultado"]
+    },
+    {
+      "nombre": "search-local",
+      "archivo": ".claude/agents/common/search-local.md",
+      "modelo": "sonnet",
+      "version": "2.6",
+      "responsabilidad": "Buscar documentación en la base de datos local del MCP. Soporta búsqueda por entidad, semántica (RAG con Ollama) y metadata",
+      "tools_permitidos": ["mcp__MCPEco__list_documents", "mcp__MCPEco__search_documents_semantic", "mcp__MCPEco__get_document_summary", "mcp__MCPEco__get_document", "Bash (solo para Ollama)"],
+      "prohibiciones": ["NO buscar archivos físicos en disco", "NO usar Read/Glob/Grep tools", "NO usar WebSearch/WebFetch", "NO crear/modificar documentos", "NO interpretar contenido"],
+      "input": {
+        "requiere_parametros": true,
+        "campos": ["query (opcional)", "step_type", "search_method", "entity_type", "entity_id", "min_similarity", "top_k", "include_full_content"]
+      },
+      "output": {
+        "exito": { "status": "success", "search_method": "entity|semantic|metadata", "documents_found": "number", "results": [] },
+        "error": { "status": "error", "error_type": "ollama_not_available|no_results|technical", "error_message": "string" }
+      },
+      "errores_posibles": ["ERR_INVALID_INPUT", "ERR_MISSING_SEARCH_PARAMS", "ERR_INVALID_ENTITY_TYPE", "ollama_not_available", "no_results"],
+      "flujo": ["PASO 0: Validación de Input", "PASO 0.5: Verificar Ollama si es semántico", "PASO 1: Decidir método de búsqueda", "PASO 2: Ejecutar búsqueda", "PASO 3: Obtener contenido de documentos"]
+    },
+    {
+      "nombre": "milestone-analyzer",
+      "archivo": ".claude/agents/deep-analysis/milestone-analyzer-agent.md",
+      "modelo": "sonnet",
+      "version": "2.2",
+      "responsabilidad": "Analiza la descripción de un milestone y propone módulos (features) para implementar en un sprint, aplicando auto-cuestionamiento según nivel del proyecto",
+      "tools_permitidos": ["Bash", "Read", "Glob", "Grep"],
+      "prohibiciones": ["NO crear archivos en el proyecto", "NO modificar código existente", "NO proponer más módulos del límite por nivel", "NO estimar >5 stories por módulo"],
+      "input": {
+        "requiere_parametros": true,
+        "campos": ["milestone_description (req)", "tech", "kind", "project_level", "project_path", "project_name"]
+      },
+      "output": {
+        "exito": { "status": "success", "analysis": { "milestone_title": "", "milestone_summary": "", "estimated_complexity": "low|medium|high", "proposed_modules": [], "global_risks": [], "global_dependencies": [] } },
+        "error": { "status": "error", "error_message": "string" }
+      },
+      "errores_posibles": ["Error al leer helpers de referencia", "milestone_description vacío", "project_path no existe"],
+      "flujo": ["PASO 1: Leer Helpers", "PASO 2: Analizar Descripción", "PASO 3: Explorar Proyecto", "PASO 4: Aplicar Auto-Cuestionamiento", "PASO 5: Proponer Módulos", "PASO 6: Identificar Riesgos"]
+    },
+    {
+      "nombre": "flow-creator",
+      "archivo": ".claude/agents/deep-analysis/flow-creator-agent.md",
+      "modelo": "sonnet",
+      "version": "2.1",
+      "responsabilidad": "Crea un flow (sprint) en la base de datos, validando límites según nivel del proyecto",
+      "tools_permitidos": ["mcp__MCPEco__create_flow", "mcp__MCPEco__list_flows"],
+      "prohibiciones": ["NO crear flow si se excede límite", "NO modificar flows existentes", "NO eliminar flows", "NO ignorar validaciones de límite"],
+      "input": {
+        "requiere_parametros": true,
+        "campos": ["project_id (req)", "project_level", "current_sprint_count", "limits", "milestone_analysis"]
+      },
+      "output": {
+        "exito": { "status": "success", "flow": { "flow_id": "", "flow_name": "", "sprint_number": 0 } },
+        "error": { "status": "error", "error_code": "SPRINT_LIMIT_EXCEEDED|FLOW_CREATION_FAILED" }
+      },
+      "errores_posibles": ["SPRINT_LIMIT_EXCEEDED", "FLOW_CREATION_FAILED"],
+      "flujo": ["PASO 1: Validar Límites", "PASO 2: Generar Nombre", "PASO 3: Crear Flow en BD", "PASO 4: Retornar Resultado"]
+    },
+    {
+      "nombre": "impact-filter",
+      "archivo": ".claude/agents/deep-analysis/impact-filter-agent.md",
+      "modelo": "sonnet",
+      "version": "3.1",
+      "responsabilidad": "Filtra y consolida módulos propuestos según nivel del proyecto (MVP/Standard/Enterprise), aplicando auto-cuestionamiento por intensidad",
+      "tools_permitidos": [],
+      "prohibiciones": ["NO aprobar más módulos del límite", "NO crear módulos nuevos", "NO ignorar auto-cuestionamiento", "NO aprobar por razones organizativas", "NO confundir stories con flow_rows"],
+      "input": {
+        "requiere_parametros": true,
+        "campos": ["project_level (req)", "proposed_modules (req)", "limits (req)", "milestone_description (req)"]
+      },
+      "output": {
+        "exito": { "status": "success", "filtering_result": { "modules_proposed": 0, "modules_approved": 0, "approved_modules": [], "omitted_modules": [], "consolidations": [], "auto_questioning_log": [] } },
+        "error": { "status": "error", "error_message": "string" }
+      },
+      "errores_posibles": ["Límite de módulos excedido", "Categoría de módulo no válida", "Consolidación inválida", "Sobrecarga cognitiva"],
+      "flujo": ["PASO 1: Aplicar Auto-Cuestionamiento según nivel", "PASO 2: Filtrar por Categoría", "PASO 3: Consolidar módulos relacionados", "PASO 4: Justificar cada decisión"]
+    },
+    {
+      "nombre": "module-creator",
+      "archivo": ".claude/agents/deep-analysis/module-creator-agent.md",
+      "modelo": "sonnet",
+      "version": "2.4",
+      "responsabilidad": "Crea flow_rows (módulos/features) en la base de datos con su deep_analysis asociado",
+      "tools_permitidos": ["mcp__MCPEco__create_flow_row", "mcp__MCPEco__create_deep_analysis"],
+      "prohibiciones": ["NO crear flow_rows sin flow_id válido", "NO crear tipo 'fix' (solo 'main')", "NUNCA generar IDs manualmente", "NUNCA retornar flow_row_ids sin haberlos creado en BD"],
+      "input": {
+        "requiere_parametros": true,
+        "campos": ["flow_id (req)", "approved_modules (req)", "global_risks (req)", "global_dependencies (req)", "tech (req)", "kind (req)"]
+      },
+      "output": {
+        "exito": { "status": "success", "flow_rows_created": [], "total_created": 0, "total_deep_analyses": 0 },
+        "parcial": { "status": "partial", "partial_results": { "created": 0, "failed": 0 }, "errors": [] },
+        "error": { "status": "error", "error_message": "string" }
+      },
+      "errores_posibles": ["flow_id inválido o inexistente", "Error al crear flow_row", "create_flow_row retornó success=false", "Failed to create deep_analysis"],
+      "flujo": ["PASO 1: Validar Input", "PASO 2.1: Llamar create_flow_row", "PASO 2.2: Validar success=true", "PASO 2.3: Llamar create_deep_analysis", "PASO 2.4: Agregar al resultado", "PASO 3: Consolidar resultados"]
+    },
+    {
+      "nombre": "story-creator",
+      "archivo": ".claude/agents/deep-analysis/story-creator-agent.md",
+      "modelo": "sonnet",
+      "version": "2.3",
+      "responsabilidad": "Crea user stories para cada flow_row, aplicando consolidación inteligente según nivel del proyecto",
+      "tools_permitidos": ["mcp__MCPEco__create_story", "mcp__MCPEco__list_stories"],
+      "prohibiciones": ["NO crear más de 5 stories por flow_row (CONSTRAINT DE BD)", "NO retornar status 'error' si SÍ se crearon stories", "NO crear stories sin criterios de aceptación", "NO crear stories duplicadas"],
+      "input": {
+        "requiere_parametros": true,
+        "campos": ["project_level (req)", "flow_rows (req)", "limits (req)", "tech (req)", "kind (req)", "milestone_description (req)"]
+      },
+      "output": {
+        "exito": { "status": "success|warning|partial_success", "stories_created": 0, "stories_by_module": [], "consolidations_applied": 0, "consolidation_log": [] },
+        "error": { "status": "error", "error_message": "string" }
+      },
+      "errores_posibles": ["Constraint violation: más de 5 stories por flow_row", "Stories sin criterios de aceptación", "Stories duplicadas detectadas"],
+      "flujo": ["PASO 1: Validar constraint de BD (max 5)", "PASO 2.1: Generar stories propuestas", "PASO 2.2: Aplicar auto-cuestionamiento", "PASO 2.3: Consolidar si excede límite", "PASO 2.4: Crear stories en BD", "PASO 3: Calcular métricas"]
+    }
+  ],
+  "resumen_modelos": {
+    "opus": [],
+    "sonnet": ["search-local", "milestone-analyzer", "flow-creator", "impact-filter", "module-creator", "story-creator"],
+    "haiku": ["mcp-validator"],
+    "default": ["general-purpose"]
+  }
+}

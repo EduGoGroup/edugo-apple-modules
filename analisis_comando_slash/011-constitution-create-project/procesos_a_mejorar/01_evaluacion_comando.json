@@ -1,0 +1,29 @@
+{
+  "comando": "011-constitution-create-project",
+  "puntaje": 72,
+  "cumple": [
+    "Frontmatter básico con name, description, allowed-tools",
+    "Validación de input en FASE 1",
+    "Delegación a agentes con JSON.stringify",
+    "Validación de respuestas de agentes",
+    "Validación física de documentos creados",
+    "Manejo de errores con try-catch",
+    "Output JSON estructurado",
+    "Logging con execution_session_manage",
+    "Advertencia FASE 8 secuencial documentada",
+    "Funciones auxiliares documentadas",
+    "Diagrama de flujo claro"
+  ],
+  "no_cumple": [
+    "FASE -1 (TODO List) - AUSENTE",
+    "FASE 0 MCPSearch - NO usa MCPSearch",
+    "Frontmatter incompleto - faltan MCP tools",
+    "Error JSON no estandarizado"
+  ],
+  "mejoras": {
+    "CRITICA": ["M001-allowed-tools", "M002-TODO-List", "M003-MCPSearch"],
+    "ALTA": ["M004-get_document", "M005-error-json", "M006-session-manage"],
+    "MEDIA": ["M007-console-log", "M008-input-validation", "M009-checklist", "M010-max-files"],
+    "BAJA": ["M011-glob-grep", "M012-timestamp", "M013-testing"]
+  }
+}

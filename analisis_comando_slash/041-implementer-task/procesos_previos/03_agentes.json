@@ -1,0 +1,134 @@
+{
+  "comando": "041-implementer-task",
+  "total_agentes": 5,
+  "agentes": [
+    {
+      "nombre": "mcp-validator",
+      "archivo": ".claude/agents/common/mcp-validator.md",
+      "modelo": "haiku",
+      "version": "2.2",
+      "responsabilidad": "Valida conectividad del servidor MCP MCPEco. Ejecuta UNA validación y retorna OK si responde o error si no responde.",
+      "tools_permitidos": ["mcp__MCPEco__list_documents"],
+      "prohibiciones": ["NO usar Bash", "NO usar Read", "NO usar Write", "NO usar Edit", "NO usar TodoWrite", "NO usar Task", "NO crear documentos de prueba", "NO intentar solucionar errores del MCP", "NO hacer múltiples reintentos"],
+      "input": { "requiere_parametros": false, "campos": [] },
+      "output": {
+        "exito": { "status": "ok", "mcp_available": true, "message": "MCP server MCPEco operativo" },
+        "error": { "status": "error", "mcp_available": false, "error_code": "MCP_NOT_AVAILABLE", "error_message": "<descripción>", "suggestion": "..." }
+      },
+      "errores_posibles": ["Tool not found", "Connection refused", "Timeout", "Permission denied"],
+      "flujo": [
+        { "paso": 0, "accion": "Validación Fail-Fast" },
+        { "paso": 1, "accion": "Ejecutar list_documents con limit: 1" },
+        { "paso": 2, "accion": "Retornar JSON estructurado" }
+      ]
+    },
+    {
+      "nombre": "search-local",
+      "archivo": ".claude/agents/common/search-local.md",
+      "modelo": "sonnet",
+      "version": "2.8",
+      "responsabilidad": "Buscar documentación en la base de datos local del MCP usando herramientas MCP. Soporta búsqueda por entidad, semántica (RAG con Ollama) y metadata.",
+      "tools_permitidos": ["mcp__MCPEco__list_documents", "mcp__MCPEco__search_documents_semantic", "mcp__MCPEco__get_document_summary", "mcp__MCPEco__get_document", "Bash (solo para Ollama)"],
+      "prohibiciones": ["NO buscar archivos físicos en disco", "NO usar Bash para find/grep/cat", "NO usar Read/Glob/Grep tools", "NO usar WebSearch/WebFetch", "NO acceder al filesystem"],
+      "input": {
+        "requiere_parametros": true,
+        "campos": ["query (opcional)", "step_type", "search_method", "entity_type", "entity_id", "min_similarity", "top_k", "include_full_content"]
+      },
+      "output": {
+        "exito": { "status": "success", "search_method": "...", "documents_found": 5, "results": [] },
+        "error": { "status": "error", "error_type": "...", "error_message": "...", "suggestion": "..." }
+      },
+      "errores_posibles": ["ERR_INVALID_INPUT", "ERR_MISSING_SEARCH_PARAMS", "ERR_INVALID_ENTITY_TYPE", "ollama_not_available", "no_results"],
+      "flujo": [
+        { "paso": "0.A", "accion": "Validación de Input" },
+        { "paso": "0.B", "accion": "Aplicar Defaults" },
+        { "paso": "0.5", "accion": "Verificar Ollama (si necesario)" },
+        { "paso": 1, "accion": "Decidir Método de Búsqueda" },
+        { "paso": 2, "accion": "Ejecutar Búsqueda (entity/semantic/metadata)" },
+        { "paso": 3, "accion": "Obtener Contenido de Documentos" }
+      ]
+    },
+    {
+      "nombre": "code-executor-agent",
+      "archivo": ".claude/agents/implementer/code-executor-agent.md",
+      "modelo": "sonnet",
+      "version": "1.0",
+      "responsabilidad": "Implementa código para una tarea específica del workflow. Analiza la task_description, determina archivos a crear/modificar, implementa el código y retorna un resumen estructurado.",
+      "tools_permitidos": ["Read", "Write", "Edit"],
+      "prohibiciones": ["NUNCA llamar MCP tools", "NUNCA usar Task() para delegar", "NUNCA usar Bash", "NUNCA manejar tracking", "NUNCA modificar archivos fuera de project_path"],
+      "input": {
+        "requiere_parametros": true,
+        "campos": ["task_title", "task_description (requerido)", "project_path (requerido)", "tech (requerido)", "kind", "project_level", "relevant_docs"]
+      },
+      "output": {
+        "exito": { "status": "success", "files_created": [], "files_modified": [], "implementation_summary": "...", "total_lines_added": 0, "total_lines_deleted": 0 },
+        "error": { "status": "error", "error_code": "INVALID_INPUT", "error_message": "..." }
+      },
+      "errores_posibles": ["INVALID_INPUT - Campos requeridos faltantes"],
+      "flujo": [
+        { "paso": 1, "accion": "Parsear Input" },
+        { "paso": 2, "accion": "Analizar Task Description" },
+        { "paso": 3, "accion": "Leer Contexto Existente" },
+        { "paso": 4, "accion": "Implementar Código" },
+        { "paso": 5, "accion": "Retornar Resultado" }
+      ]
+    },
+    {
+      "nombre": "validator-agent",
+      "archivo": ".claude/agents/implementer/validator-agent.md",
+      "modelo": "haiku",
+      "version": "2.1",
+      "responsabilidad": "Ejecutar comandos de compilación/build y tests según el tech, parsear resultados y reportar el estado de validación del código.",
+      "tools_permitidos": ["Bash"],
+      "prohibiciones": ["NUNCA modificar archivos", "NUNCA llamar MCP tools", "NUNCA usar Task()", "NUNCA ejecutar comandos destructivos", "NUNCA instalar dependencias"],
+      "input": {
+        "requiere_parametros": true,
+        "campos": ["project_path (requerido)", "tech (requerido)", "files_to_validate"]
+      },
+      "output": {
+        "exito": { "status": "success", "validation": { "compiles": true, "tests_pass": true, "tests_skipped": false }, "errors": [], "warnings": [] },
+        "error": { "status": "error", "error_message": "project_path requerido" }
+      },
+      "errores_posibles": ["project_path requerido", "tech requerido", "Errores de compilación"],
+      "flujo": [
+        { "paso": 1, "accion": "Parsear Input" },
+        { "paso": 2, "accion": "Ejecutar Build" },
+        { "paso": 3, "accion": "Ejecutar Tests (si compila)" },
+        { "paso": 4, "accion": "Parsear Errores" },
+        { "paso": 5, "accion": "Retornar Resultado" }
+      ],
+      "techs_soportados": ["golang", "python", "nodejs", "javascript", "typescript", "rust", "java"]
+    },
+    {
+      "nombre": "result-reporter-agent",
+      "archivo": ".claude/agents/implementer/result-reporter-agent.md",
+      "modelo": "haiku",
+      "version": "1.1",
+      "responsabilidad": "Actualiza work_item y avanza task en la base de datos via MCP. Reporta resultados de implementación.",
+      "tools_permitidos": ["mcp__MCPEco__update_work_item_output", "mcp__MCPEco__evaluate_work_item", "mcp__MCPEco__advance_to_next_step"],
+      "prohibiciones": ["NUNCA leer o escribir archivos", "NUNCA usar Task()", "NUNCA usar Bash", "NUNCA manejar tracking", "NUNCA tomar decisiones de negocio"],
+      "input": {
+        "requiere_parametros": true,
+        "campos": ["work_item_id (requerido)", "task_id (requerido)", "current_step (requerido)", "execution_result (requerido)", "action (requerido)"]
+      },
+      "output": {
+        "exito": { "status": "success", "work_item_id": "...", "work_item_updated": true, "evaluation_status": "approved", "next_step": "code_review", "task_advanced": true },
+        "error": { "status": "error", "error_message": "..." }
+      },
+      "errores_posibles": ["Campos requeridos faltantes", "Fallo en update_work_item_output", "Fallo en evaluate_work_item", "Fallo en advance_to_next_step"],
+      "flujo": [
+        { "paso": 1, "accion": "Parsear Input" },
+        { "paso": 2, "accion": "Actualizar Work Item" },
+        { "paso": 3, "accion": "Evaluar Work Item" },
+        { "paso": 4, "accion": "Avanzar al Siguiente Step (si corresponde)" },
+        { "paso": 5, "accion": "Retornar Resultado" }
+      ],
+      "acciones_soportadas": ["complete_and_advance", "complete_only", "update_only"]
+    }
+  ],
+  "resumen_modelos": {
+    "haiku": ["mcp-validator", "validator-agent", "result-reporter-agent"],
+    "sonnet": ["search-local", "code-executor-agent"],
+    "opus": []
+  }
+}

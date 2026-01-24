@@ -1,0 +1,42 @@
+{
+  "comando": "011-constitution-create-project",
+  "version": "1.3",
+  "descripcion": "Orquesta la creacion de un proyecto usando agentes troceados",
+  "frontmatter": {
+    "name": "011-constitution-create-project",
+    "description": "Orquesta la creacion de un proyecto usando agentes troceados.",
+    "allowed_tools": ["Task", "mcp__MCPEco__execution_session_manage", "Read"]
+  },
+  "total_fases": 12,
+  "fases": [
+    {"orden": 0, "nombre": "Validar MCP", "agente": "common/mcp-validator"},
+    {"orden": 1, "nombre": "Preprocesar Input", "agente": null},
+    {"orden": 2, "nombre": "Iniciar/Reutilizar Tracking", "agente": null},
+    {"orden": 3, "nombre": "Analizar Descripcion", "agente": "constitution/analyzer-agent"},
+    {"orden": 4, "nombre": "Crear Proyecto", "agente": "constitution/project-creator-agent"},
+    {"orden": 5, "nombre": "Vincular Tracking", "agente": null},
+    {"orden": 6, "nombre": "Determinar Documentos", "agente": "constitution/document-finder-agent"},
+    {"orden": 7, "nombre": "Buscar Existentes", "agente": "common/search-local"},
+    {"orden": 8, "nombre": "Crear Faltantes", "agente": "common/search-internet + common/document-loader"},
+    {"orden": 9, "nombre": "Asociar Documentos", "agente": "constitution/document-associator-agent"},
+    {"orden": 10, "nombre": "Finalizar Tracking", "agente": null},
+    {"orden": 11, "nombre": "Retornar Resultado", "agente": null}
+  ],
+  "subagent_types": [
+    "common/mcp-validator",
+    "constitution/analyzer-agent",
+    "constitution/project-creator-agent",
+    "constitution/document-finder-agent",
+    "common/search-local",
+    "common/search-internet",
+    "common/document-loader",
+    "constitution/document-associator-agent"
+  ],
+  "herramientas_mcp": [
+    "mcp__MCPEco__execution_session_manage",
+    "mcp__MCPEco__get_document"
+  ],
+  "advertencias_criticas": [
+    "FASE 8 debe ser SECUENCIAL (no paralela) para evitar race conditions en tags"
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "comando": "041-implementer-task",
+  "version": "v2.2",
+  "descripcion": "Orquestador para ejecutar implementación de una tarea del workflow",
+  "frontmatter": {
+    "name": "041-implementer-task",
+    "description": "Orquestador para ejecutar implementación de una tarea del workflow",
+    "allowed_tools": [
+      "Task",
+      "TodoWrite",
+      "MCPSearch",
+      "mcp__MCPEco__get_project_info",
+      "mcp__MCPEco__get_flow_info",
+      "mcp__MCPEco__get_flow_row",
+      "mcp__MCPEco__get_task_details",
+      "mcp__MCPEco__execution_session_manage",
+      "mcp__MCPEco__create_work_item"
+    ]
+  },
+  "total_fases": 13,
+  "fases": [
+    { "orden": -2, "nombre": "Inicializar TODO List", "agente": null },
+    { "orden": -1, "nombre": "Cargar Herramientas MCP", "agente": null },
+    { "orden": 0, "nombre": "Validar MCP", "agente": "mcp-validator" },
+    { "orden": 1, "nombre": "Preprocesar Input", "agente": null },
+    { "orden": 2, "nombre": "Iniciar Tracking", "agente": null },
+    { "orden": 3, "nombre": "Obtener Contexto", "agente": null },
+    { "orden": 4, "nombre": "Crear Work Item", "agente": null },
+    { "orden": 5, "nombre": "Buscar Documentación", "agente": "search-local" },
+    { "orden": 6, "nombre": "Implementar Código", "agente": "code-executor-agent" },
+    { "orden": 7, "nombre": "Validar Código", "agente": "validator-agent" },
+    { "orden": 8, "nombre": "Reportar Resultados", "agente": "result-reporter-agent" },
+    { "orden": 9, "nombre": "Finalizar Tracking", "agente": null },
+    { "orden": 10, "nombre": "Retornar Resultado", "agente": null }
+  ],
+  "subagent_types": [
+    "mcp-validator",
+    "search-local",
+    "code-executor-agent",
+    "validator-agent",
+    "result-reporter-agent"
+  ],
+  "herramientas_mcp": [
+    "mcp__MCPEco__get_project_info",
+    "mcp__MCPEco__get_flow_info",
+    "mcp__MCPEco__get_flow_row",
+    "mcp__MCPEco__get_task_details",
+    "mcp__MCPEco__execution_session_manage",
+    "mcp__MCPEco__create_work_item"
+  ],
+  "advertencias_criticas": [
+    "ERROR CRÍTICO: MCP Server no disponible - Se lanza cuando la validación MCP falla en FASE 0",
+    "Project ID es OBLIGATORIO - Debe pasarse como argumento del comando ($ARGUMENTS)",
+    "Task ID es OBLIGATORIO - Debe pasarse en el prompt ($PROMPT)",
+    "OBLIGATORIO: Crear TODO list al inicio para dar visibilidad del progreso al usuario (FASE -2)",
+    "OBLIGATORIO: Antes de ejecutar cualquier lógica, cargar TODAS las herramientas MCP requeridas (FASE -1)"
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "comando": "042-implementer-correction",
+  "total_fases": 7,
+  "fases": [
+    {
+      "fase": -2,
+      "nombre": "Inicializar TODO List",
+      "proposito": "Crear lista de tareas visible al usuario con 6 items",
+      "agente": null,
+      "modelo": null,
+      "mcp_tools": [],
+      "entrada": { "tipo": "ninguna", "campos": [] },
+      "salida": { "campos": ["TODO list con 6 items"] },
+      "validaciones": [],
+      "errores_posibles": []
+    },
+    {
+      "fase": -1,
+      "nombre": "Cargar Herramientas MCP",
+      "proposito": "Cargar herramientas MCP con MCPSearch",
+      "agente": null,
+      "modelo": null,
+      "mcp_tools": ["MCPSearch (select:mcp__MCPEco__execution_session_manage)"],
+      "entrada": { "tipo": "ninguna", "campos": [] },
+      "salida": { "campos": ["Herramientas cargadas"] },
+      "validaciones": [],
+      "errores_posibles": []
+    },
+    {
+      "fase": 0,
+      "nombre": "Validar MCP",
+      "proposito": "Validar servidor MCP disponible",
+      "agente": "mcp-validator",
+      "modelo": "haiku",
+      "mcp_tools": [],
+      "entrada": { "tipo": "prompt estático", "campos": [] },
+      "salida": { "campos": ["status"] },
+      "validaciones": ["status === 'ok'"],
+      "errores_posibles": [{"error_code": "MCP_UNAVAILABLE", "fatal": true}]
+    },
+    {
+      "fase": 1,
+      "nombre": "Parsear y Validar Input",
+      "proposito": "Parsear JSON, validar campos obligatorios, determinar tracking",
+      "agente": null,
+      "modelo": null,
+      "mcp_tools": ["mcp__MCPEco__execution_session_manage (condicional)"],
+      "entrada": { "tipo": "JSON", "campos": ["project_id (REQ)", "project_path (REQ)", "tech (REQ)", "session_id", "step_id", "task_id", "correction_context", "issues_to_fix"] },
+      "salida": { "campos": ["input parseado", "TRACKING_ENABLED", "logStep function"] },
+      "validaciones": ["JSON válido", "project_id presente", "project_path presente", "tech presente", "issues_to_fix es array"],
+      "errores_posibles": [
+        {"error_code": "INVALID_JSON_INPUT", "fatal": true},
+        {"error_code": "PROJECT_ID_REQUIRED", "fatal": true},
+        {"error_code": "MISSING_REQUIRED_FIELDS", "fatal": true},
+        {"error_code": "INVALID_ISSUES_FORMAT", "fatal": true}
+      ]
+    },
+    {
+      "fase": 2,
+      "nombre": "Aplicar Correcciones",
+      "proposito": "Delegar a correction-executor para aplicar fixes",
+      "agente": "correction-executor-agent",
+      "modelo": "sonnet",
+      "mcp_tools": [],
+      "entrada": { "tipo": "JSON", "campos": ["project_path", "tech", "issues_to_fix"] },
+      "salida": { "campos": ["correctionsApplied", "filesModified", "corrections_failed", "corrections_detail", "failures_detail"] },
+      "validaciones": ["status === 'success'"],
+      "errores_posibles": [{"error_code": "CORRECTIONS_FAILED", "fatal": true}]
+    },
+    {
+      "fase": 3,
+      "nombre": "Validar Correcciones",
+      "proposito": "Verificar que código corregido compila y pasa tests",
+      "agente": "validator-agent",
+      "modelo": "haiku",
+      "mcp_tools": [],
+      "entrada": { "tipo": "JSON", "campos": ["project_path", "tech", "files_to_validate"] },
+      "salida": { "campos": ["compiles", "tests_pass", "validationSkipped"] },
+      "validaciones": [],
+      "errores_posibles": [{"error_code": null, "fatal": false, "manejo": "marca validation_skipped: true"}]
+    },
+    {
+      "fase": 4,
+      "nombre": "Retornar Resultado",
+      "proposito": "Consolidar y retornar JSON final",
+      "agente": null,
+      "modelo": null,
+      "mcp_tools": [],
+      "entrada": { "tipo": "variables de fases anteriores", "campos": [] },
+      "salida": { "campos": ["success", "project_id", "task_id", "mode", "correction_context", "metrics", "files_modified", "summary"] },
+      "validaciones": [],
+      "errores_posibles": []
+    }
+  ],
+  "manejo_errores": {
+    "estrategia": "Fail-fast con early return. Cada error retorna JSON con success: false. NO lanza excepciones.",
+    "output_error": { "success": false, "error": "<ERROR_CODE>", "details": "<mensaje>" }
+  },
+  "funciones_auxiliares": [
+    { "nombre": "logStep", "proposito": "Enviar logs a BD si tracking habilitado", "parametros": ["message"], "retorno": "void" }
+  ]
+}
