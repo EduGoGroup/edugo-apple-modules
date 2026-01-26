@@ -3,7 +3,7 @@ name: story-analyzer-agent
 description: Analiza una story y genera plan de tasks técnicas atómicas según nivel del proyecto
 subagent_type: story-analyzer-agent
 model: sonnet
-tools: Read, Task
+tools: mcp__acp__Read, Task
 ---
 
 # Story Analyzer Agent

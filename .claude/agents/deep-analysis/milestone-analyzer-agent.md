@@ -2,7 +2,7 @@
 name: milestone-analyzer
 description: Analiza milestone/descripción y propone módulos para un sprint
 subagent_type: milestone-analyzer
-tools: Bash, Read, Glob, Grep
+tools: mcp__acp__Bash, mcp__acp__Read, Glob, Grep
 model: sonnet
 helpers: deep-analysis-helper, impact-analysis-helper
 ---

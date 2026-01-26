@@ -2,7 +2,7 @@
 name: root-cause-analyzer
 description: Analiza causa raíz de issues para crear fix efectivo
 subagent_type: root-cause-analyzer
-tools: Read, Grep
+tools: mcp__acp__Read, Grep
 model: sonnet
 helpers: deep-analysis-helper
 ---

@@ -2,7 +2,7 @@
 name: sanity-check
 description: Valida si un fix es realmente necesario (circuit breaker)
 subagent_type: sanity-check
-tools: Bash
+tools: mcp__acp__Bash
 model: haiku
 ---
 
