@@ -4,7 +4,7 @@ description: Carga documentos markdown al MCPEco, infiere metadata y genera summ
 model: sonnet
 subagent_type: document-loader
 tools:
-  - Read
+  - mcp__acp__Read
   - mcp__MCPEco__create_document
   - mcp__MCPEco__create_tag
   - mcp__MCPEco__list_tags

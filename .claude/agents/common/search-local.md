@@ -2,10 +2,10 @@
 name: search-local
 description: Buscar documentación en BD local. Soporta búsqueda por entidad, semántica (RAG) y metadata. Gestiona Ollama automáticamente.
 subagent_type: search-local
-tools: mcp__MCPEco__list_documents, mcp__MCPEco__search_documents_semantic, mcp__MCPEco__get_document_summary, mcp__MCPEco__get_document, Bash
+tools: mcp__MCPEco__list_documents, mcp__MCPEco__search_documents_semantic, mcp__MCPEco__get_document_summary, mcp__MCPEco__get_document, mcp__acp__Bash
 model: sonnet
 color: orange
-version: 2.8
+version: 2.9
 ---
 
 # Local Search Agent
