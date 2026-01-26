@@ -2,7 +2,7 @@
 name: validator-agent
 description: Valida compilación y ejecución de tests de código Swift/Apple
 subagent_type: validator
-tools: Bash
+tools: mcp__acp__Bash
 model: sonnet
 color: yellow
 ---

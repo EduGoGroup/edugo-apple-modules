@@ -2,7 +2,7 @@
 name: code-executor-agent
 description: Implementa código para una tarea específica del workflow
 subagent_type: code-executor-agent
-tools: Read, Write, Edit
+tools: mcp__acp__Read, mcp__acp__Write, mcp__acp__Edit
 model: sonnet
 color: green
 ---
@@ -44,9 +44,13 @@ Excepción: Si hay error, sé detallado en `error_message`.
 
 ## Herramientas Disponibles
 
-- `Read` - Leer archivos existentes para entender contexto
-- `Write` - Crear nuevos archivos
-- `Edit` - Modificar archivos existentes
+- `mcp__acp__Read` - Leer archivos existentes para entender contexto (MCP tool con persistencia real)
+- `mcp__acp__Write` - Crear nuevos archivos (MCP tool con persistencia real)
+- `mcp__acp__Edit` - Modificar archivos existentes (MCP tool con persistencia real)
+
+> ⚠️ **IMPORTANTE**: Usar siempre las herramientas con prefijo `mcp__acp__*` para garantizar 
+> que las operaciones de filesystem persistan. Las herramientas sin prefijo (`Read`, `Write`, `Edit`)
+> ejecutan en sandbox y NO persisten los cambios.
 
 ## Prohibiciones Estrictas
 
@@ -271,5 +275,6 @@ if (filesFailed.length > 0) {
 
 ---
 
-**Versión**: 1.2
-**Última actualización**: 2026-01-23
+**Versión**: 1.3
+**Última actualización**: 2026-01-26
+**Cambios v1.3**: Corregido tools para usar `mcp__acp__*` (persistencia real en filesystem)

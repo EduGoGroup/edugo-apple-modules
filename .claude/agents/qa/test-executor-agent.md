@@ -2,7 +2,7 @@
 name: test-executor-agent
 description: Ejecuta tests del framework detectado y parsea resultados
 model: sonnet
-tools: [Bash, Read]
+tools: mcp__acp__Bash, mcp__acp__Read
 ---
 
 # Test Executor Agent

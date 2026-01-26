@@ -3,7 +3,7 @@ name: code-analyzer-agent
 subagent_type: code-analyzer
 description: Analiza archivos de código y detecta issues de seguridad, calidad y estilo
 model: sonnet
-tools: Read
+tools: mcp__acp__Read
 ---
 
 # Code Analyzer Agent
