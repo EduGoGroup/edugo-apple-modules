@@ -1,3 +1,11 @@
+//
+//  Entity.swift
+//  EduGoCommon
+//
+//  Copyright © 2026 EduGo. All rights reserved.
+//  Licensed under the MIT License.
+//
+
 import Foundation
 
 /// Base protocol for all domain entities in EduGo platform.

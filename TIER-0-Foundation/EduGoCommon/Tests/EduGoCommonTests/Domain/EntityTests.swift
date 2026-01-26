@@ -1,9 +1,22 @@
+//
+//  EntityTests.swift
+//  EduGoCommonTests
+//
+//  Copyright © 2026 EduGo. All rights reserved.
+//  Licensed under the MIT License.
+//
+
 import XCTest
 import Foundation
 @testable import EduGoCommon
 
 /// Comprehensive test suite for the Entity protocol.
 final class EntityTests: XCTestCase {
+
+    // MARK: - Constants
+
+    /// Number of entities to create in concurrent tests.
+    private static let concurrentEntityCount = 50
 
     // MARK: - Test Fixtures
 
@@ -126,7 +139,7 @@ final class EntityTests: XCTestCase {
     }
 
     func testMultipleEntitiesProcessedConcurrently() async {
-        let entities = (0..<50).map { MockEntity(name: "E\($0)") }
+        let entities = (0..<Self.concurrentEntityCount).map { MockEntity(name: "E\($0)") }
         let store = EntityStore()
 
         await withTaskGroup(of: Void.self) { group in
@@ -136,7 +149,7 @@ final class EntityTests: XCTestCase {
         }
 
         let count = await store.count()
-        XCTAssertEqual(count, 50)
+        XCTAssertEqual(count, Self.concurrentEntityCount)
     }
 
     func testEntityCanBeSharedBetweenTasks() async throws {
@@ -170,14 +183,14 @@ final class EntityTests: XCTestCase {
 
     // MARK: - Edge Cases
 
-    func testEntityWithMinUUID() {
-        let minUUID = UUID(uuidString: "00000000-0000-0000-0000-000000000000")!
+    func testEntityWithMinUUID() throws {
+        let minUUID = try XCTUnwrap(UUID(uuidString: "00000000-0000-0000-0000-000000000000"))
         let entity = MockEntity(id: minUUID)
         XCTAssertEqual(entity.id, minUUID)
     }
 
-    func testEntityWithMaxUUID() {
-        let maxUUID = UUID(uuidString: "FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF")!
+    func testEntityWithMaxUUID() throws {
+        let maxUUID = try XCTUnwrap(UUID(uuidString: "FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF"))
         let entity = MockEntity(id: maxUUID)
         XCTAssertEqual(entity.id, maxUUID)
     }
