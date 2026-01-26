@@ -16,11 +16,11 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(path: "../TIER-0-Foundation/EduGoCommon"),
-        .package(path: "../TIER-1-Core/Logger"),
-        .package(path: "../TIER-1-Core/Models"),
-        .package(path: "../TIER-2-Infrastructure/Storage"),
-        .package(path: "../TIER-3-Domain/Auth")
+        .package(path: "../../TIER-0-Foundation/EduGoCommon"),
+        .package(path: "../../TIER-1-Core/Logger"),
+        .package(path: "../../TIER-1-Core/Models"),
+        .package(path: "../../TIER-2-Infrastructure/Storage"),
+        .package(path: "../Auth")
     ],
     targets: [
         .target(

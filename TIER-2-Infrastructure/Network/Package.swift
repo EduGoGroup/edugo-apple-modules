@@ -16,9 +16,9 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(path: "../TIER-0-Foundation/EduGoCommon"),
-        .package(path: "../TIER-1-Core/Logger"),
-        .package(path: "../TIER-1-Core/Models")
+        .package(path: "../../TIER-0-Foundation/EduGoCommon"),
+        .package(path: "../../TIER-1-Core/Logger"),
+        .package(path: "../../TIER-1-Core/Models")
     ],
     targets: [
         .target(
