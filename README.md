@@ -206,6 +206,7 @@ final class AuthServiceTests: XCTestCase {
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Decisiones de diseño, justificación de 4 tiers, trade-offs |
 | [DEVELOPMENT_GUIDE.md](DEVELOPMENT_GUIDE.md) | Cómo agregar módulo, modificar dependencias, convenciones |
 | [docs/tier-architecture-diagram.md](docs/tier-architecture-diagram.md) | Diagrama ASCII/Mermaid de tiers + reglas de dependencias |
+| [docs/architecture/error-handling-guide.md](docs/architecture/error-handling-guide.md) | Guía completa de manejo de errores tipados por capa |
 
 ---
 
