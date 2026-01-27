@@ -19,8 +19,7 @@ let package = Package(
         .package(path: "../../TIER-0-Foundation/EduGoCommon"),
         .package(path: "../../TIER-1-Core/Logger"),
         .package(path: "../../TIER-1-Core/Models"),
-        .package(path: "../../TIER-2-Infrastructure/Storage"),
-        .package(path: "../Auth")
+        .package(path: "../../TIER-2-Infrastructure/Storage")
     ],
     targets: [
         .target(
@@ -29,8 +28,7 @@ let package = Package(
                 .product(name: "EduGoCommon", package: "EduGoCommon"),
                 .product(name: "Logger", package: "Logger"),
                 .product(name: "Models", package: "Models"),
-                .product(name: "Storage", package: "Storage"),
-                .product(name: "Auth", package: "Auth")
+                .product(name: "Storage", package: "Storage")
             ],
             swiftSettings: [
                 .swiftLanguageMode(.v6),

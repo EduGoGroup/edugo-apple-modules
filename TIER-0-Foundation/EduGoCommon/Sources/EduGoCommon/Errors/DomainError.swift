@@ -27,7 +27,7 @@ import Foundation
 ///     return Student(name: name, age: age)
 /// }
 /// ```
-public enum DomainError: Error, LocalizedError, Sendable {
+public enum DomainError: Error, LocalizedError, Sendable, Equatable {
     /// Una validación de datos ha fallado.
     ///
     /// - Parameters:

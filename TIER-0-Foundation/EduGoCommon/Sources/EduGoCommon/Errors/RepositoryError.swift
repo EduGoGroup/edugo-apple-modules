@@ -161,3 +161,27 @@ public enum RepositoryError: Error, LocalizedError, Sendable {
         }
     }
 }
+
+// MARK: - Equatable
+
+extension RepositoryError: Equatable {
+    public static func == (lhs: RepositoryError, rhs: RepositoryError) -> Bool {
+        switch (lhs, rhs) {
+        case (.fetchFailed(let lReason), .fetchFailed(let rReason)):
+            return lReason == rReason
+        case (.saveFailed(let lReason), .saveFailed(let rReason)):
+            return lReason == rReason
+        case (.deleteFailed(let lReason), .deleteFailed(let rReason)):
+            return lReason == rReason
+        case (.connectionError(let lError), .connectionError(let rError)):
+            // Comparar errors por su localizedDescription ya que Error no es Equatable
+            return lError?.localizedDescription == rError?.localizedDescription
+        case (.serializationError(let lType), .serializationError(let rType)):
+            return lType == rType
+        case (.dataInconsistency(let lDesc), .dataInconsistency(let rDesc)):
+            return lDesc == rDesc
+        default:
+            return false
+        }
+    }
+}
