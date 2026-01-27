@@ -188,3 +188,251 @@ struct OSLoggerFactoryTests {
         // Should not crash
     }
 }
+
+@Suite("LoggerRegistry Tests", .serialized)
+struct LoggerRegistryTests {
+
+    @Test("LoggerRegistry shared instance is accessible")
+    func testSharedInstance() async {
+        let registry = LoggerRegistry.shared
+        let config = await registry.configuration
+        #expect(config.subsystem == "com.edugo.apple")
+    }
+
+    @Test("Configure registry with new configuration")
+    func testConfigureRegistry() async {
+        let registry = LoggerRegistry.shared
+        let newConfig = LogConfiguration(
+            globalLevel: .warning,
+            environment: .production
+        )
+
+        await registry.configure(with: newConfig)
+        let config = await registry.configuration
+
+        #expect(config.globalLevel == .warning)
+        #expect(config.environment == .production)
+    }
+
+    @Test("Register category successfully")
+    func testRegisterCategory() async {
+        let registry = LoggerRegistry.shared
+        await registry.reset()
+
+        let wasRegistered = await registry.register(category: SystemLogCategory.logger)
+        #expect(wasRegistered == true)
+
+        let isRegistered = await registry.isRegistered(category: SystemLogCategory.logger)
+        #expect(isRegistered == true)
+    }
+
+    @Test("Register duplicate category returns false")
+    func testRegisterDuplicateCategory() async {
+        let registry = LoggerRegistry.shared
+        await registry.reset()
+
+        let firstRegistration = await registry.register(category: SystemLogCategory.network)
+        #expect(firstRegistration == true)
+
+        let secondRegistration = await registry.register(category: SystemLogCategory.network)
+        #expect(secondRegistration == false)
+    }
+
+    @Test("Register multiple categories")
+    func testRegisterMultipleCategories() async {
+        let registry = LoggerRegistry.shared
+        await registry.reset()
+
+        let categories: [LogCategory] = [
+            SystemLogCategory.logger,
+            SystemLogCategory.network,
+            SystemLogCategory.database
+        ]
+
+        let count = await registry.register(categories: categories)
+        #expect(count == 3)
+
+        let registeredCount = await registry.registeredCategoryCount
+        #expect(registeredCount == 3)
+    }
+
+    @Test("Register system categories")
+    func testRegisterSystemCategories() async {
+        let registry = LoggerRegistry.shared
+        await registry.reset()
+
+        let count = await registry.registerSystemCategories()
+        #expect(count > 0)
+
+        let isRegistered = await registry.isRegistered(category: SystemLogCategory.logger)
+        #expect(isRegistered == true)
+    }
+
+    @Test("Logger factory creates logger for category")
+    func testLoggerFactory() async {
+        let registry = LoggerRegistry.shared
+        await registry.reset()
+        await registry.configure(with: .development)
+
+        let logger = await registry.logger(for: SystemLogCategory.logger)
+
+        // Logger should be usable
+        await logger.info("Test message from registry logger")
+    }
+
+    @Test("Logger factory caches loggers")
+    func testLoggerFactoryCaching() async {
+        let registry = LoggerRegistry.shared
+        await registry.reset()
+        await registry.configure(with: .development)
+
+        let logger1 = await registry.logger(for: SystemLogCategory.logger)
+        let count1 = await registry.cachedLoggerCount
+        #expect(count1 == 1)
+
+        let logger2 = await registry.logger(for: SystemLogCategory.logger)
+        let count2 = await registry.cachedLoggerCount
+        #expect(count2 == 1)
+
+        // Should be same instance
+        await logger1.info("Message 1")
+        await logger2.info("Message 2")
+    }
+
+    @Test("Set level override for category")
+    func testSetLevelOverride() async {
+        let registry = LoggerRegistry.shared
+        await registry.reset()
+        await registry.configure(with: .production)
+
+        // Set debug level for specific category
+        await registry.setLevel(.debug, for: SystemLogCategory.logger)
+
+        let logger = await registry.logger(for: SystemLogCategory.logger)
+        await logger.debug("Debug message should be logged")
+    }
+
+    @Test("Set configuration override for category")
+    func testSetConfigurationOverride() async {
+        let registry = LoggerRegistry.shared
+        await registry.reset()
+        await registry.configure(with: .production)
+
+        let customConfig = LogConfiguration(
+            globalLevel: .debug,
+            environment: .development,
+            includeMetadata: true
+        )
+
+        await registry.setConfiguration(customConfig, for: SystemLogCategory.network)
+
+        let logger = await registry.logger(for: SystemLogCategory.network)
+        await logger.debug("Custom config message")
+    }
+
+    @Test("Reset configuration for category")
+    func testResetConfigurationForCategory() async {
+        let registry = LoggerRegistry.shared
+        await registry.reset()
+        await registry.configure(with: .production)
+
+        // Set override
+        await registry.setLevel(.debug, for: SystemLogCategory.logger)
+        let logger1 = await registry.logger(for: SystemLogCategory.logger)
+        await logger1.debug("With override")
+
+        // Reset override
+        await registry.resetConfiguration(for: SystemLogCategory.logger)
+        let logger2 = await registry.logger(for: SystemLogCategory.logger)
+        await logger2.debug("After reset")
+    }
+
+    @Test("Clear cache removes all loggers")
+    func testClearCache() async {
+        let registry = LoggerRegistry.shared
+        await registry.reset()
+
+        _ = await registry.logger(for: SystemLogCategory.logger)
+        _ = await registry.logger(for: SystemLogCategory.network)
+
+        let count1 = await registry.cachedLoggerCount
+        #expect(count1 == 2)
+
+        await registry.clearCache()
+
+        let count2 = await registry.cachedLoggerCount
+        #expect(count2 == 0)
+    }
+
+    @Test("Clear cache for specific category")
+    func testClearCacheForCategory() async {
+        let registry = LoggerRegistry.shared
+        await registry.reset()
+
+        _ = await registry.logger(for: SystemLogCategory.logger)
+        _ = await registry.logger(for: SystemLogCategory.network)
+
+        let count1 = await registry.cachedLoggerCount
+        #expect(count1 == 2)
+
+        await registry.clearCache(for: SystemLogCategory.logger)
+
+        let count2 = await registry.cachedLoggerCount
+        #expect(count2 == 1)
+    }
+
+    @Test("Logger for category by string ID")
+    func testLoggerForCategoryId() async {
+        let registry = LoggerRegistry.shared
+        await registry.reset()
+        await registry.configure(with: .development)
+
+        let logger = await registry.logger(forCategoryId: "com.edugo.custom.test")
+        await logger.info("Test message from string ID")
+    }
+
+    @Test("Configure with preset")
+    func testConfigureWithPreset() async {
+        let registry = LoggerRegistry.shared
+        await registry.reset()
+
+        await registry.configure(preset: .production)
+        let config = await registry.configuration
+
+        #expect(config.globalLevel == .warning)
+        #expect(config.environment == .production)
+    }
+
+    @Test("Reset registry clears everything")
+    func testResetRegistry() async {
+        let registry = LoggerRegistry.shared
+
+        // Setup some state
+        await registry.register(category: SystemLogCategory.logger)
+        _ = await registry.logger(for: SystemLogCategory.network)
+        await registry.setLevel(.debug, for: SystemLogCategory.database)
+
+        let count1 = await registry.registeredCategoryCount
+        let cached1 = await registry.cachedLoggerCount
+        #expect(count1 > 0)
+        #expect(cached1 > 0)
+
+        // Reset
+        await registry.reset()
+
+        let count2 = await registry.registeredCategoryCount
+        let cached2 = await registry.cachedLoggerCount
+        #expect(count2 == 0)
+        #expect(cached2 == 0)
+    }
+
+    @Test("Logger without category uses global config")
+    func testLoggerWithoutCategory() async {
+        let registry = LoggerRegistry.shared
+        await registry.reset()
+        await registry.configure(with: .development)
+
+        let logger = await registry.logger()
+        await logger.info("Message without category")
+    }
+}
