@@ -30,12 +30,30 @@ public actor AuthManager: Sendable, UserContextProtocol {
     }
 
     /// Sign in with credentials
+    ///
+    /// - Parameters:
+    ///   - email: User email address
+    ///   - password: User password
+    ///
+    /// - Throws: `DomainError.validationFailed` if email is invalid
+    ///
+    /// - Note: This is a placeholder implementation for development.
+    ///         Production implementation should:
+    ///         1. Validate email format
+    ///         2. Call NetworkClient to authenticate via API
+    ///         3. Handle RepositoryError for network failures
+    ///         4. Persist session using StorageManager
     public func signIn(email: String, password: String) async throws {
-        // Placeholder implementation
-        // In production, this would call authentication API
-        let user = User(id: UUID(), email: email, name: "User")
+        // TODO: Replace with real authentication implementation
+        // This is a DEVELOPMENT-ONLY placeholder
+        #if DEBUG
+        let user = User(id: UUID(), email: email, name: "Dev User")
         currentUser = user
-        accessToken = "mock_token"
+        accessToken = "dev_token_\(UUID().uuidString)"
+        #else
+        // In release builds, throw error to prevent accidental use
+        throw DomainError.invalidOperation(operation: "Authentication not configured for production")
+        #endif
     }
 
     /// Sign out
