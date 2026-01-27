@@ -25,6 +25,9 @@ let package = Package(
                 .product(name: "EduGoCommon", package: "EduGoCommon")
             ],
             exclude: ["Documentation"],
+            resources: [
+                .process("Logger.docc")
+            ],
             swiftSettings: [
                 .swiftLanguageMode(.v6),
                 .enableExperimentalFeature("StrictConcurrency=complete")

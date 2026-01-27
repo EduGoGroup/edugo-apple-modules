@@ -148,7 +148,9 @@ public actor LoggerConfigurator {
     ///   - level: El nivel a establecer
     ///   - categoryId: El identifier de la categoría
     public func setLevel(_ level: LogLevel, for categoryId: String) async {
-        await registry.setLevel(.debug, for: SystemLogCategory(rawValue: categoryId) ?? .system)
+        // Crear categoría dinámica para el identifier proporcionado
+        let dynamicCategory = DynamicLogCategory(identifier: categoryId)
+        await registry.setLevel(level, for: dynamicCategory)
     }
 
     /// Establece un nivel específico para una categoría.
