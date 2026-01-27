@@ -436,3 +436,241 @@ struct LoggerRegistryTests {
         await logger.info("Message without category")
     }
 }
+
+@Suite("EnvironmentConfiguration Tests", .serialized)
+struct EnvironmentConfigurationTests {
+    
+    @Test("Load empty environment")
+    func testLoadEmptyEnvironment() {
+        let config = EnvironmentConfiguration.load(from: [:])
+        
+        #expect(config.logLevel == nil)
+        #expect(config.isEnabled == nil)
+        #expect(config.includeMetadata == nil)
+        #expect(config.environment == nil)
+        #expect(config.subsystem == nil)
+        #expect(config.hasAnyConfiguration == false)
+    }
+    
+    @Test("Parse log level from environment")
+    func testParseLogLevel() {
+        let env = ["EDUGO_LOG_LEVEL": "debug"]
+        let config = EnvironmentConfiguration.load(from: env)
+        
+        #expect(config.logLevel == .debug)
+    }
+    
+    @Test("Parse all log levels")
+    func testParseAllLogLevels() {
+        let levels = [
+            ("debug", LogLevel.debug),
+            ("info", LogLevel.info),
+            ("warning", LogLevel.warning),
+            ("warn", LogLevel.warning),
+            ("error", LogLevel.error)
+        ]
+        
+        for (string, expected) in levels {
+            let config = EnvironmentConfiguration.load(from: ["EDUGO_LOG_LEVEL": string])
+            #expect(config.logLevel == expected)
+        }
+    }
+    
+    @Test("Parse boolean values")
+    func testParseBooleanValues() {
+        let trueValues = ["true", "1", "yes", "TRUE", "Yes"]
+        let falseValues = ["false", "0", "no", "FALSE", "No"]
+        
+        for value in trueValues {
+            let config = EnvironmentConfiguration.load(from: ["EDUGO_LOG_ENABLED": value])
+            #expect(config.isEnabled == true)
+        }
+        
+        for value in falseValues {
+            let config = EnvironmentConfiguration.load(from: ["EDUGO_LOG_ENABLED": value])
+            #expect(config.isEnabled == false)
+        }
+    }
+    
+    @Test("Parse environment")
+    func testParseEnvironment() {
+        let envs: [(String, LogConfiguration.Environment)] = [
+            ("development", .development),
+            ("staging", .staging),
+            ("production", .production)
+        ]
+        
+        for (string, expected) in envs {
+            let config = EnvironmentConfiguration.load(from: ["EDUGO_ENVIRONMENT": string])
+            #expect(config.environment == expected)
+        }
+    }
+    
+    @Test("Parse subsystem")
+    func testParseSubsystem() {
+        let env = ["EDUGO_LOG_SUBSYSTEM": "com.test.custom"]
+        let config = EnvironmentConfiguration.load(from: env)
+        
+        #expect(config.subsystem == "com.test.custom")
+    }
+    
+    @Test("Parse multiple values")
+    func testParseMultipleValues() {
+        let env = [
+            "EDUGO_LOG_LEVEL": "info",
+            "EDUGO_LOG_ENABLED": "true",
+            "EDUGO_LOG_METADATA": "false",
+            "EDUGO_ENVIRONMENT": "staging",
+            "EDUGO_LOG_SUBSYSTEM": "com.test.app"
+        ]
+        
+        let config = EnvironmentConfiguration.load(from: env)
+        
+        #expect(config.logLevel == .info)
+        #expect(config.isEnabled == true)
+        #expect(config.includeMetadata == false)
+        #expect(config.environment == .staging)
+        #expect(config.subsystem == "com.test.app")
+        #expect(config.hasAnyConfiguration == true)
+    }
+    
+    @Test("Supported keys list")
+    func testSupportedKeys() {
+        let keys = EnvironmentConfiguration.supportedKeys()
+        
+        #expect(keys.contains("EDUGO_LOG_LEVEL"))
+        #expect(keys.contains("EDUGO_LOG_ENABLED"))
+        #expect(keys.contains("EDUGO_LOG_METADATA"))
+        #expect(keys.contains("EDUGO_ENVIRONMENT"))
+        #expect(keys.contains("EDUGO_LOG_SUBSYSTEM"))
+    }
+    
+    @Test("Documentation generation")
+    func testDocumentation() {
+        let docs = EnvironmentConfiguration.documentation()
+        
+        #expect(docs.contains("EDUGO_LOG_LEVEL"))
+        #expect(docs.contains("EDUGO_LOG_ENABLED"))
+        #expect(docs.contains("Example"))
+    }
+}
+
+@Suite("LoggerConfigurator Tests", .serialized)
+struct LoggerConfiguratorTests {
+    
+    @Test("Configurator shared instance accessible")
+    func testSharedInstance() async {
+        let configurator = LoggerConfigurator.shared
+        let level = await configurator.globalLevel
+        
+        // Should have some default level
+        #expect([.debug, .info, .warning, .error].contains(level))
+    }
+    
+    @Test("Set global level")
+    func testSetGlobalLevel() async {
+        let configurator = LoggerConfigurator.shared
+        
+        await configurator.setGlobalLevel(.error)
+        let level = await configurator.globalLevel
+        
+        #expect(level == .error)
+    }
+    
+    @Test("Set enabled state")
+    func testSetEnabled() async {
+        let configurator = LoggerConfigurator.shared
+        
+        await configurator.setEnabled(false)
+        let enabled = await configurator.isEnabled
+        
+        #expect(enabled == false)
+        
+        // Restore
+        await configurator.setEnabled(true)
+    }
+    
+    @Test("Set include metadata")
+    func testSetIncludeMetadata() async {
+        let configurator = LoggerConfigurator.shared
+        
+        await configurator.setIncludeMetadata(true)
+        let config = await configurator.configuration
+        
+        #expect(config.includeMetadata == true)
+    }
+    
+    @Test("Set level for category")
+    func testSetLevelForCategory() async {
+        let configurator = LoggerConfigurator.shared
+        
+        await configurator.setLevel(.debug, for: SystemLogCategory.logger)
+        
+        // Should not crash
+    }
+    
+    @Test("Reset category")
+    func testResetCategory() async {
+        let configurator = LoggerConfigurator.shared
+        
+        await configurator.setLevel(.debug, for: SystemLogCategory.network)
+        await configurator.resetCategory(SystemLogCategory.network)
+        
+        // Should not crash
+    }
+    
+    @Test("Apply preset development")
+    func testApplyPresetDevelopment() async {
+        let configurator = LoggerConfigurator.shared
+        
+        await configurator.applyPreset(.development)
+        let level = await configurator.globalLevel
+        let env = await configurator.environment
+        
+        #expect(level == .debug)
+        #expect(env == .development)
+    }
+    
+    @Test("Apply preset production")
+    func testApplyPresetProduction() async {
+        let configurator = LoggerConfigurator.shared
+        
+        await configurator.applyPreset(.production)
+        let level = await configurator.globalLevel
+        let env = await configurator.environment
+        
+        #expect(level == .warning)
+        #expect(env == .production)
+    }
+    
+    @Test("Convenience configure development")
+    func testConfigureDevelopment() async {
+        let configurator = LoggerConfigurator.shared
+        
+        await configurator.configureDevelopment()
+        let env = await configurator.environment
+        
+        #expect(env == .development)
+    }
+    
+    @Test("Convenience configure production")
+    func testConfigureProduction() async {
+        let configurator = LoggerConfigurator.shared
+        
+        await configurator.configureProduction()
+        let env = await configurator.environment
+        
+        #expect(env == .production)
+    }
+    
+    @Test("Configure from environment with no values")
+    func testConfigureFromEnvironmentEmpty() async {
+        let configurator = LoggerConfigurator.shared
+        
+        // Esto cargará el environment real que probablemente está vacío
+        let found = await configurator.configureFromEnvironment()
+        
+        // Should return false if no environment vars are set
+        // (can't guarantee this in all test environments)
+    }
+}

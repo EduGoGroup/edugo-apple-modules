@@ -312,7 +312,7 @@ public extension LoggerRegistry {
 // MARK: - Configuration Presets
 
 /// Presets de configuración para el registry.
-public enum LogConfigurationPreset {
+public enum LogConfigurationPreset: Sendable {
     case development
     case staging
     case production
