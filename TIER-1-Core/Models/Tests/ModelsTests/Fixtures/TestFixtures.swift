@@ -132,4 +132,48 @@ enum TestFixtures {
             updatedAt: updatedAt
         )
     }
+
+    // MARK: - MaterialDTO
+
+    static func makeMaterialDTO(
+        id: UUID = UUID(),
+        title: String = "Test Material",
+        description: String? = nil,
+        status: String = "uploaded",
+        fileURL: String? = nil,
+        fileType: String? = nil,
+        fileSizeBytes: Int? = nil,
+        schoolID: UUID = UUID(),
+        academicUnitID: UUID? = nil,
+        uploadedByTeacherID: UUID? = nil,
+        subject: String? = nil,
+        grade: String? = nil,
+        isPublic: Bool = false,
+        processingStartedAt: Date? = nil,
+        processingCompletedAt: Date? = nil,
+        createdAt: Date = Date(),
+        updatedAt: Date = Date(),
+        deletedAt: Date? = nil
+    ) -> MaterialDTO {
+        MaterialDTO(
+            id: id,
+            title: title,
+            description: description,
+            status: status,
+            fileURL: fileURL,
+            fileType: fileType,
+            fileSizeBytes: fileSizeBytes,
+            schoolID: schoolID,
+            academicUnitID: academicUnitID,
+            uploadedByTeacherID: uploadedByTeacherID,
+            subject: subject,
+            grade: grade,
+            isPublic: isPublic,
+            processingStartedAt: processingStartedAt,
+            processingCompletedAt: processingCompletedAt,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            deletedAt: deletedAt
+        )
+    }
 }
