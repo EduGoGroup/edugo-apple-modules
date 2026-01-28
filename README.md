@@ -207,6 +207,7 @@ final class AuthServiceTests: XCTestCase {
 | [DEVELOPMENT_GUIDE.md](DEVELOPMENT_GUIDE.md) | Cómo agregar módulo, modificar dependencias, convenciones |
 | [docs/tier-architecture-diagram.md](docs/tier-architecture-diagram.md) | Diagrama ASCII/Mermaid de tiers + reglas de dependencias |
 | [docs/architecture/error-handling-guide.md](docs/architecture/error-handling-guide.md) | Guía completa de manejo de errores tipados por capa |
+| [docs/CONCURRENCY.md](docs/CONCURRENCY.md) | Guía de Thread-Safety y Sendable compliance |
 
 ---
 

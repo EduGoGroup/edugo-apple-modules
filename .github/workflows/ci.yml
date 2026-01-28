@@ -1,0 +1,126 @@
+# CI Workflow for EduGo Apple Modules
+#
+# Este workflow ejecuta:
+# 1. Build del proyecto
+# 2. Tests unitarios
+# 3. Verificación de Sendable compliance (strict concurrency)
+#
+# Triggers:
+# - Push a main/develop
+# - Pull requests a main
+
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Swift
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "6.0"
+
+      - name: Cache Swift packages
+        uses: actions/cache@v4
+        with:
+          path: .build
+          key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-spm-
+
+      - name: Build
+        run: |
+          echo "🔨 Building project..."
+          swift build
+          echo "✅ Build successful"
+
+      - name: Run Tests
+        run: |
+          echo "🧪 Running tests..."
+          swift test
+          echo "✅ Tests passed"
+
+  strict-concurrency:
+    name: Verify Strict Concurrency
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Swift
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "6.0"
+
+      - name: Cache Swift packages
+        uses: actions/cache@v4
+        with:
+          path: .build
+          key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-spm-
+
+      - name: Verify Sendable Compliance
+        run: |
+          echo "🔍 Verificando Sendable compliance..."
+          echo ""
+          swift build -Xswiftc -strict-concurrency=complete
+          echo ""
+          echo "✅ Proyecto cumple con Swift 6 strict concurrency"
+
+  # Verificación por Tier (opcional, para debugging)
+  verify-tiers:
+    name: Verify Individual Tiers
+    runs-on: macos-14
+    strategy:
+      matrix:
+        tier:
+          - TIER-0-Foundation/EduGoCommon
+          - TIER-1-Core/Logger
+          - TIER-1-Core/Models
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Swift
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "6.0"
+
+      - name: Build ${{ matrix.tier }}
+        run: |
+          echo "🔨 Building ${{ matrix.tier }}..."
+          cd ${{ matrix.tier }}
+          swift build
+          echo "✅ ${{ matrix.tier }} build successful"
+
+      - name: Test ${{ matrix.tier }}
+        run: |
+          echo "🧪 Testing ${{ matrix.tier }}..."
+          cd ${{ matrix.tier }}
+          swift test
+          echo "✅ ${{ matrix.tier }} tests passed"
+
+      - name: Strict Concurrency ${{ matrix.tier }}
+        run: |
+          echo "🔍 Verifying strict concurrency for ${{ matrix.tier }}..."
+          cd ${{ matrix.tier }}
+          swift build -Xswiftc -strict-concurrency=complete
+          echo "✅ ${{ matrix.tier }} is Sendable-compliant"

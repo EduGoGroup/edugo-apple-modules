@@ -64,17 +64,22 @@ public enum RepositoryError: Error, LocalizedError, Sendable {
 
     /// Error de conexión con la fuente de datos.
     ///
-    /// - Parameter underlyingError: El error original de red o conexión (opcional)
+    /// - Parameter reason: Descripción del error de conexión (Sendable-compliant)
+    ///
+    /// ## Nota sobre Sendable
+    /// Este case usa `String` en lugar de `Error` porque el protocolo `Error`
+    /// no es `Sendable`, lo que violaría strict concurrency en Swift 6.
+    /// Para preservar información del error original, use `error.localizedDescription`.
     ///
     /// ## Ejemplo
     /// ```swift
     /// do {
     ///     let data = try await URLSession.shared.data(from: url)
     /// } catch {
-    ///     throw RepositoryError.connectionError(underlyingError: error)
+    ///     throw RepositoryError.connectionError(reason: error.localizedDescription)
     /// }
     /// ```
-    case connectionError(underlyingError: Error?)
+    case connectionError(reason: String)
 
     /// Error de serialización o deserialización de datos.
     ///
@@ -113,11 +118,8 @@ public enum RepositoryError: Error, LocalizedError, Sendable {
             return "Error al guardar datos: \(reason)"
         case .deleteFailed(let reason):
             return "Error al eliminar datos: \(reason)"
-        case .connectionError(let underlyingError):
-            if let underlying = underlyingError {
-                return "Error de conexión: \(underlying.localizedDescription)"
-            }
-            return "Error de conexión con la fuente de datos"
+        case .connectionError(let reason):
+            return "Error de conexión: \(reason)"
         case .serializationError(let type):
             return "Error de serialización para el tipo '\(type)'"
         case .dataInconsistency(let description):
@@ -173,9 +175,8 @@ extension RepositoryError: Equatable {
             return lReason == rReason
         case (.deleteFailed(let lReason), .deleteFailed(let rReason)):
             return lReason == rReason
-        case (.connectionError(let lError), .connectionError(let rError)):
-            // Comparar errors por su localizedDescription ya que Error no es Equatable
-            return lError?.localizedDescription == rError?.localizedDescription
+        case (.connectionError(let lReason), .connectionError(let rReason)):
+            return lReason == rReason
         case (.serializationError(let lType), .serializationError(let rType)):
             return lType == rType
         case (.dataInconsistency(let lDesc), .dataInconsistency(let rDesc)):

@@ -183,67 +183,169 @@ public enum OSLoggerFactory {
 
 // MARK: - Logger Builder
 
-/// Builder pattern para crear loggers con configuración fluida.
-public final class LoggerBuilder: @unchecked Sendable {
+/// Builder pattern inmutable para crear loggers con configuración fluida.
+///
+/// Este builder es `Sendable` porque es inmutable: cada método de configuración
+/// retorna una nueva instancia del builder en lugar de mutar el estado interno.
+/// Esto garantiza thread-safety sin necesidad de `@unchecked Sendable`.
+///
+/// ## Thread Safety
+/// El builder puede ser compartido de forma segura entre threads porque:
+/// - Todas las propiedades son `let` (inmutables)
+/// - Cada método retorna una nueva instancia
+/// - No hay estado compartido mutable
+///
+/// ## Ejemplo de uso:
+/// ```swift
+/// let logger = OSLoggerFactory.builder()
+///     .globalLevel(.info)
+///     .environment(.production)
+///     .override(level: .debug, for: "com.edugo.auth")
+///     .build()
+/// ```
+public struct LoggerBuilder: Sendable {
 
-    private var globalLevel: LogLevel = .info
-    private var isEnabled: Bool = true
-    private var environment: LogConfiguration.Environment = .development
-    private var subsystem: String = "com.edugo.apple"
-    private var categoryOverrides: [String: LogLevel] = [:]
-    private var includeMetadata: Bool = true
+    private let globalLevel: LogLevel
+    private let isEnabled: Bool
+    private let environment: LogConfiguration.Environment
+    private let subsystem: String
+    private let categoryOverrides: [String: LogLevel]
+    private let includeMetadata: Bool
+
+    /// Crea un nuevo builder con configuración por defecto.
+    public init() {
+        self.globalLevel = .info
+        self.isEnabled = true
+        self.environment = .development
+        self.subsystem = "com.edugo.apple"
+        self.categoryOverrides = [:]
+        self.includeMetadata = true
+    }
+
+    /// Inicializador interno para crear nuevas instancias con configuración específica.
+    private init(
+        globalLevel: LogLevel,
+        isEnabled: Bool,
+        environment: LogConfiguration.Environment,
+        subsystem: String,
+        categoryOverrides: [String: LogLevel],
+        includeMetadata: Bool
+    ) {
+        self.globalLevel = globalLevel
+        self.isEnabled = isEnabled
+        self.environment = environment
+        self.subsystem = subsystem
+        self.categoryOverrides = categoryOverrides
+        self.includeMetadata = includeMetadata
+    }
 
     /// Establece el nivel global mínimo.
+    ///
+    /// - Parameter level: El nivel mínimo de logging
+    /// - Returns: Una nueva instancia del builder con el nivel configurado
     public func globalLevel(_ level: LogLevel) -> LoggerBuilder {
-        self.globalLevel = level
-        return self
+        LoggerBuilder(
+            globalLevel: level,
+            isEnabled: self.isEnabled,
+            environment: self.environment,
+            subsystem: self.subsystem,
+            categoryOverrides: self.categoryOverrides,
+            includeMetadata: self.includeMetadata
+        )
     }
 
     /// Habilita o deshabilita el logging.
+    ///
+    /// - Parameter isEnabled: `true` para habilitar, `false` para deshabilitar
+    /// - Returns: Una nueva instancia del builder con la configuración actualizada
     public func enabled(_ isEnabled: Bool) -> LoggerBuilder {
-        self.isEnabled = isEnabled
-        return self
+        LoggerBuilder(
+            globalLevel: self.globalLevel,
+            isEnabled: isEnabled,
+            environment: self.environment,
+            subsystem: self.subsystem,
+            categoryOverrides: self.categoryOverrides,
+            includeMetadata: self.includeMetadata
+        )
     }
 
     /// Establece el entorno de ejecución.
+    ///
+    /// - Parameter env: El entorno (development, staging, production)
+    /// - Returns: Una nueva instancia del builder con el entorno configurado
     public func environment(_ env: LogConfiguration.Environment) -> LoggerBuilder {
-        self.environment = env
-        return self
+        LoggerBuilder(
+            globalLevel: self.globalLevel,
+            isEnabled: self.isEnabled,
+            environment: env,
+            subsystem: self.subsystem,
+            categoryOverrides: self.categoryOverrides,
+            includeMetadata: self.includeMetadata
+        )
     }
 
     /// Establece el subsistema.
+    ///
+    /// - Parameter subsystem: Identificador del subsistema (ej: "com.edugo.apple")
+    /// - Returns: Una nueva instancia del builder con el subsistema configurado
     public func subsystem(_ subsystem: String) -> LoggerBuilder {
-        self.subsystem = subsystem
-        return self
+        LoggerBuilder(
+            globalLevel: self.globalLevel,
+            isEnabled: self.isEnabled,
+            environment: self.environment,
+            subsystem: subsystem,
+            categoryOverrides: self.categoryOverrides,
+            includeMetadata: self.includeMetadata
+        )
     }
 
-    /// Añade un override de nivel para una categoría específica.
+    /// Añade un override de nivel para una categoría específica por su identifier.
     ///
     /// - Parameters:
-    ///   - level: El nivel a establecer
+    ///   - level: El nivel a establecer para esta categoría
     ///   - categoryId: El identifier de la categoría
+    /// - Returns: Una nueva instancia del builder con el override añadido
     public func override(level: LogLevel, for categoryId: String) -> LoggerBuilder {
-        self.categoryOverrides[categoryId] = level
-        return self
+        var newOverrides = self.categoryOverrides
+        newOverrides[categoryId] = level
+        return LoggerBuilder(
+            globalLevel: self.globalLevel,
+            isEnabled: self.isEnabled,
+            environment: self.environment,
+            subsystem: self.subsystem,
+            categoryOverrides: newOverrides,
+            includeMetadata: self.includeMetadata
+        )
     }
 
     /// Añade un override de nivel para una categoría específica.
     ///
     /// - Parameters:
-    ///   - level: El nivel a establecer
-    ///   - category: La categoría
+    ///   - level: El nivel a establecer para esta categoría
+    ///   - category: La categoría (debe conformar a `LogCategory`)
+    /// - Returns: Una nueva instancia del builder con el override añadido
     public func override(level: LogLevel, for category: LogCategory) -> LoggerBuilder {
-        self.categoryOverrides[category.identifier] = level
-        return self
+        override(level: level, for: category.identifier)
     }
 
     /// Habilita o deshabilita la inclusión de metadata.
+    ///
+    /// - Parameter include: `true` para incluir metadata, `false` para omitirla
+    /// - Returns: Una nueva instancia del builder con la configuración actualizada
     public func includeMetadata(_ include: Bool) -> LoggerBuilder {
-        self.includeMetadata = include
-        return self
+        LoggerBuilder(
+            globalLevel: self.globalLevel,
+            isEnabled: self.isEnabled,
+            environment: self.environment,
+            subsystem: self.subsystem,
+            categoryOverrides: self.categoryOverrides,
+            includeMetadata: include
+        )
     }
 
     /// Construye el logger con la configuración establecida.
+    ///
+    /// - Returns: Un `OSLoggerAdapter` configurado según los parámetros del builder
     public func build() -> OSLoggerAdapter {
         let config = LogConfiguration(
             globalLevel: globalLevel,

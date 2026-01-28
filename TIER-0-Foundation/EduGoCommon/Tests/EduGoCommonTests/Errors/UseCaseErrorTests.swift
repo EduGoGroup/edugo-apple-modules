@@ -199,7 +199,7 @@ struct UseCaseErrorTests {
 
     @Test("repositoryError propagates error description from wrapped error")
     func test_repositoryError_whenAccessed_thenPropagatesErrorDescription() {
-        let repoError = RepositoryError.connectionError(underlyingError: nil)
+        let repoError = RepositoryError.connectionError(reason: "Network unavailable")
         let useCaseError = UseCaseError.repositoryError(repoError)
 
         let description = useCaseError.errorDescription
@@ -383,12 +383,12 @@ struct UseCaseErrorTests {
 
     @Test("Pattern matching can extract specific RepositoryError cases")
     func test_patternMatching_whenRepositoryErrorWrapped_thenCanExtractSpecificCase() {
-        let connectionError = RepositoryError.connectionError(underlyingError: nil)
+        let connectionError = RepositoryError.connectionError(reason: "Network timeout")
         let useCaseError = UseCaseError.repositoryError(connectionError)
 
         if case .repositoryError(let repoError) = useCaseError {
-            if case .connectionError(let underlying) = repoError {
-                #expect(underlying == nil)
+            if case .connectionError(let reason) = repoError {
+                #expect(reason == "Network timeout")
             } else {
                 Issue.record("Expected connectionError case")
             }
@@ -463,7 +463,7 @@ struct UseCaseErrorTests {
             .fetchFailed(reason: "Not found"),
             .saveFailed(reason: "Conflict"),
             .deleteFailed(reason: "Referenced"),
-            .connectionError(underlyingError: nil),
+            .connectionError(reason: "Network unavailable"),
             .serializationError(type: "User"),
             .dataInconsistency(description: "Duplicate")
         ]

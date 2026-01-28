@@ -8,7 +8,7 @@ import Testing
 /// - Conformance a `Error`, `LocalizedError` y `Sendable`
 /// - Mensajes de localización en español
 /// - Associated values en cada caso
-/// - Wrapping de `underlyingError` en `.connectionError`
+/// - Sendable compliance (connectionError usa String, no Error)
 /// - Pattern matching para extracción de valores
 @Suite("RepositoryError Tests")
 struct RepositoryErrorTests {
@@ -176,55 +176,32 @@ struct RepositoryErrorTests {
 
     // MARK: - connectionError Tests
 
-    @Test("connectionError case creates error with underlying error")
-    func test_connectionError_whenCreatedWithUnderlyingError_thenStoresIt() {
-        let underlyingError = NetworkError(message: "Connection refused")
-        let error = RepositoryError.connectionError(underlyingError: underlyingError)
+    @Test("connectionError case creates error with reason string")
+    func test_connectionError_whenCreatedWithReason_thenStoresIt() {
+        let reason = "Connection refused"
+        let error = RepositoryError.connectionError(reason: reason)
 
-        if case .connectionError(let storedError) = error {
-            #expect(storedError != nil)
-            let networkError = storedError as? NetworkError
-            #expect(networkError?.message == "Connection refused")
+        if case .connectionError(let storedReason) = error {
+            #expect(storedReason == reason)
         } else {
             Issue.record("Expected connectionError case")
         }
     }
 
-    @Test("connectionError case creates error without underlying error")
-    func test_connectionError_whenCreatedWithoutUnderlyingError_thenHandlesNil() {
-        let error = RepositoryError.connectionError(underlyingError: nil)
-
-        if case .connectionError(let storedError) = error {
-            #expect(storedError == nil)
-        } else {
-            Issue.record("Expected connectionError case")
-        }
-    }
-
-    @Test("connectionError provides localized error description with underlying error")
-    func test_connectionError_whenHasUnderlyingError_thenIncludesInDescription() {
-        let underlyingError = NetworkError(message: "DNS resolution failed")
-        let error = RepositoryError.connectionError(underlyingError: underlyingError)
+    @Test("connectionError provides localized error description")
+    func test_connectionError_whenAccessed_thenProvidesErrorDescription() {
+        let reason = "DNS resolution failed"
+        let error = RepositoryError.connectionError(reason: reason)
 
         let description = error.errorDescription
         #expect(description != nil)
         #expect(description?.contains("conexión") == true)
-        #expect(description?.contains("DNS resolution failed") == true)
-    }
-
-    @Test("connectionError provides localized error description without underlying error")
-    func test_connectionError_whenNoUnderlyingError_thenProvidesGenericDescription() {
-        let error = RepositoryError.connectionError(underlyingError: nil)
-
-        let description = error.errorDescription
-        #expect(description != nil)
-        #expect(description?.contains("conexión") == true)
-        #expect(description?.contains("fuente de datos") == true)
+        #expect(description?.contains(reason) == true)
     }
 
     @Test("connectionError provides failure reason")
     func test_connectionError_whenAccessed_thenProvidesFailureReason() {
-        let error = RepositoryError.connectionError(underlyingError: nil)
+        let error = RepositoryError.connectionError(reason: "Test connection error")
 
         let failureReason = error.failureReason
         #expect(failureReason != nil)
@@ -233,11 +210,24 @@ struct RepositoryErrorTests {
 
     @Test("connectionError provides recovery suggestion")
     func test_connectionError_whenAccessed_thenProvidesRecoverySuggestion() {
-        let error = RepositoryError.connectionError(underlyingError: nil)
+        let error = RepositoryError.connectionError(reason: "Test connection error")
 
         let recoverySuggestion = error.recoverySuggestion
         #expect(recoverySuggestion != nil)
         #expect(recoverySuggestion?.contains("internet") == true)
+    }
+
+    @Test("connectionError is Sendable compliant with String parameter")
+    func test_connectionError_whenUsedAcrossActorBoundaries_thenIsSendable() async {
+        let error = RepositoryError.connectionError(reason: "Network timeout")
+
+        // Verify it can be sent across actor boundaries (Sendable compliance)
+        let sendableError: Sendable = error
+        #expect(sendableError is RepositoryError)
+
+        if case .connectionError(let reason) = error {
+            #expect(reason == "Network timeout")
+        }
     }
 
     // MARK: - serializationError Tests
@@ -332,12 +322,11 @@ struct RepositoryErrorTests {
 
     @Test("Pattern matching extracts associated values correctly")
     func test_patternMatching_whenMatchingCases_thenExtractsValues() {
-        let networkError = NetworkError(message: "Test")
         let errors: [RepositoryError] = [
             .fetchFailed(reason: "Not found"),
             .saveFailed(reason: "Conflict"),
             .deleteFailed(reason: "Referenced"),
-            .connectionError(underlyingError: networkError),
+            .connectionError(reason: "Network error"),
             .serializationError(type: "User"),
             .dataInconsistency(description: "Duplicate")
         ]
@@ -350,8 +339,8 @@ struct RepositoryErrorTests {
                 #expect(!reason.isEmpty)
             case .deleteFailed(let reason):
                 #expect(!reason.isEmpty)
-            case .connectionError(let underlyingError):
-                #expect(underlyingError != nil)
+            case .connectionError(let reason):
+                #expect(!reason.isEmpty)
             case .serializationError(let type):
                 #expect(!type.isEmpty)
             case .dataInconsistency(let description):
@@ -360,17 +349,14 @@ struct RepositoryErrorTests {
         }
     }
 
-    @Test("Pattern matching can unwrap underlying error")
-    func test_patternMatching_whenConnectionError_thenCanUnwrapUnderlyingError() {
-        let originalError = NetworkError(message: "Connection lost")
-        let repoError = RepositoryError.connectionError(underlyingError: originalError)
+    @Test("Pattern matching extracts connectionError reason")
+    func test_patternMatching_whenConnectionError_thenExtractsReason() {
+        let repoError = RepositoryError.connectionError(reason: "Connection lost")
 
-        if case .connectionError(let underlyingError) = repoError {
-            let networkError = underlyingError as? NetworkError
-            #expect(networkError != nil)
-            #expect(networkError?.message == "Connection lost")
+        if case .connectionError(let reason) = repoError {
+            #expect(reason == "Connection lost")
         } else {
-            Issue.record("Expected to unwrap connectionError")
+            Issue.record("Expected to extract connectionError reason")
         }
     }
 
@@ -394,18 +380,15 @@ struct RepositoryErrorTests {
         #expect(error.errorDescription?.count ?? 0 > 0)
     }
 
-    @Test("connectionError with NSError as underlying error")
-    func test_connectionError_whenNSErrorAsUnderlying_thenHandlesCorrectly() {
-        let nsError = NSError(
-            domain: "com.edugo.test",
-            code: 500,
-            userInfo: [NSLocalizedDescriptionKey: "Internal server error"]
-        )
-        let error = RepositoryError.connectionError(underlyingError: nsError)
+    @Test("connectionError with detailed reason message")
+    func test_connectionError_whenDetailedReason_thenHandlesCorrectly() {
+        let reason = "Internal server error (code: 500)"
+        let error = RepositoryError.connectionError(reason: reason)
 
         let description = error.errorDescription
         #expect(description != nil)
         #expect(description?.contains("Internal server error") == true)
+        #expect(description?.contains("500") == true)
     }
 
     @Test("serializationError with complex type names")
@@ -419,13 +402,11 @@ struct RepositoryErrorTests {
 
     @Test("All error cases provide non-nil localized messages")
     func test_allCases_whenAccessed_thenProvideNonNilLocalizedMessages() {
-        let networkError = NetworkError(message: "Test")
         let errors: [RepositoryError] = [
             .fetchFailed(reason: "Test"),
             .saveFailed(reason: "Test"),
             .deleteFailed(reason: "Test"),
-            .connectionError(underlyingError: networkError),
-            .connectionError(underlyingError: nil),
+            .connectionError(reason: "Test connection error"),
             .serializationError(type: "Test"),
             .dataInconsistency(description: "Test")
         ]
