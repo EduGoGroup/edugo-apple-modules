@@ -287,4 +287,134 @@ struct UserMapperTests {
         #expect(dto.isActive == true)
         #expect(dto.role == "teacher")
     }
+
+    // MARK: - Backend Fixture Tests
+
+    @Test("User decodes from backend valid JSON fixture")
+    func userDecodesFromBackendValidFixture() throws {
+        let json = BackendFixtures.userValidJSON
+        let data = json.data(using: .utf8)!
+
+        let decoder = BackendFixtures.backendDecoder
+        let dto = try decoder.decode(UserDTO.self, from: data)
+        let user = try dto.toDomain()
+
+        #expect(user.firstName == "Juan")
+        #expect(user.lastName == "García")
+        #expect(user.email == "juan.garcia@edugo.com")
+        #expect(user.isActive == true)
+    }
+
+    @Test("User decodes from backend minimal JSON fixture")
+    func userDecodesFromBackendMinimalFixture() throws {
+        let json = BackendFixtures.userMinimalJSON
+        let data = json.data(using: .utf8)!
+
+        let decoder = BackendFixtures.backendDecoder
+        let dto = try decoder.decode(UserDTO.self, from: data)
+        let user = try dto.toDomain()
+
+        #expect(user.firstName == "María")
+        #expect(user.lastName == "López")
+        #expect(dto.fullName == nil)
+        #expect(dto.role == nil)
+    }
+
+    @Test("User decodes from backend JSON with nulls")
+    func userDecodesFromBackendWithNullsFixture() throws {
+        let json = BackendFixtures.userWithNullsJSON
+        let data = json.data(using: .utf8)!
+
+        let decoder = BackendFixtures.backendDecoder
+        let dto = try decoder.decode(UserDTO.self, from: data)
+
+        #expect(dto.fullName == nil)
+        #expect(dto.role == nil)
+        #expect(dto.isActive == false)
+
+        let user = try dto.toDomain()
+        #expect(user.isActive == false)
+    }
+
+    @Test("User inactive decodes from backend JSON fixture")
+    func userInactiveDecodesFromBackendFixture() throws {
+        let json = BackendFixtures.userInactiveJSON
+        let data = json.data(using: .utf8)!
+
+        let decoder = BackendFixtures.backendDecoder
+        let dto = try decoder.decode(UserDTO.self, from: data)
+        let user = try dto.toDomain()
+
+        #expect(user.firstName == "Ana")
+        #expect(user.lastName == "Rodríguez")
+        #expect(user.isActive == false)
+    }
+
+    @Test("User full serialization roundtrip with backend fixture")
+    func userFullSerializationRoundtrip() throws {
+        // Deserialize from backend JSON
+        let json = BackendFixtures.userValidJSON
+        let data = json.data(using: .utf8)!
+
+        let decoder = BackendFixtures.backendDecoder
+        let dto = try decoder.decode(UserDTO.self, from: data)
+        let user = try dto.toDomain()
+
+        // Serialize back to DTO and JSON
+        let backToDTO = user.toDTO()
+        let encoder = BackendFixtures.backendEncoder
+        let encodedData = try encoder.encode(backToDTO)
+        let encodedJSON = String(data: encodedData, encoding: .utf8)!
+
+        // Verify snake_case keys in encoded JSON
+        #expect(encodedJSON.contains("\"first_name\""))
+        #expect(encodedJSON.contains("\"last_name\""))
+        #expect(encodedJSON.contains("\"is_active\""))
+        #expect(encodedJSON.contains("\"created_at\""))
+        #expect(encodedJSON.contains("\"updated_at\""))
+
+        // Deserialize again and verify equality
+        let decodedDTO = try decoder.decode(UserDTO.self, from: encodedData)
+        let decodedUser = try decodedDTO.toDomain()
+
+        #expect(user.id == decodedUser.id)
+        #expect(user.firstName == decodedUser.firstName)
+        #expect(user.lastName == decodedUser.lastName)
+        #expect(user.email == decodedUser.email)
+        #expect(user.isActive == decodedUser.isActive)
+    }
+
+    @Test("User JSON keys match backend specification")
+    func userJSONKeysMatchBackendSpec() throws {
+        let user = try User(
+            id: UUID(),
+            firstName: "Test",
+            lastName: "User",
+            email: "test@example.com",
+            isActive: true,
+            createdAt: Date(),
+            updatedAt: Date()
+        )
+
+        let dto = user.toDTO()
+        let encoder = BackendFixtures.backendEncoder
+        let data = try encoder.encode(dto)
+        let json = String(data: data, encoding: .utf8)!
+
+        // These are the expected keys from edu-admin swagger.json
+        #expect(json.contains("\"id\""))
+        #expect(json.contains("\"first_name\""))
+        #expect(json.contains("\"last_name\""))
+        #expect(json.contains("\"email\""))
+        #expect(json.contains("\"is_active\""))
+        #expect(json.contains("\"created_at\""))
+        #expect(json.contains("\"updated_at\""))
+
+        // Should NOT contain camelCase keys
+        #expect(!json.contains("\"firstName\""))
+        #expect(!json.contains("\"lastName\""))
+        #expect(!json.contains("\"isActive\""))
+        #expect(!json.contains("\"createdAt\""))
+        #expect(!json.contains("\"updatedAt\""))
+    }
 }

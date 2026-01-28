@@ -532,4 +532,219 @@ struct MaterialMapperTests {
         #expect(dto.academicUnitID == nil)
         #expect(dto.isPublic == false)
     }
+
+    // MARK: - Backend Fixture Tests
+
+    @Test("Material ready decodes from backend JSON fixture")
+    func materialReadyFromBackendFixture() throws {
+        let json = BackendFixtures.materialReadyJSON
+        let data = json.data(using: .utf8)!
+
+        let decoder = BackendFixtures.backendDecoder
+        let dto = try decoder.decode(MaterialDTO.self, from: data)
+        let material = try dto.toDomain()
+
+        #expect(material.title == "Introducción al Cálculo")
+        #expect(material.description == "Guía completa de cálculo diferencial e integral")
+        #expect(material.status == .ready)
+        #expect(material.fileURL != nil)
+        #expect(material.fileType == "application/pdf")
+        #expect(material.fileSizeBytes == 1048576)
+        #expect(material.subject == "Matemáticas")
+        #expect(material.grade == "12° Grado")
+        #expect(material.isPublic == false)
+        #expect(material.processingStartedAt != nil)
+        #expect(material.processingCompletedAt != nil)
+    }
+
+    @Test("Material uploaded decodes from backend JSON fixture")
+    func materialUploadedFromBackendFixture() throws {
+        let json = BackendFixtures.materialUploadedJSON
+        let data = json.data(using: .utf8)!
+
+        let decoder = BackendFixtures.backendDecoder
+        let dto = try decoder.decode(MaterialDTO.self, from: data)
+        let material = try dto.toDomain()
+
+        #expect(material.status == .uploaded)
+        #expect(material.description == nil)
+        #expect(material.academicUnitID == nil)
+        #expect(material.subject == nil)
+        #expect(material.processingStartedAt == nil)
+        #expect(material.processingCompletedAt == nil)
+    }
+
+    @Test("Material processing decodes from backend JSON fixture")
+    func materialProcessingFromBackendFixture() throws {
+        let json = BackendFixtures.materialProcessingJSON
+        let data = json.data(using: .utf8)!
+
+        let decoder = BackendFixtures.backendDecoder
+        let dto = try decoder.decode(MaterialDTO.self, from: data)
+        let material = try dto.toDomain()
+
+        #expect(material.status == .processing)
+        #expect(material.processingStartedAt != nil)
+        #expect(material.processingCompletedAt == nil)
+    }
+
+    @Test("Material failed decodes from backend JSON fixture")
+    func materialFailedFromBackendFixture() throws {
+        let json = BackendFixtures.materialFailedJSON
+        let data = json.data(using: .utf8)!
+
+        let decoder = BackendFixtures.backendDecoder
+        let dto = try decoder.decode(MaterialDTO.self, from: data)
+        let material = try dto.toDomain()
+
+        #expect(material.status == .failed)
+        #expect(material.processingStartedAt != nil)
+        #expect(material.processingCompletedAt != nil)
+    }
+
+    @Test("Material public decodes from backend JSON fixture")
+    func materialPublicFromBackendFixture() throws {
+        let json = BackendFixtures.materialPublicJSON
+        let data = json.data(using: .utf8)!
+
+        let decoder = BackendFixtures.backendDecoder
+        let dto = try decoder.decode(MaterialDTO.self, from: data)
+        let material = try dto.toDomain()
+
+        #expect(material.isPublic == true)
+        #expect(material.subject == "Historia")
+    }
+
+    @Test("Material deleted decodes from backend JSON fixture")
+    func materialDeletedFromBackendFixture() throws {
+        let json = BackendFixtures.materialDeletedJSON
+        let data = json.data(using: .utf8)!
+
+        let decoder = BackendFixtures.backendDecoder
+        let dto = try decoder.decode(MaterialDTO.self, from: data)
+        let material = try dto.toDomain()
+
+        #expect(material.isDeleted == true)
+        #expect(material.deletedAt != nil)
+        #expect(material.fileURL == nil)
+    }
+
+    @Test("Material minimal decodes from backend JSON fixture")
+    func materialMinimalFromBackendFixture() throws {
+        let json = BackendFixtures.materialMinimalJSON
+        let data = json.data(using: .utf8)!
+
+        let decoder = BackendFixtures.backendDecoder
+        let dto = try decoder.decode(MaterialDTO.self, from: data)
+        let material = try dto.toDomain()
+
+        #expect(material.title == "Material Básico")
+        #expect(material.status == .uploaded)
+        #expect(material.fileURL == nil)
+        #expect(material.uploadedByTeacherID == nil)
+    }
+
+    @Test("Material full serialization roundtrip with backend fixture")
+    func materialFullSerializationRoundtrip() throws {
+        let json = BackendFixtures.materialReadyJSON
+        let data = json.data(using: .utf8)!
+
+        let decoder = BackendFixtures.backendDecoder
+        let dto = try decoder.decode(MaterialDTO.self, from: data)
+        let material = try dto.toDomain()
+
+        // Serialize back to DTO and JSON
+        let backToDTO = material.toDTO()
+        let encoder = BackendFixtures.backendEncoder
+        let encodedData = try encoder.encode(backToDTO)
+        let encodedJSON = String(data: encodedData, encoding: .utf8)!
+
+        // Verify snake_case keys
+        #expect(encodedJSON.contains("\"file_url\""))
+        #expect(encodedJSON.contains("\"file_type\""))
+        #expect(encodedJSON.contains("\"file_size_bytes\""))
+        #expect(encodedJSON.contains("\"school_id\""))
+        #expect(encodedJSON.contains("\"academic_unit_id\""))
+        #expect(encodedJSON.contains("\"uploaded_by_teacher_id\""))
+        #expect(encodedJSON.contains("\"is_public\""))
+        #expect(encodedJSON.contains("\"processing_started_at\""))
+        #expect(encodedJSON.contains("\"processing_completed_at\""))
+
+        // Deserialize again and verify equality
+        let decodedDTO = try decoder.decode(MaterialDTO.self, from: encodedData)
+        let decodedMaterial = try decodedDTO.toDomain()
+
+        #expect(material == decodedMaterial)
+    }
+
+    @Test("Material JSON keys match backend specification")
+    func materialJSONKeysMatchBackendSpec() throws {
+        let material = try Material(
+            id: UUID(),
+            title: "Test",
+            description: "Description",
+            status: .ready,
+            fileURL: URL(string: "https://example.com/file.pdf"),
+            fileType: "application/pdf",
+            fileSizeBytes: 1024,
+            schoolID: UUID(),
+            academicUnitID: UUID(),
+            uploadedByTeacherID: UUID(),
+            subject: "Math",
+            grade: "10th",
+            isPublic: true,
+            processingStartedAt: Date(),
+            processingCompletedAt: Date(),
+            createdAt: Date(),
+            updatedAt: Date(),
+            deletedAt: nil
+        )
+
+        let dto = material.toDTO()
+        let encoder = BackendFixtures.backendEncoder
+        let data = try encoder.encode(dto)
+        let json = String(data: data, encoding: .utf8)!
+
+        // Expected keys from edu-mobile swagger.json
+        #expect(json.contains("\"id\""))
+        #expect(json.contains("\"title\""))
+        #expect(json.contains("\"description\""))
+        #expect(json.contains("\"status\""))
+        #expect(json.contains("\"file_url\""))
+        #expect(json.contains("\"file_type\""))
+        #expect(json.contains("\"file_size_bytes\""))
+        #expect(json.contains("\"school_id\""))
+        #expect(json.contains("\"academic_unit_id\""))
+        #expect(json.contains("\"uploaded_by_teacher_id\""))
+        #expect(json.contains("\"subject\""))
+        #expect(json.contains("\"grade\""))
+        #expect(json.contains("\"is_public\""))
+        #expect(json.contains("\"processing_started_at\""))
+        #expect(json.contains("\"processing_completed_at\""))
+        #expect(json.contains("\"created_at\""))
+        #expect(json.contains("\"updated_at\""))
+
+        // Should NOT contain camelCase keys
+        #expect(!json.contains("\"fileURL\""))
+        #expect(!json.contains("\"schoolID\""))
+        #expect(!json.contains("\"academicUnitID\""))
+        #expect(!json.contains("\"uploadedByTeacherID\""))
+        #expect(!json.contains("\"isPublic\""))
+    }
+
+    @Test("Materials array from backend fixture")
+    func materialsArrayFromBackendFixture() throws {
+        let json = BackendFixtures.materialsArrayJSON
+        let data = json.data(using: .utf8)!
+
+        let decoder = BackendFixtures.backendDecoder
+        let dtos = try decoder.decode([MaterialDTO].self, from: data)
+        let materials = try dtos.map { try $0.toDomain() }
+
+        #expect(materials.count == 2)
+        #expect(materials[0].status == .ready)
+        #expect(materials[1].status == .processing)
+        #expect(materials[1].subject == "Física")
+        #expect(materials[1].isPublic == true)
+    }
 }

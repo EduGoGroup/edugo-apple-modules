@@ -397,4 +397,188 @@ struct AcademicUnitMapperTests {
         #expect(dto.type == "section")
         #expect(dto.parentUnitID != nil)
     }
+
+    // MARK: - Backend Fixture Tests
+
+    @Test("AcademicUnit grade decodes from backend JSON fixture")
+    func academicUnitGradeFromBackendFixture() throws {
+        let json = BackendFixtures.academicUnitGradeJSON
+        let data = json.data(using: .utf8)!
+
+        let decoder = BackendFixtures.backendDecoder
+        let dto = try decoder.decode(AcademicUnitDTO.self, from: data)
+        let unit = try dto.toDomain()
+
+        #expect(unit.displayName == "Décimo Grado")
+        #expect(unit.code == "G10")
+        #expect(unit.description == "Estudiantes de décimo grado")
+        #expect(unit.type == .grade)
+        #expect(unit.parentUnitID == nil)
+        #expect(unit.isTopLevel == true)
+    }
+
+    @Test("AcademicUnit section decodes from backend JSON fixture")
+    func academicUnitSectionFromBackendFixture() throws {
+        let json = BackendFixtures.academicUnitSectionJSON
+        let data = json.data(using: .utf8)!
+
+        let decoder = BackendFixtures.backendDecoder
+        let dto = try decoder.decode(AcademicUnitDTO.self, from: data)
+        let unit = try dto.toDomain()
+
+        #expect(unit.displayName == "Sección A")
+        #expect(unit.code == "G10-A")
+        #expect(unit.type == .section)
+        #expect(unit.parentUnitID != nil)
+        #expect(unit.isTopLevel == false)
+    }
+
+    @Test("AcademicUnit club decodes from backend JSON fixture")
+    func academicUnitClubFromBackendFixture() throws {
+        let json = BackendFixtures.academicUnitClubJSON
+        let data = json.data(using: .utf8)!
+
+        let decoder = BackendFixtures.backendDecoder
+        let dto = try decoder.decode(AcademicUnitDTO.self, from: data)
+        let unit = try dto.toDomain()
+
+        #expect(unit.displayName == "Club de Matemáticas")
+        #expect(unit.type == .club)
+        #expect(unit.metadata?["meeting_day"] == .string("miércoles"))
+    }
+
+    @Test("AcademicUnit department decodes from backend JSON fixture")
+    func academicUnitDepartmentFromBackendFixture() throws {
+        let json = BackendFixtures.academicUnitDepartmentJSON
+        let data = json.data(using: .utf8)!
+
+        let decoder = BackendFixtures.backendDecoder
+        let dto = try decoder.decode(AcademicUnitDTO.self, from: data)
+        let unit = try dto.toDomain()
+
+        #expect(unit.displayName == "Departamento de Ciencias")
+        #expect(unit.type == .department)
+    }
+
+    @Test("AcademicUnit deleted decodes from backend JSON fixture")
+    func academicUnitDeletedFromBackendFixture() throws {
+        let json = BackendFixtures.academicUnitDeletedJSON
+        let data = json.data(using: .utf8)!
+
+        let decoder = BackendFixtures.backendDecoder
+        let dto = try decoder.decode(AcademicUnitDTO.self, from: data)
+        let unit = try dto.toDomain()
+
+        #expect(unit.displayName == "Unidad Eliminada")
+        #expect(unit.isDeleted == true)
+        #expect(unit.deletedAt != nil)
+    }
+
+    @Test("AcademicUnit full serialization roundtrip with backend fixture")
+    func academicUnitFullSerializationRoundtrip() throws {
+        let json = BackendFixtures.academicUnitGradeJSON
+        let data = json.data(using: .utf8)!
+
+        let decoder = BackendFixtures.backendDecoder
+        let dto = try decoder.decode(AcademicUnitDTO.self, from: data)
+        let unit = try dto.toDomain()
+
+        // Serialize back to DTO and JSON
+        let backToDTO = unit.toDTO()
+        let encoder = BackendFixtures.backendEncoder
+        let encodedData = try encoder.encode(backToDTO)
+        let encodedJSON = String(data: encodedData, encoding: .utf8)!
+
+        // Verify snake_case keys
+        #expect(encodedJSON.contains("\"display_name\""))
+        #expect(encodedJSON.contains("\"school_id\""))
+        #expect(encodedJSON.contains("\"created_at\""))
+        #expect(encodedJSON.contains("\"updated_at\""))
+
+        // Deserialize again and verify equality
+        let decodedDTO = try decoder.decode(AcademicUnitDTO.self, from: encodedData)
+        let decodedUnit = try decodedDTO.toDomain()
+
+        #expect(unit == decodedUnit)
+    }
+
+    @Test("AcademicUnit JSON keys match backend specification")
+    func academicUnitJSONKeysMatchBackendSpec() throws {
+        let unit = try AcademicUnit(
+            id: UUID(),
+            displayName: "Test Unit",
+            code: "TEST",
+            description: "Test Description",
+            type: .grade,
+            parentUnitID: UUID(),
+            schoolID: UUID(),
+            metadata: ["key": .string("value")],
+            createdAt: Date(),
+            updatedAt: Date(),
+            deletedAt: nil
+        )
+
+        let dto = unit.toDTO()
+        let encoder = BackendFixtures.backendEncoder
+        let data = try encoder.encode(dto)
+        let json = String(data: data, encoding: .utf8)!
+
+        // Expected keys from edu-admin swagger.json
+        #expect(json.contains("\"id\""))
+        #expect(json.contains("\"display_name\""))
+        #expect(json.contains("\"code\""))
+        #expect(json.contains("\"description\""))
+        #expect(json.contains("\"type\""))
+        #expect(json.contains("\"parent_unit_id\""))
+        #expect(json.contains("\"school_id\""))
+        #expect(json.contains("\"metadata\""))
+        #expect(json.contains("\"created_at\""))
+        #expect(json.contains("\"updated_at\""))
+
+        // Should NOT contain camelCase keys
+        #expect(!json.contains("\"displayName\""))
+        #expect(!json.contains("\"parentUnitID\""))
+        #expect(!json.contains("\"schoolID\""))
+        #expect(!json.contains("\"createdAt\""))
+        #expect(!json.contains("\"updatedAt\""))
+        #expect(!json.contains("\"deletedAt\""))
+    }
+
+    @Test("AcademicUnit hierarchy preserved in serialization")
+    func academicUnitHierarchyPreserved() throws {
+        let json = BackendFixtures.academicUnitSectionJSON
+        let data = json.data(using: .utf8)!
+
+        let decoder = BackendFixtures.backendDecoder
+        let dto = try decoder.decode(AcademicUnitDTO.self, from: data)
+        let unit = try dto.toDomain()
+
+        // Verify parent relationship
+        #expect(unit.parentUnitID != nil)
+        #expect(unit.isTopLevel == false)
+
+        // Serialize and verify parent is preserved
+        let backToDTO = unit.toDTO()
+        #expect(backToDTO.parentUnitID == unit.parentUnitID)
+    }
+
+    @Test("All academic unit types from backend fixtures")
+    func allAcademicUnitTypesFromBackendFixtures() throws {
+        let fixtures = [
+            (BackendFixtures.academicUnitGradeJSON, AcademicUnitType.grade),
+            (BackendFixtures.academicUnitSectionJSON, AcademicUnitType.section),
+            (BackendFixtures.academicUnitClubJSON, AcademicUnitType.club),
+            (BackendFixtures.academicUnitDepartmentJSON, AcademicUnitType.department)
+        ]
+
+        let decoder = BackendFixtures.backendDecoder
+
+        for (json, expectedType) in fixtures {
+            let data = json.data(using: .utf8)!
+            let dto = try decoder.decode(AcademicUnitDTO.self, from: data)
+            let unit = try dto.toDomain()
+
+            #expect(unit.type == expectedType)
+        }
+    }
 }

@@ -295,4 +295,176 @@ struct SchoolMapperTests {
         #expect(dto.maxStudents == 500)
         #expect(dto.subscriptionTier == "premium")
     }
+
+    // MARK: - Backend Fixture Tests
+
+    @Test("School valid decodes from backend JSON fixture")
+    func schoolValidFromBackendFixture() throws {
+        let json = BackendFixtures.schoolValidJSON
+        let data = json.data(using: .utf8)!
+
+        let decoder = BackendFixtures.backendDecoder
+        let dto = try decoder.decode(SchoolDTO.self, from: data)
+        let school = try dto.toDomain()
+
+        #expect(school.name == "Colegio San José")
+        #expect(school.code == "COL-SJ-001")
+        #expect(school.isActive == true)
+        #expect(school.address == "Calle 123 #45-67")
+        #expect(school.city == "Bogotá")
+        #expect(school.country == "CO")
+        #expect(school.contactEmail == "contacto@colegiosanjose.edu.co")
+        #expect(school.contactPhone == "+57-1-555-1234")
+        #expect(school.maxStudents == 500)
+        #expect(school.maxTeachers == 50)
+        #expect(school.subscriptionTier == "premium")
+    }
+
+    @Test("School minimal decodes from backend JSON fixture")
+    func schoolMinimalFromBackendFixture() throws {
+        let json = BackendFixtures.schoolMinimalJSON
+        let data = json.data(using: .utf8)!
+
+        let decoder = BackendFixtures.backendDecoder
+        let dto = try decoder.decode(SchoolDTO.self, from: data)
+        let school = try dto.toDomain()
+
+        #expect(school.name == "Escuela Nueva")
+        #expect(school.code == "ESC-N-001")
+        #expect(school.address == nil)
+        #expect(school.city == nil)
+        #expect(school.subscriptionTier == nil)
+    }
+
+    @Test("School with nulls decodes from backend JSON fixture")
+    func schoolWithNullsFromBackendFixture() throws {
+        let json = BackendFixtures.schoolWithNullsJSON
+        let data = json.data(using: .utf8)!
+
+        let decoder = BackendFixtures.backendDecoder
+        let dto = try decoder.decode(SchoolDTO.self, from: data)
+        let school = try dto.toDomain()
+
+        #expect(school.name == "Instituto ABC")
+        #expect(school.address == nil)
+        #expect(school.city == nil)
+        #expect(school.country == nil)
+        #expect(school.contactEmail == nil)
+        #expect(school.contactPhone == nil)
+        #expect(school.maxStudents == nil)
+        #expect(school.maxTeachers == nil)
+        #expect(school.subscriptionTier == nil)
+        #expect(school.metadata == nil)
+    }
+
+    @Test("School free tier decodes from backend JSON fixture")
+    func schoolFreeTierFromBackendFixture() throws {
+        let json = BackendFixtures.schoolFreeTierJSON
+        let data = json.data(using: .utf8)!
+
+        let decoder = BackendFixtures.backendDecoder
+        let dto = try decoder.decode(SchoolDTO.self, from: data)
+        let school = try dto.toDomain()
+
+        #expect(school.subscriptionTier == "free")
+        #expect(school.maxStudents == 100)
+        #expect(school.maxTeachers == 10)
+    }
+
+    @Test("School with complex metadata decodes from backend JSON fixture")
+    func schoolComplexMetadataFromBackendFixture() throws {
+        let json = BackendFixtures.schoolComplexMetadataJSON
+        let data = json.data(using: .utf8)!
+
+        let decoder = BackendFixtures.backendDecoder
+        let dto = try decoder.decode(SchoolDTO.self, from: data)
+        let school = try dto.toDomain()
+
+        #expect(school.metadata != nil)
+        #expect(school.metadata?["string_value"] == .string("texto"))
+        #expect(school.metadata?["number_value"] == .integer(42))
+        #expect(school.metadata?["boolean_value"] == .bool(true))
+    }
+
+    @Test("School full serialization roundtrip with backend fixture")
+    func schoolFullSerializationRoundtrip() throws {
+        let json = BackendFixtures.schoolValidJSON
+        let data = json.data(using: .utf8)!
+
+        let decoder = BackendFixtures.backendDecoder
+        let dto = try decoder.decode(SchoolDTO.self, from: data)
+        let school = try dto.toDomain()
+
+        // Serialize back to DTO and JSON
+        let backToDTO = school.toDTO()
+        let encoder = BackendFixtures.backendEncoder
+        let encodedData = try encoder.encode(backToDTO)
+        let encodedJSON = String(data: encodedData, encoding: .utf8)!
+
+        // Verify snake_case keys
+        #expect(encodedJSON.contains("\"is_active\""))
+        #expect(encodedJSON.contains("\"contact_email\""))
+        #expect(encodedJSON.contains("\"contact_phone\""))
+        #expect(encodedJSON.contains("\"max_students\""))
+        #expect(encodedJSON.contains("\"max_teachers\""))
+        #expect(encodedJSON.contains("\"subscription_tier\""))
+        #expect(encodedJSON.contains("\"created_at\""))
+        #expect(encodedJSON.contains("\"updated_at\""))
+
+        // Deserialize again and verify equality
+        let decodedDTO = try decoder.decode(SchoolDTO.self, from: encodedData)
+        let decodedSchool = try decodedDTO.toDomain()
+
+        #expect(school == decodedSchool)
+    }
+
+    @Test("School JSON keys match backend specification")
+    func schoolJSONKeysMatchBackendSpec() throws {
+        let school = try School(
+            id: UUID(),
+            name: "Test School",
+            code: "TEST-001",
+            isActive: true,
+            address: "123 Main St",
+            city: "Springfield",
+            country: "USA",
+            contactEmail: "test@school.edu",
+            contactPhone: "+1-555-1234",
+            maxStudents: 500,
+            maxTeachers: 50,
+            subscriptionTier: "premium",
+            metadata: nil,
+            createdAt: Date(),
+            updatedAt: Date()
+        )
+
+        let dto = school.toDTO()
+        let encoder = BackendFixtures.backendEncoder
+        let data = try encoder.encode(dto)
+        let json = String(data: data, encoding: .utf8)!
+
+        // Expected keys from edu-admin swagger.json
+        #expect(json.contains("\"id\""))
+        #expect(json.contains("\"name\""))
+        #expect(json.contains("\"code\""))
+        #expect(json.contains("\"is_active\""))
+        #expect(json.contains("\"address\""))
+        #expect(json.contains("\"city\""))
+        #expect(json.contains("\"country\""))
+        #expect(json.contains("\"contact_email\""))
+        #expect(json.contains("\"contact_phone\""))
+        #expect(json.contains("\"max_students\""))
+        #expect(json.contains("\"max_teachers\""))
+        #expect(json.contains("\"subscription_tier\""))
+        #expect(json.contains("\"created_at\""))
+        #expect(json.contains("\"updated_at\""))
+
+        // Should NOT contain camelCase keys
+        #expect(!json.contains("\"isActive\""))
+        #expect(!json.contains("\"contactEmail\""))
+        #expect(!json.contains("\"contactPhone\""))
+        #expect(!json.contains("\"maxStudents\""))
+        #expect(!json.contains("\"maxTeachers\""))
+        #expect(!json.contains("\"subscriptionTier\""))
+    }
 }

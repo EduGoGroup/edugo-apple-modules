@@ -310,4 +310,169 @@ struct MembershipMapperTests {
         #expect(dto.isActive == false)
         #expect(dto.withdrawnAt != nil)
     }
+
+    // MARK: - Backend Fixture Tests
+
+    @Test("Membership teacher decodes from backend JSON fixture")
+    func membershipTeacherFromBackendFixture() throws {
+        let json = BackendFixtures.membershipTeacherJSON
+        let data = json.data(using: .utf8)!
+
+        let decoder = BackendFixtures.backendDecoder
+        let dto = try decoder.decode(MembershipDTO.self, from: data)
+        let membership = try dto.toDomain()
+
+        #expect(membership.role == .teacher)
+        #expect(membership.isActive == true)
+        #expect(membership.withdrawnAt == nil)
+        #expect(membership.isCurrentlyActive == true)
+    }
+
+    @Test("Membership student decodes from backend JSON fixture")
+    func membershipStudentFromBackendFixture() throws {
+        let json = BackendFixtures.membershipStudentJSON
+        let data = json.data(using: .utf8)!
+
+        let decoder = BackendFixtures.backendDecoder
+        let dto = try decoder.decode(MembershipDTO.self, from: data)
+        let membership = try dto.toDomain()
+
+        #expect(membership.role == .student)
+        #expect(membership.isActive == true)
+    }
+
+    @Test("Membership owner decodes from backend JSON fixture")
+    func membershipOwnerFromBackendFixture() throws {
+        let json = BackendFixtures.membershipOwnerJSON
+        let data = json.data(using: .utf8)!
+
+        let decoder = BackendFixtures.backendDecoder
+        let dto = try decoder.decode(MembershipDTO.self, from: data)
+        let membership = try dto.toDomain()
+
+        #expect(membership.role == .owner)
+        #expect(membership.isActive == true)
+    }
+
+    @Test("Membership guardian decodes from backend JSON fixture")
+    func membershipGuardianFromBackendFixture() throws {
+        let json = BackendFixtures.membershipGuardianJSON
+        let data = json.data(using: .utf8)!
+
+        let decoder = BackendFixtures.backendDecoder
+        let dto = try decoder.decode(MembershipDTO.self, from: data)
+        let membership = try dto.toDomain()
+
+        #expect(membership.role == .guardian)
+        #expect(membership.isActive == true)
+    }
+
+    @Test("Membership assistant decodes from backend JSON fixture")
+    func membershipAssistantFromBackendFixture() throws {
+        let json = BackendFixtures.membershipAssistantJSON
+        let data = json.data(using: .utf8)!
+
+        let decoder = BackendFixtures.backendDecoder
+        let dto = try decoder.decode(MembershipDTO.self, from: data)
+        let membership = try dto.toDomain()
+
+        #expect(membership.role == .assistant)
+        #expect(membership.isActive == true)
+    }
+
+    @Test("Membership withdrawn decodes from backend JSON fixture")
+    func membershipWithdrawnFromBackendFixture() throws {
+        let json = BackendFixtures.membershipWithdrawnJSON
+        let data = json.data(using: .utf8)!
+
+        let decoder = BackendFixtures.backendDecoder
+        let dto = try decoder.decode(MembershipDTO.self, from: data)
+        let membership = try dto.toDomain()
+
+        #expect(membership.role == .student)
+        #expect(membership.isActive == false)
+        #expect(membership.withdrawnAt != nil)
+        #expect(membership.isCurrentlyActive == false)
+    }
+
+    @Test("Membership full serialization roundtrip with backend fixture")
+    func membershipFullSerializationRoundtrip() throws {
+        let json = BackendFixtures.membershipTeacherJSON
+        let data = json.data(using: .utf8)!
+
+        let decoder = BackendFixtures.backendDecoder
+        let dto = try decoder.decode(MembershipDTO.self, from: data)
+        let membership = try dto.toDomain()
+
+        // Serialize back to DTO and JSON
+        let backToDTO = membership.toDTO()
+        let encoder = BackendFixtures.backendEncoder
+        let encodedData = try encoder.encode(backToDTO)
+        let encodedJSON = String(data: encodedData, encoding: .utf8)!
+
+        // Verify snake_case keys
+        #expect(encodedJSON.contains("\"user_id\""))
+        #expect(encodedJSON.contains("\"unit_id\""))
+        #expect(encodedJSON.contains("\"is_active\""))
+        #expect(encodedJSON.contains("\"enrolled_at\""))
+        #expect(encodedJSON.contains("\"created_at\""))
+        #expect(encodedJSON.contains("\"updated_at\""))
+
+        // Deserialize again and verify equality
+        let decodedDTO = try decoder.decode(MembershipDTO.self, from: encodedData)
+        let decodedMembership = try decodedDTO.toDomain()
+
+        #expect(membership == decodedMembership)
+    }
+
+    @Test("Membership JSON keys match backend specification")
+    func membershipJSONKeysMatchBackendSpec() throws {
+        let membership = Membership(
+            id: UUID(),
+            userID: UUID(),
+            unitID: UUID(),
+            role: .teacher,
+            isActive: true,
+            enrolledAt: Date(),
+            withdrawnAt: nil,
+            createdAt: Date(),
+            updatedAt: Date()
+        )
+
+        let dto = membership.toDTO()
+        let encoder = BackendFixtures.backendEncoder
+        let data = try encoder.encode(dto)
+        let json = String(data: data, encoding: .utf8)!
+
+        // Expected keys from edu-admin swagger.json
+        #expect(json.contains("\"id\""))
+        #expect(json.contains("\"user_id\""))
+        #expect(json.contains("\"unit_id\""))
+        #expect(json.contains("\"role\""))
+        #expect(json.contains("\"is_active\""))
+        #expect(json.contains("\"enrolled_at\""))
+        #expect(json.contains("\"created_at\""))
+        #expect(json.contains("\"updated_at\""))
+
+        // Should NOT contain camelCase keys
+        #expect(!json.contains("\"userID\""))
+        #expect(!json.contains("\"unitID\""))
+        #expect(!json.contains("\"isActive\""))
+        #expect(!json.contains("\"enrolledAt\""))
+        #expect(!json.contains("\"withdrawnAt\""))
+    }
+
+    @Test("Memberships array from backend fixture")
+    func membershipsArrayFromBackendFixture() throws {
+        let json = BackendFixtures.membershipsArrayJSON
+        let data = json.data(using: .utf8)!
+
+        let decoder = BackendFixtures.backendDecoder
+        let dtos = try decoder.decode([MembershipDTO].self, from: data)
+        let memberships = try dtos.map { try $0.toDomain() }
+
+        #expect(memberships.count == 2)
+        #expect(memberships[0].role == .teacher)
+        #expect(memberships[1].role == .student)
+    }
 }
