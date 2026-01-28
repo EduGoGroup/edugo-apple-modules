@@ -45,14 +45,14 @@ jobs:
 
       - name: Build
         run: |
-          echo "🔨 Building project..."
-          swift build
+          echo "🔨 Building all modules..."
+          make build
           echo "✅ Build successful"
 
       - name: Run Tests
         run: |
-          echo "🧪 Running tests..."
-          swift test
+          echo "🧪 Running tests for all modules..."
+          make test
           echo "✅ Tests passed"
 
   strict-concurrency:
@@ -80,7 +80,7 @@ jobs:
         run: |
           echo "🔍 Verificando Sendable compliance..."
           echo ""
-          swift build -Xswiftc -strict-concurrency=complete
+          bash scripts/verify-sendable.sh
           echo ""
           echo "✅ Proyecto cumple con Swift 6 strict concurrency"
 
