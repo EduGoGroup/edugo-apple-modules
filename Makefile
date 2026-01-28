@@ -61,14 +61,13 @@ test:
 	@PASSED=0; FAILED=0; \
 	for module in $(ALL_MODULES); do \
 		echo "$(YELLOW)→ Testing $$module$(RESET)"; \
-		if cd $$module && swift test 2>&1 | tail -5; then \
+		if (set -o pipefail; cd $$module && swift test 2>&1 | tail -5); then \
 			PASSED=$$((PASSED + 1)); \
 			echo "$(GREEN)  ✓ $$module: PASSED$(RESET)"; \
 		else \
 			FAILED=$$((FAILED + 1)); \
 			echo "$(RED)  ✗ $$module: FAILED$(RESET)"; \
 		fi; \
-		cd - > /dev/null; \
 		echo ""; \
 	done; \
 	echo "$(YELLOW)========================================$(RESET)"; \

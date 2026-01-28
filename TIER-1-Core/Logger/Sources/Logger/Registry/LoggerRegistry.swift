@@ -59,7 +59,7 @@ public actor LoggerRegistry {
     // MARK: - Initialization
 
     /// Inicializa el registry con configuración por defecto.
-    private init() {
+    init() {
         #if DEBUG
         self.globalConfiguration = .development
         #else

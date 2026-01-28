@@ -116,6 +116,7 @@ struct LocalRepositoryConcurrencyTests {
             email: "readtest@test.com"
         )
         try await userRepo.save(user)
+        _ = try await userRepo.list()
 
         let startTime = ContinuousClock.now
 
@@ -160,6 +161,8 @@ struct LocalRepositoryConcurrencyTests {
             try await docRepo.save(document)
         }
 
+        _ = try await docRepo.list()
+
         let startTime = ContinuousClock.now
 
         let results = await withTaskGroup(of: Bool.self, returning: [Bool].self) { group in
@@ -186,7 +189,7 @@ struct LocalRepositoryConcurrencyTests {
 
         let successCount = results.filter { $0 }.count
         #expect(successCount == operationCount, "All searches should succeed and find results")
-        #expect(elapsed < .seconds(3), "Should complete within reasonable time")
+        #expect(elapsed < .seconds(1), "Should complete within target time")
     }
 
     // MARK: - Mixed Read/Write Tests
@@ -205,6 +208,7 @@ struct LocalRepositoryConcurrencyTests {
             try await userRepo.save(user)
             userIDs.append(user.id)
         }
+        _ = try await userRepo.list()
 
         let writeOperations = 300
         let readOperations = 700

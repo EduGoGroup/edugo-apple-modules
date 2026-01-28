@@ -49,9 +49,9 @@ public actor LoggerConfigurator {
 
     // MARK: - Initialization
 
-    /// Inicializa el configurador con el registry compartido.
-    private init() {
-        self.registry = LoggerRegistry.shared
+    /// Inicializa el configurador con el registry proporcionado.
+    init(registry: LoggerRegistry = .shared) {
+        self.registry = registry
 
         // Detectar configuración inicial
         #if DEBUG

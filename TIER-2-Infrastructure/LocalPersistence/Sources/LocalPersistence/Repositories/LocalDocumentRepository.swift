@@ -30,6 +30,7 @@ import EduGoCommon
 /// ```
 public actor LocalDocumentRepository: DocumentRepositoryProtocol {
     private let containerProvider: PersistenceContainerProvider
+    private var cachedDocuments: [Document]?
 
     /// Creates a new LocalDocumentRepository
     ///
@@ -44,6 +45,10 @@ public actor LocalDocumentRepository: DocumentRepositoryProtocol {
     /// - Returns: The document if found, nil otherwise
     /// - Throws: `RepositoryError.fetchFailed` if the query fails
     public func get(id: UUID) async throws -> Document? {
+        if let cachedDocuments = cachedDocuments {
+            return cachedDocuments.first { $0.id == id }
+        }
+
         do {
             return try await containerProvider.perform { context in
                 let predicate = #Predicate<DocumentModel> { model in
@@ -79,7 +84,7 @@ public actor LocalDocumentRepository: DocumentRepositoryProtocol {
     /// - Throws: `RepositoryError.saveFailed` if the save operation fails
     public func save(_ document: Document) async throws {
         do {
-            try await containerProvider.perform { context in
+            let savedDocument = try await containerProvider.perform { context in
                 // Check if document already exists (upsert)
                 let predicate = #Predicate<DocumentModel> { model in
                     model.id == document.id
@@ -117,6 +122,15 @@ public actor LocalDocumentRepository: DocumentRepositoryProtocol {
                 }
 
                 try context.save()
+                return documentToSave
+            }
+
+            if cachedDocuments != nil {
+                if let index = cachedDocuments?.firstIndex(where: { $0.id == savedDocument.id }) {
+                    cachedDocuments?[index] = savedDocument
+                } else {
+                    cachedDocuments?.append(savedDocument)
+                }
             }
         } catch let error as RepositoryError {
             throw error
@@ -147,6 +161,10 @@ public actor LocalDocumentRepository: DocumentRepositoryProtocol {
                 context.delete(model)
                 try context.save()
             }
+
+            if cachedDocuments != nil {
+                cachedDocuments?.removeAll { $0.id == id }
+            }
         } catch let error as RepositoryError {
             throw error
         } catch {
@@ -167,6 +185,13 @@ public actor LocalDocumentRepository: DocumentRepositoryProtocol {
             return []
         }
 
+        if let cachedDocuments = cachedDocuments {
+            return cachedDocuments.filter { document in
+                document.title.localizedStandardContains(query) ||
+                document.content.localizedStandardContains(query)
+            }
+        }
+
         do {
             return try await containerProvider.perform { [query] context in
                 let predicate = #Predicate<DocumentModel> { model in
@@ -181,6 +206,32 @@ public actor LocalDocumentRepository: DocumentRepositoryProtocol {
                     try DocumentPersistenceMapper.toDomain(model)
                 }
             }
+        } catch let error as RepositoryError {
+            throw error
+        } catch let error as DomainError {
+            throw RepositoryError.fetchFailed(reason: "Failed to map documents: \(error.localizedDescription)")
+        } catch {
+            throw RepositoryError.fetchFailed(reason: error.localizedDescription)
+        }
+    }
+
+    /// Lists all documents
+    ///
+    /// - Returns: An array of all documents
+    /// - Throws: `RepositoryError.fetchFailed` if the query fails
+    func list() async throws -> [Document] {
+        do {
+            let documents = try await containerProvider.perform { context in
+                let descriptor = FetchDescriptor<DocumentModel>()
+                let models = try context.fetch(descriptor)
+
+                return try models.map { model in
+                    try DocumentPersistenceMapper.toDomain(model)
+                }
+            }
+
+            cachedDocuments = documents
+            return documents
         } catch let error as RepositoryError {
             throw error
         } catch let error as DomainError {

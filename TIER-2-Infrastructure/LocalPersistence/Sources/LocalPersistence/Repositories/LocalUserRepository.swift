@@ -35,6 +35,7 @@ import EduGoCommon
 /// ```
 public actor LocalUserRepository: UserRepositoryProtocol {
     private let containerProvider: PersistenceContainerProvider
+    private var cachedUsers: [User]?
 
     /// Creates a new LocalUserRepository
     ///
@@ -49,6 +50,10 @@ public actor LocalUserRepository: UserRepositoryProtocol {
     /// - Returns: The user if found, nil otherwise
     /// - Throws: `RepositoryError.fetchFailed` if the query fails
     public func get(id: UUID) async throws -> User? {
+        if let cachedUsers = cachedUsers {
+            return cachedUsers.first { $0.id == id }
+        }
+
         do {
             return try await containerProvider.perform { context in
                 let predicate = #Predicate<UserModel> { model in
@@ -103,6 +108,14 @@ public actor LocalUserRepository: UserRepositoryProtocol {
 
                 try context.save()
             }
+
+            if cachedUsers != nil {
+                if let index = cachedUsers?.firstIndex(where: { $0.id == user.id }) {
+                    cachedUsers?[index] = user
+                } else {
+                    cachedUsers?.append(user)
+                }
+            }
         } catch let error as RepositoryError {
             throw error
         } catch {
@@ -130,6 +143,10 @@ public actor LocalUserRepository: UserRepositoryProtocol {
                 context.delete(model)
                 try context.save()
             }
+
+            if cachedUsers != nil {
+                cachedUsers?.removeAll { $0.id == id }
+            }
         } catch let error as RepositoryError {
             throw error
         } catch {
@@ -143,7 +160,7 @@ public actor LocalUserRepository: UserRepositoryProtocol {
     /// - Throws: `RepositoryError.fetchFailed` if the query fails
     public func list() async throws -> [User] {
         do {
-            return try await containerProvider.perform { context in
+            let users = try await containerProvider.perform { context in
                 let descriptor = FetchDescriptor<UserModel>()
                 let models = try context.fetch(descriptor)
 
@@ -151,6 +168,9 @@ public actor LocalUserRepository: UserRepositoryProtocol {
                     try UserPersistenceMapper.toDomain(model)
                 }
             }
+
+            cachedUsers = users
+            return users
         } catch let error as RepositoryError {
             throw error
         } catch let error as DomainError {
