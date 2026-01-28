@@ -62,8 +62,8 @@ public struct DocumentMapper: MapperProtocol {
     public typealias DTO = DocumentDTO
     public typealias Domain = Document
 
-    /// ISO8601 parsing strategy with fractional seconds support.
-    private static let iso8601Strategy: Date.ISO8601FormatStyle = .iso8601.dateTimeSeparator(.standard)
+    /// ISO8601 formatting helpers with fractional seconds support for backend compatibility.
+    /// Note: formatters are created per-call to avoid shared mutable state under strict concurrency.
 
     /// Converts a `DocumentDTO` from the backend to a `Document` domain entity.
     ///
@@ -130,20 +130,14 @@ public struct DocumentMapper: MapperProtocol {
     /// - Returns: A `DocumentMetadata` with parsed `Date` objects.
     /// - Throws: `DomainError.validationFailed` if date strings have invalid format.
     private static func mapMetadataToDomain(_ dto: DocumentMetadataDTO) throws -> DocumentMetadata {
-        let createdAt: Date
-        do {
-            createdAt = try Date(dto.createdAt, strategy: iso8601Strategy)
-        } catch {
+        guard let createdAt = parseISO8601(dto.createdAt) else {
             throw DomainError.validationFailed(
                 field: "metadata.created_at",
                 reason: "Formato de fecha inválido: '\(dto.createdAt)'. Esperado: ISO8601 (ej: 2024-01-15T10:30:00.000Z)"
             )
         }
 
-        let modifiedAt: Date
-        do {
-            modifiedAt = try Date(dto.modifiedAt, strategy: iso8601Strategy)
-        } catch {
+        guard let modifiedAt = parseISO8601(dto.modifiedAt) else {
             throw DomainError.validationFailed(
                 field: "metadata.modified_at",
                 reason: "Formato de fecha inválido: '\(dto.modifiedAt)'. Esperado: ISO8601 (ej: 2024-01-15T10:30:00.000Z)"
@@ -164,10 +158,30 @@ public struct DocumentMapper: MapperProtocol {
     /// - Returns: A `DocumentMetadataDTO` with ISO8601 formatted date strings.
     private static func mapMetadataToDTO(_ metadata: DocumentMetadata) -> DocumentMetadataDTO {
         DocumentMetadataDTO(
-            createdAt: metadata.createdAt.formatted(iso8601Strategy),
-            modifiedAt: metadata.modifiedAt.formatted(iso8601Strategy),
+            createdAt: formatISO8601(metadata.createdAt),
+            modifiedAt: formatISO8601(metadata.modifiedAt),
             version: metadata.version,
             tags: Array(metadata.tags)
         )
+    }
+
+    /// Parses an ISO8601 string with fractional seconds, falling back to non-fractional format.
+    private static func parseISO8601(_ value: String) -> Date? {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = formatter.date(from: value) {
+            return date
+        }
+
+        let fallbackFormatter = ISO8601DateFormatter()
+        fallbackFormatter.formatOptions = [.withInternetDateTime]
+        return fallbackFormatter.date(from: value)
+    }
+
+    /// Formats a date to ISO8601 with fractional seconds.
+    private static func formatISO8601(_ date: Date) -> String {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter.string(from: date)
     }
 }

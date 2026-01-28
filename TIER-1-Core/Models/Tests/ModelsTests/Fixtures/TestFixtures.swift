@@ -64,8 +64,8 @@ enum TestFixtures {
         state: String = "draft",
         ownerID: UUID = UUID(),
         collaboratorIDs: [UUID] = [],
-        createdAt: String = "2024-01-15T10:30:00Z",
-        modifiedAt: String = "2024-01-15T10:30:00Z",
+        createdAt: String = "2024-01-15T10:30:00.000Z",
+        modifiedAt: String = "2024-01-15T10:30:00.000Z",
         version: Int = 1,
         tags: [String] = []
     ) -> DocumentDTO {
@@ -90,8 +90,8 @@ enum TestFixtures {
     // MARK: - DocumentMetadataDTO
 
     static func makeDocumentMetadataDTO(
-        createdAt: String = "2024-01-15T10:30:00Z",
-        modifiedAt: String = "2024-01-15T10:30:00Z",
+        createdAt: String = "2024-01-15T10:30:00.000Z",
+        modifiedAt: String = "2024-01-15T10:30:00.000Z",
         version: Int = 1,
         tags: [String] = []
     ) -> DocumentMetadataDTO {

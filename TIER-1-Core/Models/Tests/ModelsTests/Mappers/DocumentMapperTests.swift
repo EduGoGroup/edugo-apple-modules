@@ -75,8 +75,8 @@ struct DocumentMapperTests {
     @Test("toDomain parses ISO8601 dates correctly")
     func toDomainParsesISO8601Dates() throws {
         let dto = TestFixtures.makeDocumentDTO(
-            createdAt: "2024-01-15T10:30:00Z",
-            modifiedAt: "2024-01-16T14:45:30Z"
+            createdAt: "2024-01-15T10:30:00.000Z",
+            modifiedAt: "2024-01-16T14:45:30.500Z"
         )
 
         let document = try DocumentMapper.toDomain(dto)
@@ -176,8 +176,8 @@ struct DocumentMapperTests {
             state: "published",
             ownerID: ownerID,
             collaboratorIDs: [collabID],
-            createdAt: "2024-06-01T08:00:00Z",
-            modifiedAt: "2024-06-02T16:30:00Z",
+            createdAt: "2024-06-01T08:00:00.000Z",
+            modifiedAt: "2024-06-02T16:30:00.000Z",
             version: 3,
             tags: ["homework", "math"]
         )
@@ -230,6 +230,27 @@ struct DocumentMapperTests {
         let dto = DocumentMapper.toDTO(document)
 
         #expect(dto.metadata.createdAt.contains("T"))
+        #expect(dto.metadata.createdAt.contains("."))
+        #expect(dto.metadata.createdAt.hasSuffix("Z"))
+    }
+
+    @Test("toDTO preserves fractional seconds in ISO8601 output")
+    func toDTOPreservesFractionalSeconds() throws {
+        let dateWithFraction = Date(timeIntervalSince1970: 1_705_314_600.123)
+        let metadata = DocumentMetadata(createdAt: dateWithFraction, modifiedAt: dateWithFraction, version: 1, tags: [])
+        let document = try Document(
+            id: UUID(),
+            title: "Fractional",
+            content: "",
+            type: .lesson,
+            metadata: metadata,
+            ownerID: UUID()
+        )
+
+        let dto = DocumentMapper.toDTO(document)
+
+        #expect(dto.metadata.createdAt.contains(".123"))
+        #expect(dto.metadata.createdAt.hasSuffix("Z"))
     }
 
     @Test("toDTO converts collaboratorIDs set to array")
