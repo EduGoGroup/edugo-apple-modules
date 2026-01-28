@@ -106,4 +106,30 @@ enum TestFixtures {
             tags: tags
         )
     }
+
+    // MARK: - MembershipDTO
+
+    static func makeMembershipDTO(
+        id: UUID = UUID(),
+        userID: UUID = UUID(),
+        unitID: UUID = UUID(),
+        role: String = "student",
+        isActive: Bool = true,
+        enrolledAt: Date = Date(),
+        withdrawnAt: Date? = nil,
+        createdAt: Date = Date(),
+        updatedAt: Date = Date()
+    ) -> MembershipDTO {
+        MembershipDTO(
+            id: id,
+            userID: userID,
+            unitID: unitID,
+            role: role,
+            isActive: isActive,
+            enrolledAt: enrolledAt,
+            withdrawnAt: withdrawnAt,
+            createdAt: createdAt,
+            updatedAt: updatedAt
+        )
+    }
 }
