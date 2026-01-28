@@ -1,5 +1,6 @@
 import Testing
 import Foundation
+import EduGoCommon
 @testable import Models
 import EduGoCommon
 
@@ -26,7 +27,7 @@ struct AcademicUnitMapperTests {
             type: "grade",
             parentUnitID: nil,
             schoolID: schoolID,
-            metadata: ["capacity": "120"],
+            metadata: ["capacity": .string("120")],
             createdAt: createdAt,
             updatedAt: updatedAt,
             deletedAt: nil
@@ -69,8 +70,8 @@ struct AcademicUnitMapperTests {
         }
     }
 
-    @Test("toDomain with unknown type defaults to grade")
-    func toDomainWithUnknownType() throws {
+    @Test("toDomain with unknown type throws")
+    func toDomainWithUnknownType() {
         let dto = AcademicUnitDTO(
             id: UUID(),
             displayName: "Test Unit",
@@ -85,9 +86,9 @@ struct AcademicUnitMapperTests {
             deletedAt: nil
         )
 
-        let unit = try AcademicUnitMapper.toDomain(dto)
-
-        #expect(unit.type == .grade)
+        #expect(throws: DomainError.self) {
+            _ = try AcademicUnitMapper.toDomain(dto)
+        }
     }
 
     @Test("toDomain with parent unit ID")
@@ -169,7 +170,7 @@ struct AcademicUnitMapperTests {
             type: .grade,
             parentUnitID: nil,
             schoolID: schoolID,
-            metadata: ["capacity": "120"],
+            metadata: ["capacity": .string("120")],
             createdAt: Date(timeIntervalSince1970: 1000),
             updatedAt: Date(timeIntervalSince1970: 2000),
             deletedAt: nil
@@ -213,7 +214,7 @@ struct AcademicUnitMapperTests {
             type: .grade,
             parentUnitID: nil,
             schoolID: schoolID,
-            metadata: ["key": "value"],
+            metadata: ["key": .string("value")],
             createdAt: createdAt,
             updatedAt: updatedAt,
             deletedAt: nil

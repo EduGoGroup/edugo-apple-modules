@@ -1,5 +1,6 @@
 import Testing
 import Foundation
+import EduGoCommon
 @testable import Models
 
 /// Integration tests for DTO ↔ Domain mapping.
@@ -82,8 +83,10 @@ struct DTOMappingTests {
         #expect(dto.id == user.id)
         #expect(dto.firstName == user.firstName)
         #expect(dto.lastName == user.lastName)
+        #expect(dto.fullName == user.fullName)
         #expect(dto.email == user.email)
         #expect(dto.isActive == user.isActive)
+        #expect(dto.role == nil)
         #expect(dto.createdAt == user.createdAt)
         #expect(dto.updatedAt == user.updatedAt)
     }
@@ -155,7 +158,7 @@ struct DTOMappingTests {
             maxStudents: 500,
             maxTeachers: 50,
             subscriptionTier: "premium",
-            metadata: ["key": "value"],
+            metadata: ["key": .string("value")],
             createdAt: Date(),
             updatedAt: Date()
         )
@@ -224,8 +227,8 @@ struct DTOMappingTests {
         }
     }
 
-    @Test("AcademicUnitDTO defaults unknown type to grade")
-    func testAcademicUnitDTODefaultsUnknownTypeToGrade() throws {
+    @Test("AcademicUnitDTO throws for unknown type")
+    func testAcademicUnitDTOThrowsForUnknownType() {
         let dto = AcademicUnitDTO(
             id: UUID(),
             displayName: "Test Unit",
@@ -240,9 +243,9 @@ struct DTOMappingTests {
             deletedAt: nil
         )
 
-        let domain = try dto.toDomain()
-
-        #expect(domain.type == .grade)
+        #expect(throws: DomainError.self) {
+            _ = try dto.toDomain()
+        }
     }
 
     @Test("AcademicUnit toDTO converts type to rawValue")
@@ -264,7 +267,7 @@ struct DTOMappingTests {
     // MARK: - Membership DTO Mapping Tests
 
     @Test("MembershipDTO converts all known roles")
-    func testMembershipDTOConvertsAllKnownRoles() {
+    func testMembershipDTOConvertsAllKnownRoles() throws {
         let roles: [(String, MembershipRole)] = [
             ("owner", .owner),
             ("teacher", .teacher),
@@ -286,14 +289,14 @@ struct DTOMappingTests {
                 updatedAt: Date()
             )
 
-            let domain = dto.toDomain()
+            let domain = try dto.toDomain()
 
             #expect(domain.role == expectedRole)
         }
     }
 
-    @Test("MembershipDTO defaults unknown role to student")
-    func testMembershipDTODefaultsUnknownRoleToStudent() {
+    @Test("MembershipDTO throws for unknown role")
+    func testMembershipDTOThrowsForUnknownRole() {
         let dto = MembershipDTO(
             id: UUID(),
             userID: UUID(),
@@ -306,9 +309,9 @@ struct DTOMappingTests {
             updatedAt: Date()
         )
 
-        let domain = dto.toDomain()
-
-        #expect(domain.role == .student)
+        #expect(throws: DomainError.self) {
+            _ = try dto.toDomain()
+        }
     }
 
     @Test("Membership toDTO converts role to rawValue")
@@ -331,7 +334,7 @@ struct DTOMappingTests {
     }
 
     @Test("MembershipDTO preserves withdrawnAt date")
-    func testMembershipDTOPreservesWithdrawnAt() {
+    func testMembershipDTOPreservesWithdrawnAt() throws {
         let withdrawnAt = Date()
         let dto = MembershipDTO(
             id: UUID(),
@@ -345,7 +348,7 @@ struct DTOMappingTests {
             updatedAt: Date()
         )
 
-        let domain = dto.toDomain()
+        let domain = try dto.toDomain()
 
         #expect(domain.withdrawnAt == withdrawnAt)
     }
@@ -417,8 +420,8 @@ struct DTOMappingTests {
         }
     }
 
-    @Test("MaterialDTO defaults unknown status to uploaded")
-    func testMaterialDTODefaultsUnknownStatusToUploaded() throws {
+    @Test("MaterialDTO throws for unknown status")
+    func testMaterialDTOThrowsForUnknownStatus() {
         let dto = MaterialDTO(
             id: UUID(),
             title: "Test Material",
@@ -440,9 +443,9 @@ struct DTOMappingTests {
             deletedAt: nil
         )
 
-        let domain = try dto.toDomain()
-
-        #expect(domain.status == .uploaded)
+        #expect(throws: DomainError.self) {
+            _ = try dto.toDomain()
+        }
     }
 
     @Test("MaterialDTO converts fileURL string to URL")

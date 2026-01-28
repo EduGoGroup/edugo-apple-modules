@@ -4,6 +4,7 @@
 // Data Transfer Object for Membership entity from backend API.
 
 import Foundation
+import EduGoCommon
 
 /// Data Transfer Object representing a Membership from the backend API.
 ///
@@ -30,7 +31,7 @@ import Foundation
 /// let decoder = JSONDecoder()
 /// decoder.dateDecodingStrategy = .iso8601
 /// let membershipDTO = try decoder.decode(MembershipDTO.self, from: jsonData)
-/// let membership = membershipDTO.toDomain()
+/// let membership = try membershipDTO.toDomain()
 /// ```
 public struct MembershipDTO: Codable, Sendable, Equatable {
     /// Unique identifier for the membership.
@@ -114,9 +115,14 @@ extension MembershipDTO {
     /// Converts this DTO to a domain `Membership` entity.
     ///
     /// - Returns: A `Membership` domain entity.
-    /// - Note: If the role string doesn't match a known `MembershipRole`, defaults to `.student`.
-    public func toDomain() -> Membership {
-        let membershipRole = MembershipRole(rawValue: role) ?? .student
+    /// - Throws: `DomainError.validationFailed` if role is unknown.
+    public func toDomain() throws -> Membership {
+        guard let membershipRole = MembershipRole(rawValue: role) else {
+            throw DomainError.validationFailed(
+                field: "role",
+                reason: "Rol desconocido: '\(role)'"
+            )
+        }
 
         return Membership(
             id: id,

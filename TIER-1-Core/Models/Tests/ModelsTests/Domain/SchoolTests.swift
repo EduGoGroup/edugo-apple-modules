@@ -39,7 +39,7 @@ struct SchoolTests {
             maxStudents: 500,
             maxTeachers: 50,
             subscriptionTier: "premium",
-            metadata: ["region": "midwest"],
+            metadata: ["region": .string("midwest")],
             createdAt: createdAt,
             updatedAt: updatedAt
         )
@@ -54,7 +54,7 @@ struct SchoolTests {
         #expect(school.maxStudents == 500)
         #expect(school.maxTeachers == 50)
         #expect(school.subscriptionTier == "premium")
-        #expect(school.metadata?["region"] == "midwest")
+        #expect(school.metadata?["region"] == .string("midwest"))
     }
 
     @Test("School creation fails with empty name")

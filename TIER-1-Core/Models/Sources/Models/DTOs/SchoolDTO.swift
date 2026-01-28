@@ -20,7 +20,7 @@ public struct SchoolDTO: Codable, Sendable, Equatable {
     public let maxStudents: Int?
     public let maxTeachers: Int?
     public let subscriptionTier: String?
-    public let metadata: [String: String]?
+    public let metadata: [String: JSONValue]?
     public let createdAt: Date
     public let updatedAt: Date
 
@@ -59,7 +59,7 @@ public struct SchoolDTO: Codable, Sendable, Equatable {
         maxStudents: Int?,
         maxTeachers: Int?,
         subscriptionTier: String?,
-        metadata: [String: String]?,
+        metadata: [String: JSONValue]?,
         createdAt: Date,
         updatedAt: Date
     ) {

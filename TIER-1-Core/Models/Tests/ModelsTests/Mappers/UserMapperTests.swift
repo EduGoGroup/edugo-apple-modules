@@ -15,8 +15,10 @@ struct UserMapperTests {
             id: UUID(),
             firstName: "John",
             lastName: "Doe",
+            fullName: "John Doe",
             email: "john@example.com",
             isActive: true,
+            role: "teacher",
             createdAt: createdAt,
             updatedAt: updatedAt
         )
@@ -156,8 +158,10 @@ struct UserMapperTests {
         #expect(dto.id == user.id)
         #expect(dto.firstName == user.firstName)
         #expect(dto.lastName == user.lastName)
+        #expect(dto.fullName == user.fullName)
         #expect(dto.email == user.email)
         #expect(dto.isActive == false)
+        #expect(dto.role == nil)
         #expect(dto.createdAt == createdAt)
         #expect(dto.updatedAt == updatedAt)
     }
@@ -231,8 +235,10 @@ struct UserMapperTests {
             id: id,
             firstName: "John",
             lastName: "Doe",
+            fullName: "John Doe",
             email: "john@example.com",
             isActive: true,
+            role: "teacher",
             createdAt: createdAt,
             updatedAt: updatedAt
         )
@@ -244,7 +250,9 @@ struct UserMapperTests {
 
         #expect(json.contains("\"first_name\""))
         #expect(json.contains("\"last_name\""))
+        #expect(json.contains("\"full_name\""))
         #expect(json.contains("\"is_active\""))
+        #expect(json.contains("\"role\""))
         #expect(json.contains("\"created_at\""))
         #expect(json.contains("\"updated_at\""))
         #expect(!json.contains("\"firstName\""))
@@ -258,8 +266,10 @@ struct UserMapperTests {
             "id": "550e8400-e29b-41d4-a716-446655440000",
             "first_name": "John",
             "last_name": "Doe",
+            "full_name": "John Doe",
             "email": "john@example.com",
             "is_active": true,
+            "role": "teacher",
             "created_at": "2024-01-15T10:30:00Z",
             "updated_at": "2024-01-20T14:45:00Z"
         }
@@ -272,7 +282,9 @@ struct UserMapperTests {
 
         #expect(dto.firstName == "John")
         #expect(dto.lastName == "Doe")
+        #expect(dto.fullName == "John Doe")
         #expect(dto.email == "john@example.com")
         #expect(dto.isActive == true)
+        #expect(dto.role == "teacher")
     }
 }

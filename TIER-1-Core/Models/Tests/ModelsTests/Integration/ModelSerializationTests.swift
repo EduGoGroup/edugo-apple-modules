@@ -50,8 +50,10 @@ struct ModelSerializationTests {
         #expect(dto.id == UUID(uuidString: "550e8400-e29b-41d4-a716-446655440000"))
         #expect(dto.firstName == "John")
         #expect(dto.lastName == "Doe")
+        #expect(dto.fullName == "John Doe")
         #expect(dto.email == "john.doe@example.com")
         #expect(dto.isActive == true)
+        #expect(dto.role == "teacher")
     }
 
     @Test("UserDTO converts to domain entity")
@@ -80,6 +82,7 @@ struct ModelSerializationTests {
         #expect(resultDTO.lastName == originalDTO.lastName)
         #expect(resultDTO.email == originalDTO.email)
         #expect(resultDTO.isActive == originalDTO.isActive)
+        #expect(resultDTO.fullName == originalDTO.fullName)
     }
 
     @Test("UserDTO serializes to JSON with snake_case keys")
@@ -88,8 +91,10 @@ struct ModelSerializationTests {
             id: UUID(),
             firstName: "Jane",
             lastName: "Smith",
+            fullName: "Jane Smith",
             email: "jane@example.com",
             isActive: true,
+            role: "teacher",
             createdAt: Date(),
             updatedAt: Date()
         )
@@ -99,7 +104,9 @@ struct ModelSerializationTests {
 
         #expect(jsonString.contains("\"first_name\""))
         #expect(jsonString.contains("\"last_name\""))
+        #expect(jsonString.contains("\"full_name\""))
         #expect(jsonString.contains("\"is_active\""))
+        #expect(jsonString.contains("\"role\""))
         #expect(jsonString.contains("\"created_at\""))
         #expect(jsonString.contains("\"updated_at\""))
         #expect(!jsonString.contains("\"firstName\""))
@@ -121,6 +128,7 @@ struct ModelSerializationTests {
         #expect(dto.city == "Springfield")
         #expect(dto.maxStudents == 500)
         #expect(dto.subscriptionTier == "premium")
+        #expect(dto.metadata?["founded"] == .string("1990"))
     }
 
     @Test("SchoolDTO converts to domain entity")
@@ -205,6 +213,7 @@ struct ModelSerializationTests {
 
         #expect(unit.displayName == "5th Grade - Section A")
         #expect(unit.type == .section)
+        #expect(unit.metadata?["capacity"] == .string("30"))
     }
 
     @Test("AcademicUnit roundtrip preserves data")
@@ -232,7 +241,7 @@ struct ModelSerializationTests {
             type: "grade",
             parentUnitID: UUID(),
             schoolID: UUID(),
-            metadata: ["key": "value"],
+            metadata: ["key": .string("value")],
             createdAt: Date(),
             updatedAt: Date(),
             deletedAt: Date()
@@ -270,7 +279,7 @@ struct ModelSerializationTests {
         let jsonData = try loadFixture("membership_response")
         let dto = try decoder.decode(MembershipDTO.self, from: jsonData)
 
-        let membership = dto.toDomain()
+        let membership = try dto.toDomain()
 
         #expect(membership.role == .teacher)
         #expect(membership.isActive == true)
@@ -281,7 +290,7 @@ struct ModelSerializationTests {
         let jsonData = try loadFixture("membership_response")
         let originalDTO = try decoder.decode(MembershipDTO.self, from: jsonData)
 
-        let domain = originalDTO.toDomain()
+        let domain = try originalDTO.toDomain()
         let resultDTO = domain.toDTO()
 
         #expect(resultDTO.id == originalDTO.id)

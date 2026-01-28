@@ -2,6 +2,7 @@ import Testing
 import Foundation
 import SwiftData
 import Models
+import EduGoCommon
 @testable import LocalPersistence
 
 @Suite("MembershipPersistenceMapper Tests")
@@ -10,7 +11,7 @@ struct MembershipPersistenceMapperTests {
     // MARK: - Roundtrip Tests
 
     @Test("Domain to Model to Domain roundtrip produces identical membership")
-    func testRoundtrip() {
+    func testRoundtrip() throws {
         let userID = UUID()
         let unitID = UUID()
         let enrolledAt = Date()
@@ -30,7 +31,7 @@ struct MembershipPersistenceMapperTests {
         let model = MembershipPersistenceMapper.toModel(original, existing: nil)
 
         // Model -> Domain
-        let restored = MembershipPersistenceMapper.toDomain(model)
+        let restored = try MembershipPersistenceMapper.toDomain(model)
 
         #expect(restored.id == original.id)
         #expect(restored.userID == original.userID)
@@ -43,20 +44,20 @@ struct MembershipPersistenceMapperTests {
     }
 
     @Test("Roundtrip preserves all roles")
-    func testRoundtripPreservesRoles() {
+    func testRoundtripPreservesRoles() throws {
         let roles: [MembershipRole] = [.owner, .teacher, .assistant, .student, .guardian]
 
         for role in roles {
             let original = TestDataFactory.makeMembership(role: role)
             let model = MembershipPersistenceMapper.toModel(original, existing: nil)
-            let restored = MembershipPersistenceMapper.toDomain(model)
+            let restored = try MembershipPersistenceMapper.toDomain(model)
 
             #expect(restored.role == role)
         }
     }
 
     @Test("Roundtrip with withdrawnAt date")
-    func testRoundtripWithWithdrawnAt() {
+    func testRoundtripWithWithdrawnAt() throws {
         let withdrawnAt = Date()
         let original = TestDataFactory.makeMembership(
             isActive: false,
@@ -64,14 +65,14 @@ struct MembershipPersistenceMapperTests {
         )
 
         let model = MembershipPersistenceMapper.toModel(original, existing: nil)
-        let restored = MembershipPersistenceMapper.toDomain(model)
+        let restored = try MembershipPersistenceMapper.toDomain(model)
 
         #expect(restored.withdrawnAt == withdrawnAt)
         #expect(restored.isActive == false)
     }
 
     @Test("Roundtrip preserves timestamps")
-    func testRoundtripPreservesTimestamps() {
+    func testRoundtripPreservesTimestamps() throws {
         let createdAt = Date(timeIntervalSince1970: 1000000)
         let updatedAt = Date(timeIntervalSince1970: 2000000)
         let enrolledAt = Date(timeIntervalSince1970: 500000)
@@ -82,7 +83,7 @@ struct MembershipPersistenceMapperTests {
         )
 
         let model = MembershipPersistenceMapper.toModel(original, existing: nil)
-        let restored = MembershipPersistenceMapper.toDomain(model)
+        let restored = try MembershipPersistenceMapper.toDomain(model)
 
         #expect(restored.enrolledAt == enrolledAt)
         #expect(restored.createdAt == createdAt)
@@ -143,7 +144,7 @@ struct MembershipPersistenceMapperTests {
     // MARK: - toDomain Tests
 
     @Test("toDomain creates valid domain membership")
-    func testToDomainCreatesValidMembership() {
+    func testToDomainCreatesValidMembership() throws {
         let userID = UUID()
         let unitID = UUID()
         let model = MembershipModel(
@@ -155,7 +156,7 @@ struct MembershipPersistenceMapperTests {
             enrolledAt: Date()
         )
 
-        let membership = MembershipPersistenceMapper.toDomain(model)
+        let membership = try MembershipPersistenceMapper.toDomain(model)
 
         #expect(membership.id == model.id)
         #expect(membership.userID == userID)
@@ -164,8 +165,8 @@ struct MembershipPersistenceMapperTests {
         #expect(membership.isActive == true)
     }
 
-    @Test("toDomain defaults unknown role to student")
-    func testToDomainDefaultsUnknownRoleToStudent() {
+    @Test("toDomain throws for unknown role")
+    func testToDomainThrowsForUnknownRole() {
         let model = MembershipModel(
             id: UUID(),
             userID: UUID(),
@@ -175,13 +176,13 @@ struct MembershipPersistenceMapperTests {
             enrolledAt: Date()
         )
 
-        let membership = MembershipPersistenceMapper.toDomain(model)
-
-        #expect(membership.role == .student)
+        #expect(throws: DomainError.self) {
+            _ = try MembershipPersistenceMapper.toDomain(model)
+        }
     }
 
     @Test("toDomain converts all known role strings")
-    func testToDomainConvertsAllKnownRoles() {
+    func testToDomainConvertsAllKnownRoles() throws {
         let roleMapping: [(String, MembershipRole)] = [
             ("owner", .owner),
             ("teacher", .teacher),
@@ -200,14 +201,14 @@ struct MembershipPersistenceMapperTests {
                 enrolledAt: Date()
             )
 
-            let membership = MembershipPersistenceMapper.toDomain(model)
+            let membership = try MembershipPersistenceMapper.toDomain(model)
 
             #expect(membership.role == expectedRole)
         }
     }
 
     @Test("toDomain handles nil withdrawnAt")
-    func testToDomainHandlesNilWithdrawnAt() {
+    func testToDomainHandlesNilWithdrawnAt() throws {
         let model = MembershipModel(
             id: UUID(),
             userID: UUID(),
@@ -218,7 +219,7 @@ struct MembershipPersistenceMapperTests {
             withdrawnAt: nil
         )
 
-        let membership = MembershipPersistenceMapper.toDomain(model)
+        let membership = try MembershipPersistenceMapper.toDomain(model)
 
         #expect(membership.withdrawnAt == nil)
     }

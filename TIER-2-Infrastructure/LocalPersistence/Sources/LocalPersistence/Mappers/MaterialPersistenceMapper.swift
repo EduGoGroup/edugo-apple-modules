@@ -23,7 +23,7 @@ import EduGoCommon
 /// ## Notes
 /// - Does NOT conform to `MapperProtocol` because `@Model` types are not `Codable`
 /// - Handles URL ↔ String conversion for fileURL
-/// - Unknown status strings default to `.uploaded`
+/// - Throws `DomainError.validationFailed` for unknown status strings or invalid URL
 /// - Throws `DomainError.validationFailed` if data is corrupted
 public struct MaterialPersistenceMapper: Sendable {
     private init() {}
@@ -33,13 +33,23 @@ public struct MaterialPersistenceMapper: Sendable {
     /// - Parameter model: The SwiftData model to convert
     /// - Returns: A domain Material entity
     /// - Throws: `DomainError.validationFailed` if the model contains invalid data
-    /// - Note: Unknown status strings default to `.uploaded`
     public static func toDomain(_ model: MaterialModel) throws -> Material {
-        let status = MaterialStatus(rawValue: model.status) ?? .uploaded
+        guard let status = MaterialStatus(rawValue: model.status) else {
+            throw DomainError.validationFailed(
+                field: "status",
+                reason: "Estado desconocido: '\(model.status)'"
+            )
+        }
 
         var url: URL?
         if let fileURLString = model.fileURL {
-            url = URL(string: fileURLString)
+            guard let parsedURL = URL(string: fileURLString) else {
+                throw DomainError.validationFailed(
+                    field: "fileURL",
+                    reason: "URL inválida: '\(fileURLString)'"
+                )
+            }
+            url = parsedURL
         }
 
         return try Material(

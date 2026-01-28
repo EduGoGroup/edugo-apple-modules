@@ -10,8 +10,10 @@ enum TestFixtures {
         id: UUID = UUID(),
         firstName: String = "Test",
         lastName: String = "User",
+        fullName: String? = nil,
         email: String = "test@example.com",
         isActive: Bool = true,
+        role: String? = nil,
         createdAt: Date = Date(),
         updatedAt: Date = Date()
     ) -> UserDTO {
@@ -19,8 +21,10 @@ enum TestFixtures {
             id: id,
             firstName: firstName,
             lastName: lastName,
+            fullName: fullName,
             email: email,
             isActive: isActive,
+            role: role,
             createdAt: createdAt,
             updatedAt: updatedAt
         )
@@ -192,7 +196,7 @@ enum TestFixtures {
         maxStudents: Int? = nil,
         maxTeachers: Int? = nil,
         subscriptionTier: String? = nil,
-        metadata: [String: String]? = nil,
+        metadata: [String: JSONValue]? = nil,
         createdAt: Date = Date(),
         updatedAt: Date = Date()
     ) -> SchoolDTO {
@@ -225,7 +229,7 @@ enum TestFixtures {
         type: String = "grade",
         parentUnitID: UUID? = nil,
         schoolID: UUID = UUID(),
-        metadata: [String: String]? = nil,
+        metadata: [String: JSONValue]? = nil,
         createdAt: Date = Date(),
         updatedAt: Date = Date(),
         deletedAt: Date? = nil

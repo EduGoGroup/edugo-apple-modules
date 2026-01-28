@@ -62,6 +62,25 @@ struct SchoolPersistenceMapperTests {
         #expect(restored.updatedAt == updatedAt)
     }
 
+    @Test("Roundtrip preserves metadata")
+    func testRoundtripPreservesMetadata() throws {
+        let metadata: [String: JSONValue] = [
+            "founded": .integer(1990),
+            "public": .bool(true),
+            "motto": .string("Learning is fun")
+        ]
+        let original = try School(
+            name: "Metadata School",
+            code: "META-001",
+            metadata: metadata
+        )
+
+        let model = SchoolPersistenceMapper.toModel(original, existing: nil)
+        let restored = try SchoolPersistenceMapper.toDomain(model)
+
+        #expect(restored.metadata == metadata)
+    }
+
     // MARK: - toModel Tests
 
     @Test("toModel creates new model when existing is nil")

@@ -48,6 +48,9 @@ public final class SchoolModel {
     /// Subscription tier (e.g., "free", "basic", "premium")
     public var subscriptionTier: String?
 
+    /// Metadata stored as JSON data
+    public var metadataData: Data?
+
     /// Timestamp when the school was created
     public var createdAt: Date
 
@@ -88,6 +91,7 @@ public final class SchoolModel {
         maxStudents: Int? = nil,
         maxTeachers: Int? = nil,
         subscriptionTier: String? = nil,
+        metadataData: Data? = nil,
         createdAt: Date = Date(),
         updatedAt: Date = Date()
     ) {
@@ -103,6 +107,7 @@ public final class SchoolModel {
         self.maxStudents = maxStudents
         self.maxTeachers = maxTeachers
         self.subscriptionTier = subscriptionTier
+        self.metadataData = metadataData
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }

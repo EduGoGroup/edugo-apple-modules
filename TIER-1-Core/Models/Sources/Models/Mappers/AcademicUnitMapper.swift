@@ -15,7 +15,7 @@ import Foundation
 /// - Maps `display_name` (snake_case) to `displayName` (camelCase)
 /// - Maps `parent_unit_id` to `parentUnitID`
 /// - Maps `school_id` to `schoolID`
-/// - Converts string `type` to `AcademicUnitType` enum (with fallback to `.grade`)
+/// - Converts string `type` to `AcademicUnitType` enum
 /// - Handles nullable fields like `deleted_at`, `parent_unit_id`
 /// - Preserves hierarchical relationships during roundtrip conversion
 ///
@@ -54,8 +54,7 @@ public struct AcademicUnitMapper: MapperProtocol {
     ///
     /// - Parameter dto: The data transfer object from the backend.
     /// - Returns: An `AcademicUnit` domain entity.
-    /// - Throws: `DomainError.validationFailed` if displayName is empty.
-    /// - Note: Unknown type strings default to `.grade`.
+    /// - Throws: `DomainError.validationFailed` if displayName is empty or type is unknown.
     public static func toDomain(_ dto: AcademicUnitDTO) throws -> AcademicUnit {
         try dto.toDomain()
     }

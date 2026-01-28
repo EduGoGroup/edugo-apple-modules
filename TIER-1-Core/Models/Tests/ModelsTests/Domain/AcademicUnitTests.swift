@@ -41,7 +41,7 @@ struct AcademicUnitTests {
             type: .section,
             parentUnitID: parentID,
             schoolID: schoolID,
-            metadata: ["capacity": "30"],
+            metadata: ["capacity": .string("30")],
             createdAt: createdAt,
             updatedAt: updatedAt,
             deletedAt: nil
@@ -53,7 +53,7 @@ struct AcademicUnitTests {
         #expect(unit.type == .section)
         #expect(unit.parentUnitID == parentID)
         #expect(unit.schoolID == schoolID)
-        #expect(unit.metadata?["capacity"] == "30")
+        #expect(unit.metadata?["capacity"] == .string("30"))
         #expect(unit.isTopLevel == false)
     }
 

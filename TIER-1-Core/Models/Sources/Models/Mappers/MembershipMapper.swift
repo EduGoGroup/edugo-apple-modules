@@ -13,7 +13,7 @@ import Foundation
 /// ## Overview
 /// `MembershipMapper` provides type-safe conversion that:
 /// - Maps `user_id`/`unit_id` (snake_case) to `userID`/`unitID` (camelCase)
-/// - Converts string `role` to `MembershipRole` enum (with fallback to `.student`)
+/// - Converts string `role` to `MembershipRole` enum
 /// - Handles nullable `withdrawn_at` timestamps
 /// - Preserves all membership properties during roundtrip conversion
 ///
@@ -50,10 +50,9 @@ public struct MembershipMapper: MapperProtocol {
     ///
     /// - Parameter dto: The data transfer object from the backend.
     /// - Returns: A `Membership` domain entity.
-    /// - Throws: Currently does not throw, but conforms to `MapperProtocol`.
-    /// - Note: Unknown role strings default to `.student`.
+    /// - Throws: `DomainError.validationFailed` if role is unknown.
     public static func toDomain(_ dto: MembershipDTO) throws -> Membership {
-        dto.toDomain()
+        try dto.toDomain()
     }
 
     /// Converts a `Membership` domain entity to a `MembershipDTO` for the backend.

@@ -66,6 +66,26 @@ struct AcademicUnitPersistenceMapperTests {
         #expect(restored.updatedAt == updatedAt)
     }
 
+    @Test("Roundtrip preserves metadata")
+    func testRoundtripPreservesMetadata() throws {
+        let metadata: [String: JSONValue] = [
+            "capacity": .integer(30),
+            "room": .string("101"),
+            "active": .bool(true)
+        ]
+        let original = try AcademicUnit(
+            displayName: "Grade 5 - Section A",
+            type: .section,
+            schoolID: UUID(),
+            metadata: metadata
+        )
+
+        let model = AcademicUnitPersistenceMapper.toModel(original, existing: nil)
+        let restored = try AcademicUnitPersistenceMapper.toDomain(model)
+
+        #expect(restored.metadata == metadata)
+    }
+
     // MARK: - toModel Tests
 
     @Test("toModel creates new model when existing is nil")
@@ -148,8 +168,8 @@ struct AcademicUnitPersistenceMapperTests {
         }
     }
 
-    @Test("toDomain defaults unknown type to grade")
-    func testToDomainDefaultsUnknownTypeToGrade() throws {
+    @Test("toDomain throws for unknown type")
+    func testToDomainThrowsForUnknownType() {
         let model = AcademicUnitModel(
             id: UUID(),
             displayName: "Test Unit",
@@ -157,9 +177,9 @@ struct AcademicUnitPersistenceMapperTests {
             schoolID: UUID()
         )
 
-        let unit = try AcademicUnitPersistenceMapper.toDomain(model)
-
-        #expect(unit.type == .grade)
+        #expect(throws: DomainError.self) {
+            _ = try AcademicUnitPersistenceMapper.toDomain(model)
+        }
     }
 
     @Test("toDomain converts all known type strings")

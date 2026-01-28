@@ -26,7 +26,7 @@ struct SchoolMapperTests {
             maxStudents: 500,
             maxTeachers: 50,
             subscriptionTier: "premium",
-            metadata: ["region": "midwest"],
+            metadata: ["region": .string("midwest")],
             createdAt: createdAt,
             updatedAt: updatedAt
         )
@@ -150,7 +150,7 @@ struct SchoolMapperTests {
             maxStudents: 500,
             maxTeachers: 50,
             subscriptionTier: "premium",
-            metadata: ["key": "value"],
+            metadata: ["key": .string("value")],
             createdAt: createdAt,
             updatedAt: updatedAt
         )

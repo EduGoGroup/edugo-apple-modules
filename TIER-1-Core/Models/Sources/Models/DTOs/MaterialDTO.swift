@@ -1,4 +1,5 @@
 import Foundation
+import EduGoCommon
 
 /// Data Transfer Object for Material entity.
 ///
@@ -99,13 +100,24 @@ extension MaterialDTO {
     /// Converts the DTO to a domain Material entity.
     ///
     /// - Returns: A `Material` domain entity.
-    /// - Throws: `DomainError.validationFailed` if conversion fails.
+    /// - Throws: `DomainError.validationFailed` if status or URL are invalid.
     public func toDomain() throws -> Material {
-        let materialStatus = MaterialStatus(rawValue: status) ?? .uploaded
+        guard let materialStatus = MaterialStatus(rawValue: status) else {
+            throw DomainError.validationFailed(
+                field: "status",
+                reason: "Estado desconocido: '\(status)'"
+            )
+        }
 
         var url: URL?
         if let fileURLString = fileURL {
-            url = URL(string: fileURLString)
+            guard let parsedURL = URL(string: fileURLString) else {
+                throw DomainError.validationFailed(
+                    field: "fileURL",
+                    reason: "URL inválida: '\(fileURLString)'"
+                )
+            }
+            url = parsedURL
         }
 
         return try Material(

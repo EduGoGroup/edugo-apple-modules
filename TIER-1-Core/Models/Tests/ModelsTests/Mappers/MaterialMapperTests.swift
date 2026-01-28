@@ -90,8 +90,8 @@ struct MaterialMapperTests {
         }
     }
 
-    @Test("toDomain with unknown status defaults to uploaded")
-    func toDomainWithUnknownStatus() throws {
+    @Test("toDomain with unknown status throws")
+    func toDomainWithUnknownStatus() {
         let dto = MaterialDTO(
             id: UUID(),
             title: "Test Material",
@@ -113,9 +113,9 @@ struct MaterialMapperTests {
             deletedAt: nil
         )
 
-        let material = try MaterialMapper.toDomain(dto)
-
-        #expect(material.status == .uploaded)
+        #expect(throws: DomainError.self) {
+            _ = try MaterialMapper.toDomain(dto)
+        }
     }
 
     @Test("toDomain with nil fileURL returns nil URL")
@@ -144,6 +144,34 @@ struct MaterialMapperTests {
         let material = try MaterialMapper.toDomain(dto)
 
         #expect(material.fileURL == nil)
+    }
+
+    @Test("toDomain with invalid fileURL throws")
+    func toDomainWithInvalidFileURL() {
+        let dto = MaterialDTO(
+            id: UUID(),
+            title: "Test Material",
+            description: nil,
+            status: "uploaded",
+            fileURL: "not a url",
+            fileType: nil,
+            fileSizeBytes: nil,
+            schoolID: schoolID,
+            academicUnitID: nil,
+            uploadedByTeacherID: nil,
+            subject: nil,
+            grade: nil,
+            isPublic: false,
+            processingStartedAt: nil,
+            processingCompletedAt: nil,
+            createdAt: Date(),
+            updatedAt: Date(),
+            deletedAt: nil
+        )
+
+        #expect(throws: DomainError.self) {
+            _ = try MaterialMapper.toDomain(dto)
+        }
     }
 
     @Test("toDomain with deleted material")

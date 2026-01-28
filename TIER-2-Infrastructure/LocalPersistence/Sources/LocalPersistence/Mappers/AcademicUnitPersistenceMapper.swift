@@ -23,10 +23,33 @@ import EduGoCommon
 /// ## Notes
 /// - Does NOT conform to `MapperProtocol` because `@Model` types are not `Codable`
 /// - Handles parent-child relationships separately from mapping
-/// - Unknown type strings default to `.grade`
+/// - Throws `DomainError.validationFailed` for unknown type strings
 /// - Throws `DomainError.validationFailed` if data is corrupted
 public struct AcademicUnitPersistenceMapper: Sendable {
     private init() {}
+
+    private static func decodeMetadata(_ data: Data?) throws -> [String: JSONValue]? {
+        guard let data = data else {
+            return nil
+        }
+
+        do {
+            return try JSONDecoder().decode([String: JSONValue].self, from: data)
+        } catch {
+            throw DomainError.validationFailed(
+                field: "metadata",
+                reason: "Metadata JSON inválido"
+            )
+        }
+    }
+
+    private static func encodeMetadata(_ metadata: [String: JSONValue]?) -> Data? {
+        guard let metadata = metadata else {
+            return nil
+        }
+
+        return try? JSONEncoder().encode(metadata)
+    }
 
     /// Converts an AcademicUnitModel to a domain AcademicUnit
     ///
@@ -35,7 +58,14 @@ public struct AcademicUnitPersistenceMapper: Sendable {
     /// - Throws: `DomainError.validationFailed` if the model contains invalid data
     /// - Note: Parent-child relationships must be handled separately
     public static func toDomain(_ model: AcademicUnitModel) throws -> AcademicUnit {
-        let unitType = AcademicUnitType(rawValue: model.type) ?? .grade
+        guard let unitType = AcademicUnitType(rawValue: model.type) else {
+            throw DomainError.validationFailed(
+                field: "type",
+                reason: "Tipo desconocido: '\(model.type)'"
+            )
+        }
+
+        let metadata = try decodeMetadata(model.metadataData)
 
         return try AcademicUnit(
             id: model.id,
@@ -45,7 +75,7 @@ public struct AcademicUnitPersistenceMapper: Sendable {
             type: unitType,
             parentUnitID: model.parentUnit?.id,
             schoolID: model.schoolID,
-            metadata: nil, // Metadata not persisted in SwiftData model
+            metadata: metadata,
             createdAt: model.createdAt,
             updatedAt: model.updatedAt,
             deletedAt: model.deletedAt
@@ -70,6 +100,7 @@ public struct AcademicUnitPersistenceMapper: Sendable {
             existing.unitDescription = domain.description
             existing.type = domain.type.rawValue
             existing.schoolID = domain.schoolID
+            existing.metadataData = encodeMetadata(domain.metadata)
             existing.updatedAt = domain.updatedAt
             existing.deletedAt = domain.deletedAt
             // Note: parentUnit relationship must be updated separately
@@ -83,6 +114,7 @@ public struct AcademicUnitPersistenceMapper: Sendable {
                 unitDescription: domain.description,
                 type: domain.type.rawValue,
                 schoolID: domain.schoolID,
+                metadataData: encodeMetadata(domain.metadata),
                 createdAt: domain.createdAt,
                 updatedAt: domain.updatedAt,
                 deletedAt: domain.deletedAt

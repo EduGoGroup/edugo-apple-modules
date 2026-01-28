@@ -1,5 +1,6 @@
 import Testing
 import Foundation
+import EduGoCommon
 @testable import Models
 
 @Suite("MembershipMapper Tests")
@@ -89,8 +90,8 @@ struct MembershipMapperTests {
         }
     }
 
-    @Test("toDomain with unknown role defaults to student")
-    func toDomainWithUnknownRole() throws {
+    @Test("toDomain with unknown role throws")
+    func toDomainWithUnknownRole() {
         let dto = MembershipDTO(
             id: UUID(),
             userID: userID,
@@ -103,9 +104,9 @@ struct MembershipMapperTests {
             updatedAt: Date()
         )
 
-        let membership = try MembershipMapper.toDomain(dto)
-
-        #expect(membership.role == .student)
+        #expect(throws: DomainError.self) {
+            _ = try MembershipMapper.toDomain(dto)
+        }
     }
 
     // MARK: - toDTO Tests
@@ -188,7 +189,7 @@ struct MembershipMapperTests {
     // MARK: - Extension Method Tests
 
     @Test("MembershipDTO.toDomain() works correctly")
-    func dtoToDomainExtension() {
+    func dtoToDomainExtension() throws {
         let dto = MembershipDTO(
             id: UUID(),
             userID: userID,
@@ -201,7 +202,7 @@ struct MembershipMapperTests {
             updatedAt: Date()
         )
 
-        let membership = dto.toDomain()
+        let membership = try dto.toDomain()
 
         #expect(membership.id == dto.id)
         #expect(membership.role == .owner)

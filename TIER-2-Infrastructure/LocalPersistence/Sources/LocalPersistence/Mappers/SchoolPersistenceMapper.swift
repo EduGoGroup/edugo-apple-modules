@@ -26,12 +26,37 @@ import EduGoCommon
 public struct SchoolPersistenceMapper: Sendable {
     private init() {}
 
+    private static func decodeMetadata(_ data: Data?) throws -> [String: JSONValue]? {
+        guard let data = data else {
+            return nil
+        }
+
+        do {
+            return try JSONDecoder().decode([String: JSONValue].self, from: data)
+        } catch {
+            throw DomainError.validationFailed(
+                field: "metadata",
+                reason: "Metadata JSON inválido"
+            )
+        }
+    }
+
+    private static func encodeMetadata(_ metadata: [String: JSONValue]?) -> Data? {
+        guard let metadata = metadata else {
+            return nil
+        }
+
+        return try? JSONEncoder().encode(metadata)
+    }
+
     /// Converts a SchoolModel to a domain School
     ///
     /// - Parameter model: The SwiftData model to convert
     /// - Returns: A domain School entity
     /// - Throws: `DomainError.validationFailed` if the model contains invalid data
     public static func toDomain(_ model: SchoolModel) throws -> School {
+        let metadata = try decodeMetadata(model.metadataData)
+
         return try School(
             id: model.id,
             name: model.name,
@@ -45,7 +70,7 @@ public struct SchoolPersistenceMapper: Sendable {
             maxStudents: model.maxStudents,
             maxTeachers: model.maxTeachers,
             subscriptionTier: model.subscriptionTier,
-            metadata: nil, // Metadata not persisted in SwiftData model
+            metadata: metadata,
             createdAt: model.createdAt,
             updatedAt: model.updatedAt
         )
@@ -74,6 +99,7 @@ public struct SchoolPersistenceMapper: Sendable {
             existing.maxStudents = domain.maxStudents
             existing.maxTeachers = domain.maxTeachers
             existing.subscriptionTier = domain.subscriptionTier
+            existing.metadataData = encodeMetadata(domain.metadata)
             existing.updatedAt = domain.updatedAt
             return existing
         } else {
@@ -91,6 +117,7 @@ public struct SchoolPersistenceMapper: Sendable {
                 maxStudents: domain.maxStudents,
                 maxTeachers: domain.maxTeachers,
                 subscriptionTier: domain.subscriptionTier,
+                metadataData: encodeMetadata(domain.metadata),
                 createdAt: domain.createdAt,
                 updatedAt: domain.updatedAt
             )

@@ -14,7 +14,7 @@ import Foundation
 /// `MaterialMapper` provides type-safe conversion that:
 /// - Maps `file_url` (snake_case) to `fileURL` (camelCase) with URL parsing
 /// - Maps `school_id`/`academic_unit_id` to `schoolID`/`academicUnitID`
-/// - Converts string `status` to `MaterialStatus` enum (with fallback to `.uploaded`)
+/// - Converts string `status` to `MaterialStatus` enum
 /// - Handles nullable fields like `deleted_at`, `processing_*_at`
 /// - Preserves all material properties during roundtrip conversion
 ///
@@ -60,8 +60,7 @@ public struct MaterialMapper: MapperProtocol {
     ///
     /// - Parameter dto: The data transfer object from the backend.
     /// - Returns: A `Material` domain entity.
-    /// - Throws: `DomainError.validationFailed` if title is empty.
-    /// - Note: Unknown status strings default to `.uploaded`.
+    /// - Throws: `DomainError.validationFailed` if title is empty or status is unknown.
     public static func toDomain(_ dto: MaterialDTO) throws -> Material {
         try dto.toDomain()
     }

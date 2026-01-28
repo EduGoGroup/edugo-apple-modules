@@ -63,7 +63,7 @@ public struct School: Sendable, Equatable, Identifiable, Codable, Hashable {
     public let subscriptionTier: String?
 
     /// Additional metadata as key-value pairs
-    public let metadata: [String: String]?
+    public let metadata: [String: JSONValue]?
 
     /// Timestamp when the school was created
     public let createdAt: Date
@@ -105,7 +105,7 @@ public struct School: Sendable, Equatable, Identifiable, Codable, Hashable {
         maxStudents: Int? = nil,
         maxTeachers: Int? = nil,
         subscriptionTier: String? = nil,
-        metadata: [String: String]? = nil,
+        metadata: [String: JSONValue]? = nil,
         createdAt: Date = Date(),
         updatedAt: Date = Date()
     ) throws {

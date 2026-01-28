@@ -101,7 +101,7 @@ public struct AcademicUnit: Sendable, Equatable, Identifiable, Codable, Hashable
     public let schoolID: UUID
 
     /// Additional metadata as key-value pairs
-    public let metadata: [String: String]?
+    public let metadata: [String: JSONValue]?
 
     /// Timestamp when the unit was created
     public let createdAt: Date
@@ -149,7 +149,7 @@ public struct AcademicUnit: Sendable, Equatable, Identifiable, Codable, Hashable
         type: AcademicUnitType,
         parentUnitID: UUID? = nil,
         schoolID: UUID,
-        metadata: [String: String]? = nil,
+        metadata: [String: JSONValue]? = nil,
         createdAt: Date = Date(),
         updatedAt: Date = Date(),
         deletedAt: Date? = nil

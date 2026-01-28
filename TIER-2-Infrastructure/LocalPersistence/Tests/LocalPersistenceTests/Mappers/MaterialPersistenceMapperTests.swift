@@ -183,8 +183,8 @@ struct MaterialPersistenceMapperTests {
         }
     }
 
-    @Test("toDomain defaults unknown status to uploaded")
-    func testToDomainDefaultsUnknownStatusToUploaded() throws {
+    @Test("toDomain throws for unknown status")
+    func testToDomainThrowsForUnknownStatus() {
         let model = MaterialModel(
             id: UUID(),
             title: "Test Material",
@@ -193,9 +193,9 @@ struct MaterialPersistenceMapperTests {
             isPublic: false
         )
 
-        let material = try MaterialPersistenceMapper.toDomain(model)
-
-        #expect(material.status == .uploaded)
+        #expect(throws: DomainError.self) {
+            _ = try MaterialPersistenceMapper.toDomain(model)
+        }
     }
 
     @Test("toDomain converts all known status strings")
@@ -236,6 +236,22 @@ struct MaterialPersistenceMapperTests {
         let material = try MaterialPersistenceMapper.toDomain(model)
 
         #expect(material.fileURL?.absoluteString == "https://example.com/file.pdf")
+    }
+
+    @Test("toDomain throws for invalid URL")
+    func testToDomainThrowsForInvalidURL() {
+        let model = MaterialModel(
+            id: UUID(),
+            title: "Test Material",
+            status: "uploaded",
+            fileURL: "not a url",
+            schoolID: UUID(),
+            isPublic: false
+        )
+
+        #expect(throws: DomainError.self) {
+            _ = try MaterialPersistenceMapper.toDomain(model)
+        }
     }
 
     @Test("toDomain handles nil fileURL")

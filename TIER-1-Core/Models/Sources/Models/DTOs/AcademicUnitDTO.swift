@@ -1,4 +1,5 @@
 import Foundation
+import EduGoCommon
 
 /// Data Transfer Object for AcademicUnit entity.
 ///
@@ -15,7 +16,7 @@ public struct AcademicUnitDTO: Codable, Sendable, Equatable {
     public let type: String
     public let parentUnitID: UUID?
     public let schoolID: UUID
-    public let metadata: [String: String]?
+    public let metadata: [String: JSONValue]?
     public let createdAt: Date
     public let updatedAt: Date
     public let deletedAt: Date?
@@ -46,7 +47,7 @@ public struct AcademicUnitDTO: Codable, Sendable, Equatable {
         type: String,
         parentUnitID: UUID?,
         schoolID: UUID,
-        metadata: [String: String]?,
+        metadata: [String: JSONValue]?,
         createdAt: Date,
         updatedAt: Date,
         deletedAt: Date?
@@ -71,10 +72,14 @@ extension AcademicUnitDTO {
     /// Converts the DTO to a domain AcademicUnit entity.
     ///
     /// - Returns: An `AcademicUnit` domain entity.
-    /// - Throws: `DomainError.validationFailed` if conversion fails.
-    /// - Note: Unknown type strings default to `.grade`.
+    /// - Throws: `DomainError.validationFailed` if type is unknown.
     public func toDomain() throws -> AcademicUnit {
-        let unitType = AcademicUnitType(rawValue: type) ?? .grade
+        guard let unitType = AcademicUnitType(rawValue: type) else {
+            throw DomainError.validationFailed(
+                field: "type",
+                reason: "Tipo desconocido: '\(type)'"
+            )
+        }
 
         return try AcademicUnit(
             id: id,

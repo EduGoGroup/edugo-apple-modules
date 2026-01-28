@@ -16,8 +16,10 @@ import Foundation
 ///     "id": "550e8400-e29b-41d4-a716-446655440000",
 ///     "first_name": "John",
 ///     "last_name": "Doe",
+///     "full_name": "John Doe",
 ///     "email": "john.doe@example.com",
 ///     "is_active": true,
+///     "role": "teacher",
 ///     "created_at": "2024-01-15T10:30:00Z",
 ///     "updated_at": "2024-01-20T14:45:00Z"
 /// }
@@ -44,11 +46,17 @@ public struct UserDTO: Codable, Sendable, Equatable {
     /// User's last name.
     public let lastName: String
 
+    /// Full name from backend (optional, can be derived locally).
+    public let fullName: String?
+
     /// User's email address.
     public let email: String
 
     /// Whether the user account is active.
     public let isActive: Bool
+
+    /// Role provided by backend (optional).
+    public let role: String?
 
     /// Timestamp when the user was created.
     public let createdAt: Date
@@ -61,8 +69,10 @@ public struct UserDTO: Codable, Sendable, Equatable {
         case id
         case firstName = "first_name"
         case lastName = "last_name"
+        case fullName = "full_name"
         case email
         case isActive = "is_active"
+        case role
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
@@ -73,24 +83,30 @@ public struct UserDTO: Codable, Sendable, Equatable {
     ///   - id: Unique identifier for the user.
     ///   - firstName: User's first name.
     ///   - lastName: User's last name.
+    ///   - fullName: User's full name (optional).
     ///   - email: User's email address.
     ///   - isActive: Whether the user account is active.
+    ///   - role: User role (optional, provided by backend).
     ///   - createdAt: Timestamp when the user was created.
     ///   - updatedAt: Timestamp when the user was last updated.
     public init(
         id: UUID,
         firstName: String,
         lastName: String,
+        fullName: String? = nil,
         email: String,
         isActive: Bool,
+        role: String? = nil,
         createdAt: Date,
         updatedAt: Date
     ) {
         self.id = id
         self.firstName = firstName
         self.lastName = lastName
+        self.fullName = fullName
         self.email = email
         self.isActive = isActive
+        self.role = role
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }
@@ -127,8 +143,10 @@ extension User {
             id: id,
             firstName: firstName,
             lastName: lastName,
+            fullName: fullName,
             email: email,
             isActive: isActive,
+            role: nil,
             createdAt: createdAt,
             updatedAt: updatedAt
         )

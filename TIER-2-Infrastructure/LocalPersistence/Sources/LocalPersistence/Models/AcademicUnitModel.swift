@@ -31,6 +31,9 @@ public final class AcademicUnitModel {
     /// ID of the school this unit belongs to
     public var schoolID: UUID
 
+    /// Metadata stored as JSON data
+    public var metadataData: Data?
+
     /// Timestamp when the unit was created
     public var createdAt: Date
 
@@ -74,6 +77,7 @@ public final class AcademicUnitModel {
         unitDescription: String? = nil,
         type: String,
         schoolID: UUID,
+        metadataData: Data? = nil,
         createdAt: Date = Date(),
         updatedAt: Date = Date(),
         deletedAt: Date? = nil,
@@ -85,6 +89,7 @@ public final class AcademicUnitModel {
         self.unitDescription = unitDescription
         self.type = type
         self.schoolID = schoolID
+        self.metadataData = metadataData
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.deletedAt = deletedAt

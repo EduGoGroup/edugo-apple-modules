@@ -22,7 +22,7 @@ import EduGoCommon
 ///
 /// ## Notes
 /// - Does NOT conform to `MapperProtocol` because `@Model` types are not `Codable`
-/// - Unknown role strings default to `.student`
+/// - Throws `DomainError.validationFailed` for unknown role strings
 public struct MembershipPersistenceMapper: Sendable {
     private init() {}
 
@@ -30,9 +30,14 @@ public struct MembershipPersistenceMapper: Sendable {
     ///
     /// - Parameter model: The SwiftData model to convert
     /// - Returns: A domain Membership entity
-    /// - Note: Unknown role strings default to `.student`
-    public static func toDomain(_ model: MembershipModel) -> Membership {
-        let role = MembershipRole(rawValue: model.role) ?? .student
+    /// - Throws: `DomainError.validationFailed` if role is unknown
+    public static func toDomain(_ model: MembershipModel) throws -> Membership {
+        guard let role = MembershipRole(rawValue: model.role) else {
+            throw DomainError.validationFailed(
+                field: "role",
+                reason: "Rol desconocido: '\(model.role)'"
+            )
+        }
 
         return Membership(
             id: model.id,
