@@ -11,20 +11,24 @@ struct LocalRepositoryConcurrencyTests {
     // MARK: - Setup Helper
 
     private func setupRepositories() async throws -> (LocalUserRepository, LocalDocumentRepository) {
-        // Always reconfigure to ensure clean state
-        try await PersistenceContainerProvider.shared.configure(
+        let provider = PersistenceContainerProvider()
+        // Always configure a fresh provider to avoid cross-suite interference
+        try await provider.configure(
             with: .testing,
             schema: schema
         )
-        return (LocalUserRepository(), LocalDocumentRepository())
+        return (
+            LocalUserRepository(containerProvider: provider),
+            LocalDocumentRepository(containerProvider: provider)
+        )
     }
 
     // MARK: - Concurrent Save Tests
 
-    @Test("100 concurrent user saves complete without data races")
+    @Test("1000 concurrent user saves complete without data races")
     func testConcurrentUserSaves() async throws {
         let (userRepo, _) = try await setupRepositories()
-        let operationCount = 100
+        let operationCount = 1000
 
         let startTime = ContinuousClock.now
 
@@ -56,14 +60,14 @@ struct LocalRepositoryConcurrencyTests {
 
         let successCount = results.filter { $0 }.count
         #expect(successCount == operationCount, "All saves should succeed")
-        #expect(elapsed < .seconds(30), "Should complete within reasonable time")
+        #expect(elapsed < .seconds(2), "Should complete within target time")
     }
 
-    @Test("100 concurrent document saves complete without data races")
+    @Test("1000 concurrent document saves complete without data races")
     func testConcurrentDocumentSaves() async throws {
         let (_, docRepo) = try await setupRepositories()
         let ownerID = UUID()
-        let operationCount = 100
+        let operationCount = 1000
 
         let startTime = ContinuousClock.now
 
@@ -96,15 +100,15 @@ struct LocalRepositoryConcurrencyTests {
 
         let successCount = results.filter { $0 }.count
         #expect(successCount == operationCount, "All saves should succeed")
-        #expect(elapsed < .seconds(30), "Should complete within reasonable time")
+        #expect(elapsed < .seconds(2), "Should complete within target time")
     }
 
     // MARK: - Concurrent Read Tests
 
-    @Test("500 concurrent user reads complete without errors")
+    @Test("5000 concurrent user reads complete without errors")
     func testConcurrentUserReads() async throws {
         let (userRepo, _) = try await setupRepositories()
-        let operationCount = 500
+        let operationCount = 5000
 
         // Create a user to read
         let user = try TestDataFactory.makeUser(
@@ -139,13 +143,13 @@ struct LocalRepositoryConcurrencyTests {
 
         let successCount = results.filter { $0 }.count
         #expect(successCount == operationCount, "All reads should succeed")
-        #expect(elapsed < .seconds(30), "Should complete within reasonable time")
+        #expect(elapsed < .seconds(1), "Should complete within target time")
     }
 
-    @Test("500 concurrent document searches complete without errors")
+    @Test("5000 concurrent document searches complete without errors")
     func testConcurrentDocumentSearches() async throws {
         let (_, docRepo) = try await setupRepositories()
-        let operationCount = 500
+        let operationCount = 5000
 
         // Create some documents to search
         for i in 0..<5 {
@@ -182,7 +186,7 @@ struct LocalRepositoryConcurrencyTests {
 
         let successCount = results.filter { $0 }.count
         #expect(successCount == operationCount, "All searches should succeed and find results")
-        #expect(elapsed < .seconds(30), "Should complete within reasonable time")
+        #expect(elapsed < .seconds(3), "Should complete within reasonable time")
     }
 
     // MARK: - Mixed Read/Write Tests
@@ -202,8 +206,8 @@ struct LocalRepositoryConcurrencyTests {
             userIDs.append(user.id)
         }
 
-        let writeOperations = 30
-        let readOperations = 70
+        let writeOperations = 300
+        let readOperations = 700
         let totalOperations = writeOperations + readOperations
 
         let startTime = ContinuousClock.now
@@ -250,7 +254,7 @@ struct LocalRepositoryConcurrencyTests {
 
         let successCount = results.filter { $0 }.count
         #expect(successCount == totalOperations, "All operations should succeed")
-        #expect(elapsed < .seconds(30), "Should complete within reasonable time")
+        #expect(elapsed < .seconds(2), "Should complete within target time")
     }
 
     // MARK: - Actor Isolation Tests

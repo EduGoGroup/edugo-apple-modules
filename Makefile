@@ -12,7 +12,7 @@ RESET  := \033[0m
 # Módulos por tier
 TIER_0_MODULES := TIER-0-Foundation/EduGoCommon
 TIER_1_MODULES := TIER-1-Core/Logger TIER-1-Core/Models
-TIER_2_MODULES := TIER-2-Infrastructure/Network TIER-2-Infrastructure/Storage
+TIER_2_MODULES := TIER-2-Infrastructure/Network TIER-2-Infrastructure/Storage TIER-2-Infrastructure/LocalPersistence
 TIER_3_MODULES := TIER-3-Domain/Auth TIER-3-Domain/Roles
 TIER_4_MODULES := TIER-4-Features/AI TIER-4-Features/API TIER-4-Features/Analytics
 
@@ -29,7 +29,7 @@ help:
 	@echo "$(YELLOW)Módulos por TIER:$(RESET)"
 	@echo "  TIER-0 (Foundation): EduGoCommon"
 	@echo "  TIER-1 (Core):       Logger, Models"
-	@echo "  TIER-2 (Infrastructure): Network, Storage"
+	@echo "  TIER-2 (Infrastructure): Network, Storage, LocalPersistence"
 	@echo "  TIER-3 (Domain):     Auth, Roles"
 	@echo "  TIER-4 (Features):   AI, API, Analytics"
 	@echo ""
@@ -168,7 +168,7 @@ list-modules:
 	@echo "$(YELLOW)TIER-4 (Features):$(RESET)"
 	@for module in $(TIER_4_MODULES); do echo "  - $$module"; done
 	@echo ""
-	@echo "$(GREEN)Total: 8 módulos$(RESET)"
+	@echo "$(GREEN)Total: 9 módulos$(RESET)"
 
 ## verify: Verifica la estructura del proyecto
 verify:

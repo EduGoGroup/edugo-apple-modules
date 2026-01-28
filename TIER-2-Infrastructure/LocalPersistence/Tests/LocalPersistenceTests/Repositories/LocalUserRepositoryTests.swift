@@ -12,12 +12,13 @@ struct LocalUserRepositoryTests {
     // MARK: - Setup Helper
 
     private func setupRepository() async throws -> LocalUserRepository {
-        // Always reconfigure to ensure clean state
-        try await PersistenceContainerProvider.shared.configure(
+        let provider = PersistenceContainerProvider()
+        // Always configure a fresh provider to avoid cross-suite interference
+        try await provider.configure(
             with: .testing,
             schema: schema
         )
-        return LocalUserRepository()
+        return LocalUserRepository(containerProvider: provider)
     }
 
     // MARK: - CRUD Tests

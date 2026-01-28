@@ -12,12 +12,13 @@ struct LocalDocumentRepositoryTests {
     // MARK: - Setup Helper
 
     private func setupRepository() async throws -> LocalDocumentRepository {
-        // Always reconfigure to ensure clean state
-        try await PersistenceContainerProvider.shared.configure(
+        let provider = PersistenceContainerProvider()
+        // Always configure a fresh provider to avoid cross-suite interference
+        try await provider.configure(
             with: .testing,
             schema: schema
         )
-        return LocalDocumentRepository()
+        return LocalDocumentRepository(containerProvider: provider)
     }
 
     // MARK: - CRUD Tests

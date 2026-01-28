@@ -26,6 +26,9 @@ public actor PersistenceContainerProvider: Sendable {
     /// The underlying SwiftData model container
     private var container: ModelContainer?
 
+    /// Reused context for serialized operations
+    private var context: ModelContext?
+
     /// The current configuration
     private var configuration: LocalPersistenceConfiguration
 
@@ -34,7 +37,7 @@ public actor PersistenceContainerProvider: Sendable {
         container != nil
     }
 
-    private init() {
+    init() {
         self.configuration = .production
     }
 
@@ -75,10 +78,12 @@ public actor PersistenceContainerProvider: Sendable {
             )
         }
 
-        self.container = try ModelContainer(
+        let container = try ModelContainer(
             for: schema,
             configurations: [modelConfiguration]
         )
+        self.container = container
+        self.context = ModelContext(container)
     }
 
     /// Performs database operations within the actor's isolation
@@ -104,7 +109,12 @@ public actor PersistenceContainerProvider: Sendable {
         guard let container = container else {
             throw PersistenceError.notConfigured
         }
-        let context = ModelContext(container)
+        if context == nil {
+            context = ModelContext(container)
+        }
+        guard let context = context else {
+            throw PersistenceError.notConfigured
+        }
         return try operation(context)
     }
 
@@ -118,7 +128,12 @@ public actor PersistenceContainerProvider: Sendable {
         guard let container = container else {
             throw PersistenceError.notConfigured
         }
-        let context = ModelContext(container)
+        if context == nil {
+            context = ModelContext(container)
+        }
+        guard let context = context else {
+            throw PersistenceError.notConfigured
+        }
         try operation(context)
     }
 
@@ -128,6 +143,7 @@ public actor PersistenceContainerProvider: Sendable {
     /// After calling this, `configure(with:schema:)` must be called again.
     public func reset() {
         self.container = nil
+        self.context = nil
     }
 }
 

@@ -74,23 +74,25 @@ struct PersistenceContainerProviderTests {
 
     @Test("Configure with inMemory storage succeeds")
     func testConfigureInMemory() async throws {
-        try await PersistenceContainerProvider.shared.configure(
+        let provider = PersistenceContainerProvider()
+        try await provider.configure(
             with: .testing,
             schema: schema
         )
 
-        let isInitialized = await PersistenceContainerProvider.shared.isInitialized
+        let isInitialized = await provider.isInitialized
         #expect(isInitialized == true)
     }
 
     @Test("perform executes operation after configuration")
     func testPerformOperation() async throws {
-        try await PersistenceContainerProvider.shared.configure(
+        let provider = PersistenceContainerProvider()
+        try await provider.configure(
             with: .testing,
             schema: schema
         )
 
-        let result = try await PersistenceContainerProvider.shared.perform { _ in
+        let result = try await provider.perform { _ in
             return 42
         }
 
@@ -99,20 +101,21 @@ struct PersistenceContainerProviderTests {
 
     @Test("Can insert and fetch items using perform")
     func testInsertAndFetch() async throws {
-        try await PersistenceContainerProvider.shared.configure(
+        let provider = PersistenceContainerProvider()
+        try await provider.configure(
             with: .testing,
             schema: schema
         )
 
         let itemName = "TestItem-\(UUID().uuidString.prefix(8))"
 
-        try await PersistenceContainerProvider.shared.perform { context in
+        try await provider.perform { context in
             let testItem = TestItem(name: itemName)
             context.insert(testItem)
             try context.save()
         }
 
-        let fetchedName = try await PersistenceContainerProvider.shared.perform { context in
+        let fetchedName = try await provider.perform { context in
             let descriptor = FetchDescriptor<TestItem>()
             let items = try context.fetch(descriptor)
             return items.first(where: { $0.name == itemName })?.name
@@ -123,30 +126,24 @@ struct PersistenceContainerProviderTests {
 
     @Test("Reset clears the container")
     func testResetClearsContainer() async throws {
-        try await PersistenceContainerProvider.shared.configure(
+        let provider = PersistenceContainerProvider()
+        try await provider.configure(
             with: .testing,
             schema: schema
         )
 
-        await PersistenceContainerProvider.shared.reset()
+        await provider.reset()
 
-        let isInitialized = await PersistenceContainerProvider.shared.isInitialized
+        let isInitialized = await provider.isInitialized
         #expect(isInitialized == false)
-
-        // Reconfigure for subsequent tests
-        try await PersistenceContainerProvider.shared.configure(
-            with: .testing,
-            schema: schema
-        )
     }
 
     @Test("perform throws notConfigured when not configured")
     func testPerformThrowsWhenNotConfigured() async throws {
-        // Reset first
-        await PersistenceContainerProvider.shared.reset()
+        let provider = PersistenceContainerProvider()
 
         do {
-            _ = try await PersistenceContainerProvider.shared.perform { _ in
+            _ = try await provider.perform { _ in
                 return 1
             }
             Issue.record("Expected notConfigured error")
@@ -159,11 +156,5 @@ struct PersistenceContainerProviderTests {
         } catch {
             Issue.record("Unexpected error type: \(error)")
         }
-
-        // Reconfigure for subsequent tests
-        try await PersistenceContainerProvider.shared.configure(
-            with: .testing,
-            schema: schema
-        )
     }
 }
