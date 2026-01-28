@@ -88,25 +88,13 @@ const normalizedInput = {
 }
 ```
 
-### PASO 1: Validar Límites
-
-```
-Límites por nivel:
-- MVP: max_sprints = 1
-- Standard: max_sprints = 3
-- Enterprise: max_sprints = 8
-```
-
-Si `current_sprint_count >= max_sprints`:
-→ Retornar error SPRINT_LIMIT_EXCEEDED
-
-### PASO 2: Generar Nombre del Sprint
+### PASO 1: Generar Nombre del Sprint
 
 Formato: `Sprint {N}: {milestone_title}`
 
 Ejemplo: `Sprint 1: Autenticación y Usuarios`
 
-### PASO 3: Crear Flow en BD
+### PASO 2: Crear Flow en BD
 
 ```
 mcp__MCPEco__create_flow({
@@ -116,7 +104,7 @@ mcp__MCPEco__create_flow({
 })
 ```
 
-### PASO 4: Retornar Resultado
+### PASO 3: Retornar Resultado
 
 ---
 
