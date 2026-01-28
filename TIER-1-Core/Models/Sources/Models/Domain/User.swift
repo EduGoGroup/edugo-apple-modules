@@ -1,4 +1,5 @@
 import Foundation
+import EduGoCommon
 
 // MARK: - User Entity
 
@@ -48,7 +49,7 @@ public struct User: Sendable, Equatable, Identifiable, Codable, Hashable {
     ///   - email: User's email address. Must be valid format.
     ///   - isActive: Whether the account is active. Defaults to true.
     ///   - roleIDs: Set of assigned role IDs. Defaults to empty.
-    /// - Throws: `UserValidationError` if validation fails.
+    /// - Throws: `DomainError.validationFailed` if validation fails.
     public init(
         id: UUID = UUID(),
         name: String,
@@ -56,16 +57,18 @@ public struct User: Sendable, Equatable, Identifiable, Codable, Hashable {
         isActive: Bool = true,
         roleIDs: Set<UUID> = []
     ) throws {
-        guard !name.trimmingCharacters(in: .whitespaces).isEmpty else {
-            throw UserValidationError.emptyName
+        let trimmedName = name.trimmingCharacters(in: .whitespaces)
+        guard !trimmedName.isEmpty else {
+            throw DomainError.validationFailed(
+                field: "name",
+                reason: "El nombre no puede estar vacío"
+            )
         }
 
-        guard Self.isValidEmail(email) else {
-            throw UserValidationError.invalidEmail(email)
-        }
+        try EmailValidator.validate(email)
 
         self.id = id
-        self.name = name.trimmingCharacters(in: .whitespaces)
+        self.name = trimmedName
         self.email = email.lowercased()
         self.isActive = isActive
         self.roleIDs = roleIDs
@@ -77,7 +80,7 @@ public struct User: Sendable, Equatable, Identifiable, Codable, Hashable {
     ///
     /// - Parameter name: The new name.
     /// - Returns: A new `User` instance with the updated name.
-    /// - Throws: `UserValidationError.emptyName` if name is empty.
+    /// - Throws: `DomainError.validationFailed` if name is empty.
     public func with(name: String) throws -> User {
         try User(
             id: id,
@@ -92,7 +95,7 @@ public struct User: Sendable, Equatable, Identifiable, Codable, Hashable {
     ///
     /// - Parameter email: The new email address.
     /// - Returns: A new `User` instance with the updated email.
-    /// - Throws: `UserValidationError.invalidEmail` if format is invalid.
+    /// - Throws: `DomainError.validationFailed` if format is invalid.
     public func with(email: String) throws -> User {
         try User(
             id: id,
@@ -163,32 +166,4 @@ public struct User: Sendable, Equatable, Identifiable, Codable, Hashable {
         roleIDs.contains(roleID)
     }
 
-    // MARK: - Email Validation
-
-    private static func isValidEmail(_ email: String) -> Bool {
-        let emailRegex = #"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"#
-        return email.range(of: emailRegex, options: .regularExpression) != nil
-    }
-}
-
-// MARK: - User Validation Error
-
-/// Errors that can occur during User validation.
-public enum UserValidationError: Error, Equatable, Sendable {
-    /// The name provided was empty or whitespace only.
-    case emptyName
-
-    /// The email provided was not in a valid format.
-    case invalidEmail(String)
-}
-
-extension UserValidationError: LocalizedError {
-    public var errorDescription: String? {
-        switch self {
-        case .emptyName:
-            return "User name cannot be empty"
-        case .invalidEmail(let email):
-            return "Invalid email format: \(email)"
-        }
-    }
 }

@@ -1,5 +1,6 @@
 import Testing
 import Foundation
+import EduGoCommon
 @testable import Models
 
 @Suite("Document Entity Tests")
@@ -169,25 +170,39 @@ struct DocumentTests {
 
     @Test("Document creation fails with empty title")
     func testEmptyTitleFails() {
-        #expect(throws: DocumentValidationError.emptyTitle) {
+        #expect {
             _ = try Document(
                 title: "",
                 content: "Content",
                 type: .lesson,
                 ownerID: UUID()
             )
+        } throws: { error in
+            guard let domainError = error as? DomainError,
+                  case .validationFailed(let field, _) = domainError,
+                  field == "title" else {
+                return false
+            }
+            return true
         }
     }
 
     @Test("Document creation fails with whitespace-only title")
     func testWhitespaceTitleFails() {
-        #expect(throws: DocumentValidationError.emptyTitle) {
+        #expect {
             _ = try Document(
                 title: "   ",
                 content: "Content",
                 type: .lesson,
                 ownerID: UUID()
             )
+        } throws: { error in
+            guard let domainError = error as? DomainError,
+                  case .validationFailed(let field, _) = domainError,
+                  field == "title" else {
+                return false
+            }
+            return true
         }
     }
 
@@ -273,8 +288,15 @@ struct DocumentTests {
             ownerID: UUID()
         )
 
-        #expect(throws: DocumentValidationError.emptyContent) {
+        #expect {
             _ = try document.publish()
+        } throws: { error in
+            guard let domainError = error as? DomainError,
+                  case .validationFailed(let field, _) = domainError,
+                  field == "content" else {
+                return false
+            }
+            return true
         }
     }
 
@@ -287,8 +309,15 @@ struct DocumentTests {
             ownerID: UUID()
         )
 
-        #expect(throws: DocumentValidationError.emptyContent) {
+        #expect {
             _ = try document.publish()
+        } throws: { error in
+            guard let domainError = error as? DomainError,
+                  case .validationFailed(let field, _) = domainError,
+                  field == "content" else {
+                return false
+            }
+            return true
         }
     }
 
@@ -302,8 +331,15 @@ struct DocumentTests {
             ownerID: UUID()
         )
 
-        #expect(throws: DocumentValidationError.invalidStateTransition(from: .archived, to: .published)) {
+        #expect {
             _ = try document.publish()
+        } throws: { error in
+            guard let domainError = error as? DomainError,
+                  case .invalidOperation(let operation) = domainError,
+                  operation.contains("archived") && operation.contains("published") else {
+                return false
+            }
+            return true
         }
     }
 
@@ -330,8 +366,15 @@ struct DocumentTests {
             ownerID: UUID()
         )
 
-        #expect(throws: DocumentValidationError.invalidStateTransition(from: .draft, to: .archived)) {
+        #expect {
             _ = try document.archive()
+        } throws: { error in
+            guard let domainError = error as? DomainError,
+                  case .invalidOperation(let operation) = domainError,
+                  operation.contains("draft") && operation.contains("archived") else {
+                return false
+            }
+            return true
         }
     }
 
@@ -523,16 +566,17 @@ struct DocumentTests {
 
     // MARK: - Error Description Tests
 
-    @Test("DocumentValidationError has meaningful descriptions")
+    @Test("DomainError has meaningful descriptions for document operations")
     func testErrorDescriptions() {
-        let emptyTitle = DocumentValidationError.emptyTitle
-        let emptyContent = DocumentValidationError.emptyContent
-        let invalidTransition = DocumentValidationError.invalidStateTransition(from: .draft, to: .archived)
+        let emptyTitle = DomainError.validationFailed(field: "title", reason: "Title cannot be empty")
+        let emptyContent = DomainError.validationFailed(field: "content", reason: "Content cannot be empty")
+        let invalidTransition = DomainError.invalidOperation(operation: "Cannot transition from draft to archived")
 
         #expect(emptyTitle.errorDescription?.contains("title") == true)
+        #expect(emptyTitle.errorDescription?.contains("empty") == true)
         #expect(emptyContent.errorDescription?.contains("content") == true)
-        // Error uses DocumentState.description ("Draft", "Archived") not rawValue
-        #expect(invalidTransition.errorDescription?.contains("Draft") == true)
-        #expect(invalidTransition.errorDescription?.contains("Archived") == true)
+        #expect(emptyContent.errorDescription?.contains("empty") == true)
+        #expect(invalidTransition.errorDescription?.contains("draft") == true)
+        #expect(invalidTransition.errorDescription?.contains("archived") == true)
     }
 }

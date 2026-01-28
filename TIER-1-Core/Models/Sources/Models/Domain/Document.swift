@@ -219,7 +219,7 @@ public struct Document: Sendable, Equatable, Identifiable, Codable, Hashable {
     ///   - metadata: Document metadata. Defaults to new metadata.
     ///   - ownerID: ID of the owner user.
     ///   - collaboratorIDs: Set of collaborator user IDs. Defaults to empty.
-    /// - Throws: `DocumentValidationError` if validation fails.
+    /// - Throws: `DomainError.validationFailed` if validation fails.
     public init(
         id: UUID = UUID(),
         title: String,
@@ -230,9 +230,7 @@ public struct Document: Sendable, Equatable, Identifiable, Codable, Hashable {
         ownerID: UUID,
         collaboratorIDs: Set<UUID> = []
     ) throws {
-        guard !title.trimmingCharacters(in: .whitespaces).isEmpty else {
-            throw DocumentValidationError.emptyTitle
-        }
+        try DocumentValidator.validateTitle(title)
 
         self.id = id
         self.title = title.trimmingCharacters(in: .whitespaces)
@@ -250,7 +248,7 @@ public struct Document: Sendable, Equatable, Identifiable, Codable, Hashable {
     ///
     /// - Parameter title: The new title.
     /// - Returns: A new `Document` with updated title and metadata.
-    /// - Throws: `DocumentValidationError.emptyTitle` if title is empty.
+    /// - Throws: `DomainError.validationFailed` if title is empty.
     public func with(title: String) throws -> Document {
         try Document(
             id: id,
@@ -305,16 +303,10 @@ public struct Document: Sendable, Equatable, Identifiable, Codable, Hashable {
     /// Publishes the document (transitions from draft to published).
     ///
     /// - Returns: A new `Document` in published state.
-    /// - Throws: `DocumentValidationError.invalidStateTransition` if transition is invalid.
-    ///           `DocumentValidationError.emptyContent` if content is empty.
+    /// - Throws: `DomainError.validationFailed` if transition is invalid or content is empty.
     public func publish() throws -> Document {
-        guard state.canTransition(to: .published) else {
-            throw DocumentValidationError.invalidStateTransition(from: state, to: .published)
-        }
-
-        guard !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            throw DocumentValidationError.emptyContent
-        }
+        try DocumentValidator.validateTransition(from: state, to: .published)
+        try DocumentValidator.validateContentForPublish(content)
 
         return try Document(
             id: id,
@@ -331,11 +323,9 @@ public struct Document: Sendable, Equatable, Identifiable, Codable, Hashable {
     /// Archives the document (transitions from published to archived).
     ///
     /// - Returns: A new `Document` in archived state.
-    /// - Throws: `DocumentValidationError.invalidStateTransition` if transition is invalid.
+    /// - Throws: `DomainError.validationFailed` if transition is invalid.
     public func archive() throws -> Document {
-        guard state.canTransition(to: .archived) else {
-            throw DocumentValidationError.invalidStateTransition(from: state, to: .archived)
-        }
+        try DocumentValidator.validateTransition(from: state, to: .archived)
 
         return try Document(
             id: id,
@@ -352,11 +342,9 @@ public struct Document: Sendable, Equatable, Identifiable, Codable, Hashable {
     /// Reverts the document to draft state.
     ///
     /// - Returns: A new `Document` in draft state.
-    /// - Throws: `DocumentValidationError.invalidStateTransition` if transition is invalid.
+    /// - Throws: `DomainError.validationFailed` if transition is invalid.
     public func revertToDraft() throws -> Document {
-        guard state.canTransition(to: .draft) else {
-            throw DocumentValidationError.invalidStateTransition(from: state, to: .draft)
-        }
+        try DocumentValidator.validateTransition(from: state, to: .draft)
 
         return try Document(
             id: id,
@@ -426,32 +414,5 @@ public struct Document: Sendable, Equatable, Identifiable, Codable, Hashable {
     /// - Returns: `true` if the user can edit.
     public func canEdit(_ userID: UUID) -> Bool {
         ownerID == userID || collaboratorIDs.contains(userID)
-    }
-}
-
-// MARK: - Document Validation Error
-
-/// Errors that can occur during Document validation.
-public enum DocumentValidationError: Error, Equatable, Sendable {
-    /// The title provided was empty.
-    case emptyTitle
-
-    /// The content is empty (required for publishing).
-    case emptyContent
-
-    /// The state transition is not valid.
-    case invalidStateTransition(from: DocumentState, to: DocumentState)
-}
-
-extension DocumentValidationError: LocalizedError {
-    public var errorDescription: String? {
-        switch self {
-        case .emptyTitle:
-            return "Document title cannot be empty"
-        case .emptyContent:
-            return "Document content cannot be empty when publishing"
-        case .invalidStateTransition(let from, let to):
-            return "Invalid state transition from \(from) to \(to)"
-        }
     }
 }

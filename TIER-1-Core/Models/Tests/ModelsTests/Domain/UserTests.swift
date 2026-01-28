@@ -1,5 +1,6 @@
 import Testing
 import Foundation
+import EduGoCommon
 @testable import Models
 
 @Suite("User Entity Tests")
@@ -82,29 +83,57 @@ struct UserTests {
 
     @Test("User creation fails with empty name")
     func testEmptyNameFails() {
-        #expect(throws: UserValidationError.emptyName) {
+        #expect {
             _ = try User(name: "", email: "john@edugo.com")
+        } throws: { error in
+            guard let domainError = error as? DomainError,
+                  case .validationFailed(let field, _) = domainError,
+                  field == "name" else {
+                return false
+            }
+            return true
         }
     }
 
     @Test("User creation fails with whitespace-only name")
     func testWhitespaceNameFails() {
-        #expect(throws: UserValidationError.emptyName) {
+        #expect {
             _ = try User(name: "   ", email: "john@edugo.com")
+        } throws: { error in
+            guard let domainError = error as? DomainError,
+                  case .validationFailed(let field, _) = domainError,
+                  field == "name" else {
+                return false
+            }
+            return true
         }
     }
 
     @Test("User creation fails with invalid email")
     func testInvalidEmailFails() {
-        #expect(throws: UserValidationError.invalidEmail("notanemail")) {
+        #expect {
             _ = try User(name: "John", email: "notanemail")
+        } throws: { error in
+            guard let domainError = error as? DomainError,
+                  case .validationFailed(let field, _) = domainError,
+                  field == "email" else {
+                return false
+            }
+            return true
         }
     }
 
     @Test("User creation fails with email missing domain")
     func testEmailMissingDomainFails() {
-        #expect(throws: UserValidationError.invalidEmail("john@")) {
+        #expect {
             _ = try User(name: "John", email: "john@")
+        } throws: { error in
+            guard let domainError = error as? DomainError,
+                  case .validationFailed(let field, _) = domainError,
+                  field == "email" else {
+                return false
+            }
+            return true
         }
     }
 
@@ -237,12 +266,14 @@ struct UserTests {
 
     // MARK: - Error Description Tests
 
-    @Test("UserValidationError has meaningful descriptions")
+    @Test("DomainError has meaningful descriptions for validation failures")
     func testErrorDescriptions() {
-        let emptyNameError = UserValidationError.emptyName
-        let invalidEmailError = UserValidationError.invalidEmail("bad")
+        let emptyNameError = DomainError.validationFailed(field: "name", reason: "Name cannot be empty")
+        let invalidEmailError = DomainError.validationFailed(field: "email", reason: "Invalid email: bad")
 
+        #expect(emptyNameError.errorDescription?.contains("name") == true)
         #expect(emptyNameError.errorDescription?.contains("empty") == true)
+        #expect(invalidEmailError.errorDescription?.contains("email") == true)
         #expect(invalidEmailError.errorDescription?.contains("bad") == true)
     }
 }
