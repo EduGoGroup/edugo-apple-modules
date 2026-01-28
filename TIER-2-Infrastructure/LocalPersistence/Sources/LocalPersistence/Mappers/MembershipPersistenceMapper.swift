@@ -11,7 +11,7 @@ import EduGoCommon
 ///
 /// ```swift
 /// // Convert from persistence to domain
-/// let membership = MembershipPersistenceMapper.toDomain(membershipModel)
+/// let membership = try MembershipPersistenceMapper.toDomain(membershipModel)
 ///
 /// // Convert from domain to persistence (new model)
 /// let model = MembershipPersistenceMapper.toModel(membership, existing: nil)

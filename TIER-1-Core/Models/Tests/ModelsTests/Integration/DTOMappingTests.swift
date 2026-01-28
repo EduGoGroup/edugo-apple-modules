@@ -170,7 +170,7 @@ struct DTOMappingTests {
         #expect(dto.country == "CO")
         #expect(dto.contactEmail == "test@school.com")
         #expect(dto.maxStudents == 500)
-        #expect(dto.metadata?["key"] == "value")
+        #expect(dto.metadata?["key"] == .string("value"))
     }
 
     // MARK: - AcademicUnit DTO Mapping Tests

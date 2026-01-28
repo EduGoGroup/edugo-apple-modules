@@ -43,7 +43,9 @@ public struct MaterialPersistenceMapper: Sendable {
 
         var url: URL?
         if let fileURLString = model.fileURL {
-            guard let parsedURL = URL(string: fileURLString) else {
+            guard let parsedURL = URL(string: fileURLString),
+                  parsedURL.scheme != nil,
+                  parsedURL.host != nil || parsedURL.isFileURL else {
                 throw DomainError.validationFailed(
                     field: "fileURL",
                     reason: "URL inválida: '\(fileURLString)'"
