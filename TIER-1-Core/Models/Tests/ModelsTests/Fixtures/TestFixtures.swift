@@ -176,4 +176,72 @@ enum TestFixtures {
             deletedAt: deletedAt
         )
     }
+
+    // MARK: - SchoolDTO
+
+    static func makeSchoolDTO(
+        id: UUID = UUID(),
+        name: String = "Test School",
+        code: String = "TEST-001",
+        isActive: Bool = true,
+        address: String? = nil,
+        city: String? = nil,
+        country: String? = nil,
+        contactEmail: String? = nil,
+        contactPhone: String? = nil,
+        maxStudents: Int? = nil,
+        maxTeachers: Int? = nil,
+        subscriptionTier: String? = nil,
+        metadata: [String: String]? = nil,
+        createdAt: Date = Date(),
+        updatedAt: Date = Date()
+    ) -> SchoolDTO {
+        SchoolDTO(
+            id: id,
+            name: name,
+            code: code,
+            isActive: isActive,
+            address: address,
+            city: city,
+            country: country,
+            contactEmail: contactEmail,
+            contactPhone: contactPhone,
+            maxStudents: maxStudents,
+            maxTeachers: maxTeachers,
+            subscriptionTier: subscriptionTier,
+            metadata: metadata,
+            createdAt: createdAt,
+            updatedAt: updatedAt
+        )
+    }
+
+    // MARK: - AcademicUnitDTO
+
+    static func makeAcademicUnitDTO(
+        id: UUID = UUID(),
+        displayName: String = "Test Unit",
+        code: String? = nil,
+        description: String? = nil,
+        type: String = "grade",
+        parentUnitID: UUID? = nil,
+        schoolID: UUID = UUID(),
+        metadata: [String: String]? = nil,
+        createdAt: Date = Date(),
+        updatedAt: Date = Date(),
+        deletedAt: Date? = nil
+    ) -> AcademicUnitDTO {
+        AcademicUnitDTO(
+            id: id,
+            displayName: displayName,
+            code: code,
+            description: description,
+            type: type,
+            parentUnitID: parentUnitID,
+            schoolID: schoolID,
+            metadata: metadata,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            deletedAt: deletedAt
+        )
+    }
 }
