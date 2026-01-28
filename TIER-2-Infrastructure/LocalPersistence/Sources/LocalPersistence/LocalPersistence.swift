@@ -65,3 +65,9 @@ public typealias PersistenceConfiguration = LocalPersistenceConfiguration
 
 // Container
 public typealias PersistenceProvider = PersistenceContainerProvider
+
+// Models - SwiftData @Model types for persistence
+// (UserModel, DocumentModel are automatically public via @Model)
+
+// Mappers - Convert between persistence models and domain entities
+// (UserPersistenceMapper, DocumentPersistenceMapper are public structs)
