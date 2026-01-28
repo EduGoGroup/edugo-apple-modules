@@ -26,14 +26,15 @@ struct LocalUserRepositoryTests {
     @Test("Save and get user")
     func testSaveAndGet() async throws {
         let repository = try await setupRepository()
-        let user = try TestDataFactory.makeUser(name: "John Doe")
+        let user = try TestDataFactory.makeUser(firstName: "John", lastName: "Doe")
 
         try await repository.save(user)
         let fetched = try await repository.get(id: user.id)
 
         #expect(fetched != nil)
         #expect(fetched?.id == user.id)
-        #expect(fetched?.name == "John Doe")
+        #expect(fetched?.firstName == "John")
+        #expect(fetched?.lastName == "Doe")
     }
 
     @Test("Get returns nil for non-existent user")
@@ -48,8 +49,8 @@ struct LocalUserRepositoryTests {
     @Test("List returns saved users")
     func testListReturnsSavedUsers() async throws {
         let repository = try await setupRepository()
-        let user1 = try TestDataFactory.makeUser(name: "User 1", email: "user1@test.com")
-        let user2 = try TestDataFactory.makeUser(name: "User 2", email: "user2@test.com")
+        let user1 = try TestDataFactory.makeUser(firstName: "User", lastName: "One", email: "user1@test.com")
+        let user2 = try TestDataFactory.makeUser(firstName: "User", lastName: "Two", email: "user2@test.com")
 
         try await repository.save(user1)
         try await repository.save(user2)
@@ -94,73 +95,81 @@ struct LocalUserRepositoryTests {
     @Test("Save same user twice updates instead of duplicating")
     func testUpsertUpdatesExisting() async throws {
         let repository = try await setupRepository()
-        let user = try TestDataFactory.makeUser(name: "Original Name")
+        let user = try TestDataFactory.makeUser(firstName: "Original", lastName: "Name")
 
         try await repository.save(user)
 
         let updatedUser = try User(
             id: user.id,
-            name: "Updated Name",
+            firstName: "Updated",
+            lastName: "Name",
             email: user.email,
             isActive: user.isActive,
-            roleIDs: user.roleIDs
+            createdAt: user.createdAt,
+            updatedAt: Date()
         )
         try await repository.save(updatedUser)
 
         let fetched = try await repository.get(id: user.id)
-        #expect(fetched?.name == "Updated Name")
+        #expect(fetched?.firstName == "Updated")
     }
 
     @Test("Upsert updates all fields")
     func testUpsertUpdatesAllFields() async throws {
         let repository = try await setupRepository()
         let user = try TestDataFactory.makeUser(
-            name: "Test",
-            isActive: true,
-            roleIDs: []
+            firstName: "Test",
+            lastName: "User",
+            isActive: true
         )
 
         try await repository.save(user)
 
-        let newRoleID = UUID()
         let updatedUser = try User(
             id: user.id,
-            name: "Updated",
+            firstName: "Updated",
+            lastName: "Person",
             email: user.email,
             isActive: false,
-            roleIDs: [newRoleID]
+            createdAt: user.createdAt,
+            updatedAt: Date()
         )
         try await repository.save(updatedUser)
 
         let fetched = try await repository.get(id: user.id)
 
-        #expect(fetched?.name == "Updated")
+        #expect(fetched?.firstName == "Updated")
+        #expect(fetched?.lastName == "Person")
         #expect(fetched?.isActive == false)
-        #expect(fetched?.roleIDs.contains(newRoleID) == true)
     }
 
     // MARK: - Edge Cases
 
-    @Test("Save user with empty roleIDs")
-    func testSaveUserWithEmptyRoles() async throws {
+    @Test("Save user with inactive status")
+    func testSaveUserWithInactiveStatus() async throws {
         let repository = try await setupRepository()
-        let user = try TestDataFactory.makeUser(roleIDs: [])
+        let user = try TestDataFactory.makeUser(isActive: false)
 
         try await repository.save(user)
         let fetched = try await repository.get(id: user.id)
 
-        #expect(fetched?.roleIDs.isEmpty == true)
+        #expect(fetched?.isActive == false)
     }
 
-    @Test("Save user with many roleIDs")
-    func testSaveUserWithManyRoles() async throws {
+    @Test("Save and retrieve multiple users")
+    func testSaveAndRetrieveMultipleUsers() async throws {
         let repository = try await setupRepository()
-        let roles: Set<UUID> = Set((0..<20).map { _ in UUID() })
-        let user = try TestDataFactory.makeUser(roleIDs: roles)
+        let users = try TestDataFactory.makeUsers(count: 20)
 
-        try await repository.save(user)
-        let fetched = try await repository.get(id: user.id)
+        for user in users {
+            try await repository.save(user)
+        }
 
-        #expect(fetched?.roleIDs.count == 20)
+        let listed = try await repository.list()
+
+        #expect(listed.count >= 20)
+        for user in users {
+            #expect(listed.contains { $0.id == user.id })
+        }
     }
 }

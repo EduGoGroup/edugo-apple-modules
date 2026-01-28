@@ -12,11 +12,15 @@ struct UserPersistenceMapperTests {
 
     @Test("Domain to Model to Domain roundtrip produces identical user")
     func testRoundtrip() throws {
+        let createdAt = Date()
+        let updatedAt = Date()
         let original = try TestDataFactory.makeUser(
-            name: "John Doe",
+            firstName: "John",
+            lastName: "Doe",
             email: "john@example.com",
             isActive: true,
-            roleIDs: [UUID(), UUID()]
+            createdAt: createdAt,
+            updatedAt: updatedAt
         )
 
         // Domain -> Model
@@ -26,32 +30,38 @@ struct UserPersistenceMapperTests {
         let restored = try UserPersistenceMapper.toDomain(model)
 
         #expect(restored.id == original.id)
-        #expect(restored.name == original.name)
+        #expect(restored.firstName == original.firstName)
+        #expect(restored.lastName == original.lastName)
         #expect(restored.email == original.email)
         #expect(restored.isActive == original.isActive)
-        #expect(restored.roleIDs == original.roleIDs)
+        #expect(restored.createdAt == original.createdAt)
+        #expect(restored.updatedAt == original.updatedAt)
     }
 
-    @Test("Roundtrip with empty roleIDs")
-    func testRoundtripEmptyRoles() throws {
-        let original = try TestDataFactory.makeUser(roleIDs: [])
+    @Test("Roundtrip with inactive user")
+    func testRoundtripInactiveUser() throws {
+        let original = try TestDataFactory.makeUser(isActive: false)
 
         let model = UserPersistenceMapper.toModel(original, existing: nil)
         let restored = try UserPersistenceMapper.toDomain(model)
 
-        #expect(restored.roleIDs.isEmpty)
+        #expect(restored.isActive == false)
     }
 
-    @Test("Roundtrip with many roleIDs preserves all")
-    func testRoundtripManyRoles() throws {
-        let roles: Set<UUID> = Set((0..<10).map { _ in UUID() })
-        let original = try TestDataFactory.makeUser(roleIDs: roles)
+    @Test("Roundtrip preserves all timestamps")
+    func testRoundtripPreservesTimestamps() throws {
+        let createdAt = Date(timeIntervalSince1970: 1000000)
+        let updatedAt = Date(timeIntervalSince1970: 2000000)
+        let original = try TestDataFactory.makeUser(
+            createdAt: createdAt,
+            updatedAt: updatedAt
+        )
 
         let model = UserPersistenceMapper.toModel(original, existing: nil)
         let restored = try UserPersistenceMapper.toDomain(model)
 
-        #expect(restored.roleIDs.count == 10)
-        #expect(restored.roleIDs == roles)
+        #expect(restored.createdAt == createdAt)
+        #expect(restored.updatedAt == updatedAt)
     }
 
     // MARK: - toModel Tests
@@ -63,71 +73,102 @@ struct UserPersistenceMapperTests {
         let model = UserPersistenceMapper.toModel(user, existing: nil)
 
         #expect(model.id == user.id)
-        #expect(model.name == user.name)
+        #expect(model.firstName == user.firstName)
+        #expect(model.lastName == user.lastName)
         #expect(model.email == user.email)
     }
 
     @Test("toModel updates existing model in place")
     func testToModelUpdatesExisting() throws {
-        let user1 = try TestDataFactory.makeUser(name: "Original")
+        let user1 = try TestDataFactory.makeUser(firstName: "Original", lastName: "User")
         let existingModel = UserPersistenceMapper.toModel(user1, existing: nil)
 
+        let newUpdatedAt = Date()
         let user2 = try User(
             id: user1.id,
-            name: "Updated",
+            firstName: "Updated",
+            lastName: "Name",
             email: user1.email,
             isActive: false,
-            roleIDs: [UUID()]
+            createdAt: user1.createdAt,
+            updatedAt: newUpdatedAt
         )
 
         let updatedModel = UserPersistenceMapper.toModel(user2, existing: existingModel)
 
         // Should be the same instance
         #expect(updatedModel === existingModel)
-        #expect(updatedModel.name == "Updated")
+        #expect(updatedModel.firstName == "Updated")
+        #expect(updatedModel.lastName == "Name")
         #expect(updatedModel.isActive == false)
-        #expect(updatedModel.roleIDs.count == 1)
+        #expect(updatedModel.updatedAt == newUpdatedAt)
     }
 
-    @Test("toModel converts Set to Array for roleIDs")
-    func testSetToArrayConversion() throws {
-        let roles: Set<UUID> = [UUID(), UUID(), UUID()]
-        let user = try TestDataFactory.makeUser(roleIDs: roles)
+    @Test("toModel preserves createdAt when updating")
+    func testToModelPreservesCreatedAt() throws {
+        let originalCreatedAt = Date(timeIntervalSince1970: 1000000)
+        let user1 = try TestDataFactory.makeUser(createdAt: originalCreatedAt)
+        let existingModel = UserPersistenceMapper.toModel(user1, existing: nil)
 
-        let model = UserPersistenceMapper.toModel(user, existing: nil)
+        let user2 = try User(
+            id: user1.id,
+            firstName: "Updated",
+            lastName: "User",
+            email: user1.email,
+            isActive: true,
+            createdAt: originalCreatedAt,
+            updatedAt: Date()
+        )
 
-        #expect(model.roleIDs.count == 3)
-        #expect(Set(model.roleIDs) == roles)
+        let updatedModel = UserPersistenceMapper.toModel(user2, existing: existingModel)
+
+        #expect(updatedModel.createdAt == originalCreatedAt)
     }
 
     // MARK: - toDomain Tests
 
-    @Test("toDomain converts Array to Set for roleIDs")
-    func testArrayToSetConversion() throws {
-        let roleID = UUID()
+    @Test("toDomain creates valid domain user")
+    func testToDomainCreatesValidUser() throws {
         let model = UserModel(
             id: UUID(),
-            name: "Test",
+            firstName: "Test",
+            lastName: "User",
             email: "test@example.com",
-            isActive: true,
-            roleIDs: [roleID, roleID, roleID] // duplicates
+            isActive: true
         )
 
         let user = try UserPersistenceMapper.toDomain(model)
 
-        // Set should deduplicate
-        #expect(user.roleIDs.count == 1)
-        #expect(user.roleIDs.contains(roleID))
+        #expect(user.id == model.id)
+        #expect(user.firstName == model.firstName)
+        #expect(user.lastName == model.lastName)
+        #expect(user.email == model.email)
+        #expect(user.isActive == model.isActive)
     }
 
-    @Test("toDomain throws for empty name")
-    func testToDomainThrowsForEmptyName() {
+    @Test("toDomain throws for empty firstName")
+    func testToDomainThrowsForEmptyFirstName() {
         let model = UserModel(
             id: UUID(),
-            name: "",
+            firstName: "",
+            lastName: "User",
             email: "test@example.com",
-            isActive: true,
-            roleIDs: []
+            isActive: true
+        )
+
+        #expect(throws: DomainError.self) {
+            _ = try UserPersistenceMapper.toDomain(model)
+        }
+    }
+
+    @Test("toDomain throws for empty lastName")
+    func testToDomainThrowsForEmptyLastName() {
+        let model = UserModel(
+            id: UUID(),
+            firstName: "Test",
+            lastName: "",
+            email: "test@example.com",
+            isActive: true
         )
 
         #expect(throws: DomainError.self) {
@@ -139,10 +180,10 @@ struct UserPersistenceMapperTests {
     func testToDomainThrowsForInvalidEmail() {
         let model = UserModel(
             id: UUID(),
-            name: "Test User",
+            firstName: "Test",
+            lastName: "User",
             email: "invalid-email",
-            isActive: true,
-            roleIDs: []
+            isActive: true
         )
 
         #expect(throws: DomainError.self) {

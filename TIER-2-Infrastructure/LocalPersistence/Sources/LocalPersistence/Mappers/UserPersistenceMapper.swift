@@ -22,7 +22,7 @@ import EduGoCommon
 ///
 /// ## Notes
 /// - Does NOT conform to `MapperProtocol` because `@Model` types are not `Codable`
-/// - Handles `Array<UUID>` ↔ `Set<UUID>` conversion for roleIDs
+/// - User roles are managed via `MembershipModel`, not stored in User
 /// - Throws `DomainError.validationFailed` if data is corrupted
 public struct UserPersistenceMapper: Sendable {
     private init() {}
@@ -33,16 +33,15 @@ public struct UserPersistenceMapper: Sendable {
     /// - Returns: A domain User entity
     /// - Throws: `DomainError.validationFailed` if the model contains invalid data
     public static func toDomain(_ model: UserModel) throws -> User {
-        // Convert Array to Set for roleIDs
-        let roleIDsSet = Set(model.roleIDs)
-
-        // User.init validates name and email
+        // User.init validates firstName, lastName, and email
         return try User(
             id: model.id,
-            name: model.name,
+            firstName: model.firstName,
+            lastName: model.lastName,
             email: model.email,
             isActive: model.isActive,
-            roleIDs: roleIDsSet
+            createdAt: model.createdAt,
+            updatedAt: model.updatedAt
         )
     }
 
@@ -56,24 +55,24 @@ public struct UserPersistenceMapper: Sendable {
     ///   - existing: An optional existing UserModel to update
     /// - Returns: A UserModel with the domain entity's data
     public static func toModel(_ domain: User, existing: UserModel?) -> UserModel {
-        // Convert Set to Array for roleIDs
-        let roleIDsArray = Array(domain.roleIDs)
-
         if let existing = existing {
             // Update existing model in place for SwiftData change tracking
-            existing.name = domain.name
+            existing.firstName = domain.firstName
+            existing.lastName = domain.lastName
             existing.email = domain.email
             existing.isActive = domain.isActive
-            existing.roleIDs = roleIDsArray
+            existing.updatedAt = domain.updatedAt
             return existing
         } else {
             // Create new model
             return UserModel(
                 id: domain.id,
-                name: domain.name,
+                firstName: domain.firstName,
+                lastName: domain.lastName,
                 email: domain.email,
                 isActive: domain.isActive,
-                roleIDs: roleIDsArray
+                createdAt: domain.createdAt,
+                updatedAt: domain.updatedAt
             )
         }
     }

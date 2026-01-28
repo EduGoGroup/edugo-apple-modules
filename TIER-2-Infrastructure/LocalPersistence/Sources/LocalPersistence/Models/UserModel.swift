@@ -7,16 +7,20 @@ import SwiftData
 /// the domain `User` type using `UserPersistenceMapper`.
 ///
 /// ## Notes
-/// - Uses `[UUID]` for roleIDs because SwiftData doesn't support `Set<UUID>` directly
+/// - User roles are managed via `MembershipModel`, not stored in User
 /// - The `id` property has a unique constraint to ensure data integrity
+/// - Aligns with backend API using `firstName`/`lastName` fields
 @Model
 public final class UserModel {
     /// Unique identifier for the user
     @Attribute(.unique)
     public var id: UUID
 
-    /// User's display name
-    public var name: String
+    /// User's first name
+    public var firstName: String
+
+    /// User's last name
+    public var lastName: String
 
     /// User's email address (normalized to lowercase)
     public var email: String
@@ -24,29 +28,37 @@ public final class UserModel {
     /// Whether the user account is active
     public var isActive: Bool
 
-    /// Array of role IDs assigned to the user
-    /// Stored as Array because SwiftData doesn't support Set<UUID>
-    public var roleIDs: [UUID]
+    /// Timestamp when the user was created
+    public var createdAt: Date
+
+    /// Timestamp when the user was last updated
+    public var updatedAt: Date
 
     /// Creates a new UserModel instance
     ///
     /// - Parameters:
     ///   - id: Unique identifier (defaults to new UUID)
-    ///   - name: User's display name
+    ///   - firstName: User's first name
+    ///   - lastName: User's last name
     ///   - email: User's email address
     ///   - isActive: Whether the account is active (defaults to true)
-    ///   - roleIDs: Array of role IDs (defaults to empty)
+    ///   - createdAt: Creation timestamp (defaults to now)
+    ///   - updatedAt: Last update timestamp (defaults to now)
     public init(
         id: UUID = UUID(),
-        name: String,
+        firstName: String,
+        lastName: String,
         email: String,
         isActive: Bool = true,
-        roleIDs: [UUID] = []
+        createdAt: Date = Date(),
+        updatedAt: Date = Date()
     ) {
         self.id = id
-        self.name = name
+        self.firstName = firstName
+        self.lastName = lastName
         self.email = email
         self.isActive = isActive
-        self.roleIDs = roleIDs
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
     }
 }

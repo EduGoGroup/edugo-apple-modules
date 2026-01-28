@@ -37,7 +37,8 @@ struct LocalRepositoryConcurrencyTests {
                 group.addTask {
                     do {
                         let user = try TestDataFactory.makeUser(
-                            name: "ConcurrentUser \(i)",
+                            firstName: "Concurrent",
+                            lastName: "User\(i)",
                             email: "concurrent\(i)@test.com"
                         )
                         try await userRepo.save(user)
@@ -112,7 +113,8 @@ struct LocalRepositoryConcurrencyTests {
 
         // Create a user to read
         let user = try TestDataFactory.makeUser(
-            name: "ReadTestUser",
+            firstName: "ReadTest",
+            lastName: "User",
             email: "readtest@test.com"
         )
         try await userRepo.save(user)
@@ -202,7 +204,8 @@ struct LocalRepositoryConcurrencyTests {
         var userIDs: [UUID] = []
         for i in 0..<5 {
             let user = try TestDataFactory.makeUser(
-                name: "Initial User \(i)",
+                firstName: "Initial",
+                lastName: "User\(i)",
                 email: "initial\(i)@test.com"
             )
             try await userRepo.save(user)
@@ -222,7 +225,8 @@ struct LocalRepositoryConcurrencyTests {
                 group.addTask {
                     do {
                         let user = try TestDataFactory.makeUser(
-                            name: "NewUser \(i)",
+                            firstName: "New",
+                            lastName: "User\(i)",
                             email: "newuser\(i)@test.com"
                         )
                         try await userRepo.save(user)
@@ -270,10 +274,12 @@ struct LocalRepositoryConcurrencyTests {
         let userID = UUID()
         let user = try User(
             id: userID,
-            name: "Shared User",
+            firstName: "Shared",
+            lastName: "User",
             email: "shared@test.com",
             isActive: true,
-            roleIDs: []
+            createdAt: Date(),
+            updatedAt: Date()
         )
         try await userRepo.save(user)
 
@@ -285,10 +291,12 @@ struct LocalRepositoryConcurrencyTests {
                     do {
                         let updatedUser = try User(
                             id: userID,
-                            name: "Updated \(i)",
+                            firstName: "Updated",
+                            lastName: "\(i)",
                             email: "shared@test.com",
                             isActive: true,
-                            roleIDs: []
+                            createdAt: user.createdAt,
+                            updatedAt: Date()
                         )
                         try await userRepo.save(updatedUser)
                         return i
@@ -312,6 +320,6 @@ struct LocalRepositoryConcurrencyTests {
         // User should exist with one of the update values
         let finalUser = try await userRepo.get(id: userID)
         #expect(finalUser != nil)
-        #expect(finalUser!.name.hasPrefix("Updated"))
+        #expect(finalUser!.firstName == "Updated")
     }
 }
