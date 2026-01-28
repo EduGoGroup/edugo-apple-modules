@@ -41,6 +41,16 @@ struct UserTests {
         #expect(user.email == "john@edugo.com")
     }
 
+    @Test("User creation trims whitespace from email")
+    func testEmailTrimming() throws {
+        let user = try User(
+            name: "John",
+            email: "  John@EDUGO.com  "
+        )
+
+        #expect(user.email == "john@edugo.com")
+    }
+
     @Test("User creation with custom ID")
     func testCustomID() throws {
         let customID = UUID()
@@ -173,6 +183,14 @@ struct UserTests {
         #expect(updated.email == "jane@edugo.com")
         #expect(updated.id == user.id)
         #expect(updated.name == user.name)
+    }
+
+    @Test("with(email:) trims and lowercases new email")
+    func testWithEmailNormalization() throws {
+        let user = try User(name: "John", email: "john@edugo.com")
+        let updated = try user.with(email: "  Jane@EduGo.com  ")
+
+        #expect(updated.email == "jane@edugo.com")
     }
 
     @Test("with(isActive:) creates copy with new status")

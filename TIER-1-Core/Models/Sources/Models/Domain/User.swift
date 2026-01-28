@@ -65,11 +65,12 @@ public struct User: Sendable, Equatable, Identifiable, Codable, Hashable {
             )
         }
 
-        try EmailValidator.validate(email)
+        let normalizedEmail = email.trimmingCharacters(in: .whitespaces)
+        try EmailValidator.validate(normalizedEmail)
 
         self.id = id
         self.name = trimmedName
-        self.email = email.lowercased()
+        self.email = normalizedEmail.lowercased()
         self.isActive = isActive
         self.roleIDs = roleIDs
     }
