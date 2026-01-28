@@ -32,7 +32,9 @@ let package = Package(
             ],
             swiftSettings: [
                 .swiftLanguageMode(.v6),
-                .enableExperimentalFeature("StrictConcurrency=complete")
+                .enableExperimentalFeature("StrictConcurrency=complete"),
+                .enableUpcomingFeature("InferSendableFromCaptures"),
+                .enableUpcomingFeature("RegionBasedIsolation")
             ]
         ),
         .testTarget(
@@ -40,7 +42,9 @@ let package = Package(
             dependencies: ["Roles"],
             swiftSettings: [
                 .swiftLanguageMode(.v6),
-                .enableExperimentalFeature("StrictConcurrency=complete")
+                .enableExperimentalFeature("StrictConcurrency=complete"),
+                .enableUpcomingFeature("InferSendableFromCaptures"),
+                .enableUpcomingFeature("RegionBasedIsolation")
             ]
         )
     ]
