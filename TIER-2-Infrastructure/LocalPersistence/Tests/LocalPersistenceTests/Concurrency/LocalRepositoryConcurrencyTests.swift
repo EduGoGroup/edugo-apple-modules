@@ -6,8 +6,6 @@ import Models
 
 @Suite("LocalRepository Concurrency Tests", .serialized)
 struct LocalRepositoryConcurrencyTests {
-    private let schema = Schema([UserModel.self, DocumentModel.self])
-
     // MARK: - Setup Helper
 
     private func setupRepositories() async throws -> (LocalUserRepository, LocalDocumentRepository) {
@@ -15,7 +13,7 @@ struct LocalRepositoryConcurrencyTests {
         // Always configure a fresh provider to avoid cross-suite interference
         try await provider.configure(
             with: .testing,
-            schema: schema
+            schema: LocalPersistenceSchema.current
         )
         return (
             LocalUserRepository(containerProvider: provider),

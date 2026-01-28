@@ -7,8 +7,6 @@ import EduGoCommon
 
 @Suite("LocalDocumentRepository Tests", .serialized)
 struct LocalDocumentRepositoryTests {
-    private let schema = Schema([UserModel.self, DocumentModel.self])
-
     // MARK: - Setup Helper
 
     private func setupRepository() async throws -> LocalDocumentRepository {
@@ -16,7 +14,7 @@ struct LocalDocumentRepositoryTests {
         // Always configure a fresh provider to avoid cross-suite interference
         try await provider.configure(
             with: .testing,
-            schema: schema
+            schema: LocalPersistenceSchema.current
         )
         return LocalDocumentRepository(containerProvider: provider)
     }
