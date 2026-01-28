@@ -8,12 +8,15 @@ struct ModelsTests {
     @Test("User model creation with new API")
     func testUserCreation() throws {
         let user = try User(
-            name: "Test User",
+            firstName: "Test",
+            lastName: "User",
             email: "test@edugo.com"
         )
 
         #expect(user.email == "test@edugo.com")
-        #expect(user.name == "Test User")
+        #expect(user.firstName == "Test")
+        #expect(user.lastName == "User")
+        #expect(user.fullName == "Test User")
         #expect(user.isActive == true)
     }
 

@@ -6,19 +6,26 @@ import EduGoCommon
 /// Represents a user in the EduGo system.
 ///
 /// `User` is an immutable, thread-safe entity conforming to `Sendable`.
-/// Relationships are modeled via IDs (value semantics) rather than references.
+/// User roles are managed through `Membership` entities (contextual per academic unit),
+/// not stored directly in User.
+///
+/// ## Backend Alignment
+/// This model aligns with edu-admin and edu-mobile APIs:
+/// - Uses `firstName`/`lastName` (maps to `first_name`/`last_name` in JSON)
+/// - Includes `createdAt`/`updatedAt` timestamps
+/// - Roles are NOT stored here - use `Membership` for role assignments
 ///
 /// ## Example
 /// ```swift
-/// let user = User(
+/// let user = try User(
 ///     id: UUID(),
-///     name: "John Doe",
+///     firstName: "John",
+///     lastName: "Doe",
 ///     email: "john@edugo.com",
 ///     isActive: true
 /// )
 ///
-/// // Add a role
-/// let updatedUser = user.addRole(adminRoleID)
+/// print(user.fullName) // "John Doe"
 /// ```
 public struct User: Sendable, Equatable, Identifiable, Codable, Hashable {
 
@@ -27,8 +34,11 @@ public struct User: Sendable, Equatable, Identifiable, Codable, Hashable {
     /// Unique identifier for the user
     public let id: UUID
 
-    /// User's display name
-    public let name: String
+    /// User's first name
+    public let firstName: String
+
+    /// User's last name
+    public let lastName: String
 
     /// User's email address (validated format)
     public let email: String
@@ -36,8 +46,18 @@ public struct User: Sendable, Equatable, Identifiable, Codable, Hashable {
     /// Whether the user account is active
     public let isActive: Bool
 
-    /// Set of role IDs assigned to this user
-    public let roleIDs: Set<UUID>
+    /// Timestamp when the user was created
+    public let createdAt: Date
+
+    /// Timestamp when the user was last updated
+    public let updatedAt: Date
+
+    // MARK: - Computed Properties
+
+    /// Full name combining firstName and lastName
+    public var fullName: String {
+        "\(firstName) \(lastName)"
+    }
 
     // MARK: - Initialization
 
@@ -45,23 +65,35 @@ public struct User: Sendable, Equatable, Identifiable, Codable, Hashable {
     ///
     /// - Parameters:
     ///   - id: Unique identifier. Defaults to a new UUID.
-    ///   - name: User's display name. Must not be empty.
+    ///   - firstName: User's first name. Must not be empty.
+    ///   - lastName: User's last name. Must not be empty.
     ///   - email: User's email address. Must be valid format.
     ///   - isActive: Whether the account is active. Defaults to true.
-    ///   - roleIDs: Set of assigned role IDs. Defaults to empty.
+    ///   - createdAt: Creation timestamp. Defaults to now.
+    ///   - updatedAt: Last update timestamp. Defaults to now.
     /// - Throws: `DomainError.validationFailed` if validation fails.
     public init(
         id: UUID = UUID(),
-        name: String,
+        firstName: String,
+        lastName: String,
         email: String,
         isActive: Bool = true,
-        roleIDs: Set<UUID> = []
+        createdAt: Date = Date(),
+        updatedAt: Date = Date()
     ) throws {
-        let trimmedName = name.trimmingCharacters(in: .whitespaces)
-        guard !trimmedName.isEmpty else {
+        let trimmedFirstName = firstName.trimmingCharacters(in: .whitespaces)
+        guard !trimmedFirstName.isEmpty else {
             throw DomainError.validationFailed(
-                field: "name",
+                field: "firstName",
                 reason: "El nombre no puede estar vacío"
+            )
+        }
+
+        let trimmedLastName = lastName.trimmingCharacters(in: .whitespaces)
+        guard !trimmedLastName.isEmpty else {
+            throw DomainError.validationFailed(
+                field: "lastName",
+                reason: "El apellido no puede estar vacío"
             )
         }
 
@@ -69,26 +101,47 @@ public struct User: Sendable, Equatable, Identifiable, Codable, Hashable {
         try EmailValidator.validate(normalizedEmail)
 
         self.id = id
-        self.name = trimmedName
+        self.firstName = trimmedFirstName
+        self.lastName = trimmedLastName
         self.email = normalizedEmail.lowercased()
         self.isActive = isActive
-        self.roleIDs = roleIDs
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
     }
 
     // MARK: - Copy Methods
 
-    /// Creates a copy with updated name.
+    /// Creates a copy with updated first name.
     ///
-    /// - Parameter name: The new name.
-    /// - Returns: A new `User` instance with the updated name.
-    /// - Throws: `DomainError.validationFailed` if name is empty.
-    public func with(name: String) throws -> User {
+    /// - Parameter firstName: The new first name.
+    /// - Returns: A new `User` instance with the updated first name.
+    /// - Throws: `DomainError.validationFailed` if first name is empty.
+    public func with(firstName: String) throws -> User {
         try User(
             id: id,
-            name: name,
+            firstName: firstName,
+            lastName: lastName,
             email: email,
             isActive: isActive,
-            roleIDs: roleIDs
+            createdAt: createdAt,
+            updatedAt: Date()
+        )
+    }
+
+    /// Creates a copy with updated last name.
+    ///
+    /// - Parameter lastName: The new last name.
+    /// - Returns: A new `User` instance with the updated last name.
+    /// - Throws: `DomainError.validationFailed` if last name is empty.
+    public func with(lastName: String) throws -> User {
+        try User(
+            id: id,
+            firstName: firstName,
+            lastName: lastName,
+            email: email,
+            isActive: isActive,
+            createdAt: createdAt,
+            updatedAt: Date()
         )
     }
 
@@ -100,10 +153,12 @@ public struct User: Sendable, Equatable, Identifiable, Codable, Hashable {
     public func with(email: String) throws -> User {
         try User(
             id: id,
-            name: name,
+            firstName: firstName,
+            lastName: lastName,
             email: email,
             isActive: isActive,
-            roleIDs: roleIDs
+            createdAt: createdAt,
+            updatedAt: Date()
         )
     }
 
@@ -116,55 +171,12 @@ public struct User: Sendable, Equatable, Identifiable, Codable, Hashable {
         // swiftlint:disable:next force_try
         try! User(
             id: id,
-            name: name,
+            firstName: firstName,
+            lastName: lastName,
             email: email,
             isActive: isActive,
-            roleIDs: roleIDs
+            createdAt: createdAt,
+            updatedAt: Date()
         )
     }
-
-    // MARK: - Role Management
-
-    /// Creates a copy with an additional role.
-    ///
-    /// - Parameter roleID: The role ID to add.
-    /// - Returns: A new `User` with the role added.
-    public func addRole(_ roleID: UUID) -> User {
-        var newRoles = roleIDs
-        newRoles.insert(roleID)
-        // swiftlint:disable:next force_try
-        return try! User(
-            id: id,
-            name: name,
-            email: email,
-            isActive: isActive,
-            roleIDs: newRoles
-        )
-    }
-
-    /// Creates a copy with a role removed.
-    ///
-    /// - Parameter roleID: The role ID to remove.
-    /// - Returns: A new `User` without the specified role.
-    public func removeRole(_ roleID: UUID) -> User {
-        var newRoles = roleIDs
-        newRoles.remove(roleID)
-        // swiftlint:disable:next force_try
-        return try! User(
-            id: id,
-            name: name,
-            email: email,
-            isActive: isActive,
-            roleIDs: newRoles
-        )
-    }
-
-    /// Checks if the user has a specific role.
-    ///
-    /// - Parameter roleID: The role ID to check.
-    /// - Returns: `true` if the user has the role, `false` otherwise.
-    public func hasRole(_ roleID: UUID) -> Bool {
-        roleIDs.contains(roleID)
-    }
-
 }

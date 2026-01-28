@@ -8,17 +8,21 @@ enum TestFixtures {
 
     static func makeUserDTO(
         id: UUID = UUID(),
-        name: String = "Test User",
+        firstName: String = "Test",
+        lastName: String = "User",
         email: String = "test@example.com",
         isActive: Bool = true,
-        roleIDs: [UUID] = []
+        createdAt: Date = Date(),
+        updatedAt: Date = Date()
     ) -> UserDTO {
         UserDTO(
             id: id,
-            name: name,
+            firstName: firstName,
+            lastName: lastName,
             email: email,
             isActive: isActive,
-            roleIDs: roleIDs
+            createdAt: createdAt,
+            updatedAt: updatedAt
         )
     }
 

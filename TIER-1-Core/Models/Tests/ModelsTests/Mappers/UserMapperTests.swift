@@ -9,39 +9,75 @@ struct UserMapperTests {
 
     @Test("toDomain with valid DTO returns User")
     func toDomainWithValidDTO() throws {
-        let roleID1 = UUID()
-        let roleID2 = UUID()
+        let createdAt = Date(timeIntervalSince1970: 1000)
+        let updatedAt = Date(timeIntervalSince1970: 2000)
         let dto = UserDTO(
             id: UUID(),
-            name: "John Doe",
+            firstName: "John",
+            lastName: "Doe",
             email: "john@example.com",
             isActive: true,
-            roleIDs: [roleID1, roleID2]
+            createdAt: createdAt,
+            updatedAt: updatedAt
         )
 
         let user = try UserMapper.toDomain(dto)
 
         #expect(user.id == dto.id)
-        #expect(user.name == "John Doe")
+        #expect(user.firstName == "John")
+        #expect(user.lastName == "Doe")
+        #expect(user.fullName == "John Doe")
         #expect(user.email == "john@example.com")
         #expect(user.isActive == true)
-        #expect(user.roleIDs.count == 2)
-        #expect(user.roleIDs.contains(roleID1))
-        #expect(user.roleIDs.contains(roleID2))
+        #expect(user.createdAt == createdAt)
+        #expect(user.updatedAt == updatedAt)
     }
 
     @Test("toDomain with invalid email throws validation error")
     func toDomainWithInvalidEmail() {
-        let dto = UserDTO(id: UUID(), name: "Test", email: "invalid-email", isActive: true, roleIDs: [])
+        let dto = UserDTO(
+            id: UUID(),
+            firstName: "Test",
+            lastName: "User",
+            email: "invalid-email",
+            isActive: true,
+            createdAt: Date(),
+            updatedAt: Date()
+        )
 
         #expect(throws: (any Error).self) {
             _ = try UserMapper.toDomain(dto)
         }
     }
 
-    @Test("toDomain with empty name throws validation error")
-    func toDomainWithEmptyName() {
-        let dto = UserDTO(id: UUID(), name: "   ", email: "test@example.com", isActive: true, roleIDs: [])
+    @Test("toDomain with empty firstName throws validation error")
+    func toDomainWithEmptyFirstName() {
+        let dto = UserDTO(
+            id: UUID(),
+            firstName: "   ",
+            lastName: "User",
+            email: "test@example.com",
+            isActive: true,
+            createdAt: Date(),
+            updatedAt: Date()
+        )
+
+        #expect(throws: (any Error).self) {
+            _ = try UserMapper.toDomain(dto)
+        }
+    }
+
+    @Test("toDomain with empty lastName throws validation error")
+    func toDomainWithEmptyLastName() {
+        let dto = UserDTO(
+            id: UUID(),
+            firstName: "Test",
+            lastName: "   ",
+            email: "test@example.com",
+            isActive: true,
+            createdAt: Date(),
+            updatedAt: Date()
+        )
 
         #expect(throws: (any Error).self) {
             _ = try UserMapper.toDomain(dto)
@@ -50,65 +86,97 @@ struct UserMapperTests {
 
     @Test("toDomain normalizes email to lowercase")
     func toDomainNormalizesEmail() throws {
-        let dto = UserDTO(id: UUID(), name: "Test", email: "John.Doe@Example.COM", isActive: true, roleIDs: [])
+        let dto = UserDTO(
+            id: UUID(),
+            firstName: "Test",
+            lastName: "User",
+            email: "John.Doe@Example.COM",
+            isActive: true,
+            createdAt: Date(),
+            updatedAt: Date()
+        )
 
         let user = try UserMapper.toDomain(dto)
 
         #expect(user.email == "john.doe@example.com")
     }
 
-    @Test("toDomain trims name whitespace")
-    func toDomainTrimsName() throws {
-        let dto = UserDTO(id: UUID(), name: "  John Doe  ", email: "john@example.com", isActive: true, roleIDs: [])
+    @Test("toDomain trims firstName whitespace")
+    func toDomainTrimsFirstName() throws {
+        let dto = UserDTO(
+            id: UUID(),
+            firstName: "  John  ",
+            lastName: "Doe",
+            email: "john@example.com",
+            isActive: true,
+            createdAt: Date(),
+            updatedAt: Date()
+        )
 
         let user = try UserMapper.toDomain(dto)
 
-        #expect(user.name == "John Doe")
+        #expect(user.firstName == "John")
     }
 
-    @Test("toDomain converts roleIDs array to set removing duplicates")
-    func toDomainConvertsRoleIDsArrayToSet() throws {
-        let roleID = UUID()
-        let dto = UserDTO(id: UUID(), name: "Test", email: "test@example.com", isActive: true, roleIDs: [roleID, roleID, roleID])
+    @Test("toDomain trims lastName whitespace")
+    func toDomainTrimsLastName() throws {
+        let dto = UserDTO(
+            id: UUID(),
+            firstName: "John",
+            lastName: "  Doe  ",
+            email: "john@example.com",
+            isActive: true,
+            createdAt: Date(),
+            updatedAt: Date()
+        )
 
         let user = try UserMapper.toDomain(dto)
 
-        #expect(user.roleIDs.count == 1)
-        #expect(user.roleIDs.contains(roleID))
+        #expect(user.lastName == "Doe")
     }
 
     // MARK: - toDTO Tests
 
     @Test("toDTO converts User correctly")
     func toDTOConvertsCorrectly() throws {
-        let roleID = UUID()
-        let user = try User(id: UUID(), name: "Jane", email: "jane@test.com", isActive: false, roleIDs: [roleID])
+        let createdAt = Date(timeIntervalSince1970: 1000)
+        let updatedAt = Date(timeIntervalSince1970: 2000)
+        let user = try User(
+            id: UUID(),
+            firstName: "Jane",
+            lastName: "Smith",
+            email: "jane@test.com",
+            isActive: false,
+            createdAt: createdAt,
+            updatedAt: updatedAt
+        )
 
         let dto = UserMapper.toDTO(user)
 
         #expect(dto.id == user.id)
-        #expect(dto.name == user.name)
+        #expect(dto.firstName == user.firstName)
+        #expect(dto.lastName == user.lastName)
         #expect(dto.email == user.email)
         #expect(dto.isActive == false)
-        #expect(dto.roleIDs.count == 1)
-        #expect(dto.roleIDs.contains(roleID))
-    }
-
-    @Test("toDTO with empty roleIDs returns empty array")
-    func toDTOWithEmptyRoleIDs() throws {
-        let user = try User(id: UUID(), name: "Test", email: "test@test.com", isActive: true, roleIDs: [])
-
-        let dto = UserMapper.toDTO(user)
-
-        #expect(dto.roleIDs.isEmpty)
+        #expect(dto.createdAt == createdAt)
+        #expect(dto.updatedAt == updatedAt)
     }
 
     // MARK: - Roundtrip Tests
 
     @Test("roundtrip preserves data")
     func roundtripPreservesData() throws {
-        let roleID = UUID()
-        let original = try User(id: UUID(), name: "Test User", email: "test@test.com", isActive: true, roleIDs: [roleID])
+        let createdAt = Date(timeIntervalSince1970: 1000)
+        let updatedAt = Date(timeIntervalSince1970: 2000)
+        let original = try User(
+            id: UUID(),
+            firstName: "Test",
+            lastName: "User",
+            email: "test@test.com",
+            isActive: true,
+            createdAt: createdAt,
+            updatedAt: updatedAt
+        )
 
         let dto = UserMapper.toDTO(original)
         let converted = try UserMapper.toDomain(dto)
@@ -116,14 +184,95 @@ struct UserMapperTests {
         #expect(original == converted)
     }
 
-    @Test("roundtrip with multiple roleIDs preserves all IDs")
-    func roundtripWithMultipleRoleIDs() throws {
-        let roleIDs: Set<UUID> = [UUID(), UUID(), UUID()]
-        let original = try User(id: UUID(), name: "Multi Role", email: "multi@test.com", isActive: true, roleIDs: roleIDs)
+    // MARK: - Extension Method Tests
 
-        let dto = UserMapper.toDTO(original)
-        let converted = try UserMapper.toDomain(dto)
+    @Test("UserDTO.toDomain() works correctly")
+    func dtoToDomainExtension() throws {
+        let dto = UserDTO(
+            id: UUID(),
+            firstName: "John",
+            lastName: "Doe",
+            email: "john@example.com",
+            isActive: true,
+            createdAt: Date(),
+            updatedAt: Date()
+        )
 
-        #expect(original.roleIDs == converted.roleIDs)
+        let user = try dto.toDomain()
+
+        #expect(user.id == dto.id)
+        #expect(user.firstName == dto.firstName)
+        #expect(user.lastName == dto.lastName)
+    }
+
+    @Test("User.toDTO() works correctly")
+    func userToDTOExtension() throws {
+        let user = try User(
+            firstName: "Jane",
+            lastName: "Smith",
+            email: "jane@test.com"
+        )
+
+        let dto = user.toDTO()
+
+        #expect(dto.id == user.id)
+        #expect(dto.firstName == user.firstName)
+        #expect(dto.lastName == user.lastName)
+    }
+
+    // MARK: - JSON Serialization Tests
+
+    @Test("UserDTO encodes to JSON with snake_case keys")
+    func dtoEncodesToSnakeCaseJSON() throws {
+        let id = UUID()
+        let createdAt = Date(timeIntervalSince1970: 1705318200)
+        let updatedAt = Date(timeIntervalSince1970: 1705459500)
+        let dto = UserDTO(
+            id: id,
+            firstName: "John",
+            lastName: "Doe",
+            email: "john@example.com",
+            isActive: true,
+            createdAt: createdAt,
+            updatedAt: updatedAt
+        )
+
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        let data = try encoder.encode(dto)
+        let json = String(data: data, encoding: .utf8)!
+
+        #expect(json.contains("\"first_name\""))
+        #expect(json.contains("\"last_name\""))
+        #expect(json.contains("\"is_active\""))
+        #expect(json.contains("\"created_at\""))
+        #expect(json.contains("\"updated_at\""))
+        #expect(!json.contains("\"firstName\""))
+        #expect(!json.contains("\"lastName\""))
+    }
+
+    @Test("UserDTO decodes from JSON with snake_case keys")
+    func dtoDecodesFromSnakeCaseJSON() throws {
+        let json = """
+        {
+            "id": "550e8400-e29b-41d4-a716-446655440000",
+            "first_name": "John",
+            "last_name": "Doe",
+            "email": "john@example.com",
+            "is_active": true,
+            "created_at": "2024-01-15T10:30:00Z",
+            "updated_at": "2024-01-20T14:45:00Z"
+        }
+        """
+        let data = json.data(using: .utf8)!
+
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let dto = try decoder.decode(UserDTO.self, from: data)
+
+        #expect(dto.firstName == "John")
+        #expect(dto.lastName == "Doe")
+        #expect(dto.email == "john@example.com")
+        #expect(dto.isActive == true)
     }
 }

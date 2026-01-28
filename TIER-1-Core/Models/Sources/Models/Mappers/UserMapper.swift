@@ -13,7 +13,8 @@ import EduGoCommon
 ///
 /// ## Overview
 /// `UserMapper` provides type-safe conversion that:
-/// - Converts `Array` to `Set` for role IDs (domain uses `Set` for uniqueness)
+/// - Maps `first_name`/`last_name` (snake_case) to `firstName`/`lastName` (camelCase)
+/// - Handles timestamp fields (`created_at`/`updated_at`)
 /// - Delegates email and name validation to `User.init`
 /// - Preserves all user properties during roundtrip conversion
 ///
@@ -22,10 +23,12 @@ import EduGoCommon
 /// // DTO from backend
 /// let dto = UserDTO(
 ///     id: UUID(),
-///     name: "John Doe",
+///     firstName: "John",
+///     lastName: "Doe",
 ///     email: "john@example.com",
 ///     isActive: true,
-///     roleIDs: [roleID1, roleID2]
+///     createdAt: Date(),
+///     updatedAt: Date()
 /// )
 ///
 /// // Convert to domain
@@ -37,8 +40,14 @@ import EduGoCommon
 ///
 /// ## Error Handling
 /// The `toDomain` method throws errors from `User.init`:
-/// - `DomainError.validationFailed(field: "name", ...)` if name is empty
+/// - `DomainError.validationFailed(field: "firstName", ...)` if first name is empty
+/// - `DomainError.validationFailed(field: "lastName", ...)` if last name is empty
 /// - `DomainError.validationFailed(field: "email", ...)` if email is invalid
+///
+/// ## Notes
+/// - Roles are NOT mapped here; they are managed through `Membership` entities
+/// - The extension methods on `UserDTO` and `User` (`toDomain()`, `toDTO()`) are preferred
+///   for direct conversion. This mapper exists for `MapperProtocol` conformance.
 public struct UserMapper: MapperProtocol {
     public typealias DTO = UserDTO
     public typealias Domain = User
@@ -47,16 +56,10 @@ public struct UserMapper: MapperProtocol {
     ///
     /// - Parameter dto: The data transfer object from the backend.
     /// - Returns: A validated `User` domain entity.
-    /// - Throws: `DomainError.validationFailed` if email or name are invalid.
-    /// - Note: `User.init` normalizes email to lowercase and trims whitespace from name/email.
+    /// - Throws: `DomainError.validationFailed` if email or names are invalid.
+    /// - Note: `User.init` normalizes email to lowercase and trims whitespace from names/email.
     public static func toDomain(_ dto: UserDTO) throws -> User {
-        try User(
-            id: dto.id,
-            name: dto.name,
-            email: dto.email,
-            isActive: dto.isActive,
-            roleIDs: Set(dto.roleIDs)
-        )
+        try dto.toDomain()
     }
 
     /// Converts a `User` domain entity to a `UserDTO` for the backend.
@@ -64,12 +67,6 @@ public struct UserMapper: MapperProtocol {
     /// - Parameter domain: The domain entity to convert.
     /// - Returns: A `UserDTO` suitable for sending to the backend.
     public static func toDTO(_ domain: User) -> UserDTO {
-        UserDTO(
-            id: domain.id,
-            name: domain.name,
-            email: domain.email,
-            isActive: domain.isActive,
-            roleIDs: Array(domain.roleIDs)
-        )
+        domain.toDTO()
     }
 }

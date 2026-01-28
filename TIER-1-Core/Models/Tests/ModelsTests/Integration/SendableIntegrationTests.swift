@@ -17,20 +17,21 @@ struct SendableIntegrationTests {
     @Test("Concurrent User modifications produce deterministic results")
     func testConcurrentUserModifications() async throws {
         let baseUser = try User(
-            name: "Base User",
+            firstName: "Base",
+            lastName: "User",
             email: "base@edugo.com"
         )
 
         // Simulate 100 concurrent "modifications" (each creates a copy)
         let results = await withTaskGroup(of: User.self, returning: [User].self) { group in
             for i in 0..<100 {
-                let roleID = UUID()
                 group.addTask {
                     // Each task gets its own copy (value semantics)
-                    // and adds a unique role
-                    let modified = baseUser.addRole(roleID)
+                    // and modifies the firstName
+                    // swiftlint:disable:next force_try
+                    let modified = try! baseUser.with(firstName: "User\(i)")
                     // Simulate some work
-                    _ = modified.name.count + i
+                    _ = modified.fullName.count
                     return modified
                 }
             }
@@ -45,16 +46,15 @@ struct SendableIntegrationTests {
         // Verify all 100 tasks completed
         #expect(results.count == 100)
 
-        // Each result should have exactly 1 role (its own)
+        // Each result should have unique firstName
         // because value semantics means each task has isolated copy
         for result in results {
-            #expect(result.roleIDs.count == 1)
             #expect(result.id == baseUser.id)
-            #expect(result.name == baseUser.name)
+            #expect(result.lastName == baseUser.lastName)
         }
 
         // Original user is unchanged
-        #expect(baseUser.roleIDs.isEmpty)
+        #expect(baseUser.firstName == "Base")
     }
 
     @Test("Concurrent Role modifications with permissions")
@@ -163,29 +163,25 @@ struct SendableIntegrationTests {
             return role
         }
 
+        // Create users (without roleIDs - roles are now managed via Membership)
         let users: [User] = try (0..<10).map { i in
-            var user = try User(name: "User \(i)", email: "user\(i)@edugo.com")
-            for role in roles {
-                user = user.addRole(role.id)
-            }
-            return user
+            try User(firstName: "User", lastName: "\(i)", email: "user\(i)@edugo.com")
         }
 
         // Concurrently navigate the graph from all users
         let rolesCopy = roles // Capture immutable copy
         let navigationResults = await withTaskGroup(
-            of: (userID: UUID, roleCount: Int, hasAllRoles: Bool).self,
-            returning: [(userID: UUID, roleCount: Int, hasAllRoles: Bool)].self
+            of: (userID: UUID, userFullName: String, rolesAvailable: Int).self,
+            returning: [(userID: UUID, userFullName: String, rolesAvailable: Int)].self
         ) { group in
             for user in users {
                 group.addTask {
-                    let roleCount = user.roleIDs.count
-                    let hasAllRoles = rolesCopy.allSatisfy { user.hasRole($0.id) }
-                    return (user.id, roleCount, hasAllRoles)
+                    let rolesAvailable = rolesCopy.count
+                    return (user.id, user.fullName, rolesAvailable)
                 }
             }
 
-            var results: [(userID: UUID, roleCount: Int, hasAllRoles: Bool)] = []
+            var results: [(userID: UUID, userFullName: String, rolesAvailable: Int)] = []
             for await result in group {
                 results.append(result)
             }
@@ -195,8 +191,7 @@ struct SendableIntegrationTests {
         #expect(navigationResults.count == 10)
 
         for result in navigationResults {
-            #expect(result.roleCount == 5)
-            #expect(result.hasAllRoles == true)
+            #expect(result.rolesAvailable == 5)
         }
     }
 
@@ -259,7 +254,7 @@ struct SendableIntegrationTests {
 
     @Test("Entities can be captured in Tasks without issues")
     func testSendableCaptureInTasks() async throws {
-        let user = try User(name: "Sendable Test", email: "sendable@test.com")
+        let user = try User(firstName: "Sendable", lastName: "Test", email: "sendable@test.com")
         let role = try Role(name: "Sendable Role", level: .admin)
         let permission = Permission.create(resource: .users, action: .read)
         let document = try Document(
@@ -270,7 +265,7 @@ struct SendableIntegrationTests {
         )
 
         // All entities should be capturable in concurrent tasks
-        async let userTask = Task { user.name }.value
+        async let userTask = Task { user.fullName }.value
         async let roleTask = Task { role.level }.value
         async let permissionTask = Task { permission.code }.value
         async let documentTask = Task { document.state }.value
@@ -288,7 +283,8 @@ struct SendableIntegrationTests {
         let originalID = UUID()
         let user = try User(
             id: originalID,
-            name: "Identity Test",
+            firstName: "Identity",
+            lastName: "Test",
             email: "identity@test.com"
         )
 

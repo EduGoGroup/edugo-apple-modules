@@ -16,7 +16,8 @@ struct ConcurrencyPerformanceTests {
     @Test("1000+ User copy operations complete quickly")
     func testMassiveUserCopyOperations() async throws {
         let baseUser = try User(
-            name: "Performance Test User",
+            firstName: "Performance",
+            lastName: "Test User",
             email: "perf@test.com"
         )
 
@@ -25,9 +26,9 @@ struct ConcurrencyPerformanceTests {
         // Perform 1000 concurrent copy operations
         let results = await withTaskGroup(of: User.self, returning: [User].self) { group in
             for i in 0..<1000 {
-                let roleID = UUID()
                 group.addTask {
-                    var modified = baseUser.addRole(roleID)
+                    // swiftlint:disable:next force_try
+                    var modified = try! baseUser.with(firstName: "User\(i)")
                     // Simulate typical modifications
                     if i % 2 == 0 {
                         modified = modified.with(isActive: false)
@@ -180,19 +181,16 @@ struct ConcurrencyPerformanceTests {
             return results
         }
 
-        // Create users with roles
+        // Create users (roles are now managed via Membership, not stored in User)
         let users = await withTaskGroup(of: User.self, returning: [User].self) { group in
             for i in 0..<100 {
                 group.addTask {
                     // swiftlint:disable:next force_try
-                    var user = try! User(
-                        name: "User \(i)",
+                    try! User(
+                        firstName: "User",
+                        lastName: "\(i)",
                         email: "user\(i)@perf.test"
                     )
-                    for role in roles.prefix(roles.count / 4) {
-                        user = user.addRole(role.id)
-                    }
-                    return user
                 }
             }
 
@@ -216,29 +214,24 @@ struct ConcurrencyPerformanceTests {
 
     @Test("Read-heavy concurrent access performance")
     func testReadHeavyWorkload() async throws {
-        // Setup: Create a populated user
-        let user: User = {
-            var temp = try! User(name: "Read Test", email: "read@test.com")
-            for _ in 0..<20 {
-                temp = temp.addRole(UUID())
-            }
-            return temp
-        }()
+        // Setup: Create a user
+        // swiftlint:disable:next force_try
+        let user = try! User(firstName: "Read", lastName: "Test", email: "read@test.com")
 
         let startTime = ContinuousClock.now
 
         // Perform 5000 concurrent reads
         let results = await withTaskGroup(
-            of: (name: String, roleCount: Int).self,
-            returning: [(name: String, roleCount: Int)].self
+            of: (fullName: String, email: String).self,
+            returning: [(fullName: String, email: String)].self
         ) { group in
             for _ in 0..<5000 {
                 group.addTask {
-                    (user.name, user.roleIDs.count)
+                    (user.fullName, user.email)
                 }
             }
 
-            var results: [(name: String, roleCount: Int)] = []
+            var results: [(fullName: String, email: String)] = []
             results.reserveCapacity(5000)
             for await result in group {
                 results.append(result)
@@ -249,7 +242,7 @@ struct ConcurrencyPerformanceTests {
         let elapsed = ContinuousClock.now - startTime
 
         #expect(results.count == 5000)
-        #expect(results.allSatisfy { $0.name == "Read Test" && $0.roleCount == 20 })
+        #expect(results.allSatisfy { $0.fullName == "Read Test" && $0.email == "read@test.com" })
         #expect(elapsed < .seconds(1), "Read operations took too long: \(elapsed)")
     }
 
@@ -257,7 +250,7 @@ struct ConcurrencyPerformanceTests {
 
     @Test("Mixed read/write workload performance")
     func testMixedWorkload() async throws {
-        let baseUser = try User(name: "Mixed Test", email: "mixed@test.com")
+        let baseUser = try User(firstName: "Mixed", lastName: "Test", email: "mixed@test.com")
 
         let startTime = ContinuousClock.now
 
@@ -270,12 +263,13 @@ struct ConcurrencyPerformanceTests {
                 let isWrite = i % 10 < 3 // 30% writes
                 group.addTask {
                     if isWrite {
-                        let modified = baseUser.addRole(UUID())
-                        return (true, modified.roleIDs.count == 1)
+                        // swiftlint:disable:next force_try
+                        let modified = try! baseUser.with(firstName: "Modified\(i)")
+                        return (true, modified.firstName.starts(with: "Modified"))
                     } else {
-                        _ = baseUser.name
+                        _ = baseUser.fullName
                         _ = baseUser.email
-                        _ = baseUser.roleIDs.count
+                        _ = baseUser.isActive
                         return (false, true)
                     }
                 }
@@ -304,22 +298,18 @@ struct ConcurrencyPerformanceTests {
 
     @Test("Concurrent aggregation produces correct results")
     func testConcurrentAggregation() async throws {
-        // Create 100 users with varying role counts
+        // Create 100 users
         let users = try (0..<100).map { i in
-            var user = try User(name: "User \(i)", email: "user\(i)@agg.test")
-            for _ in 0..<(i % 10) {
-                user = user.addRole(UUID())
-            }
-            return user
+            try User(firstName: "User", lastName: "\(i)", email: "user\(i)@agg.test")
         }
 
         let startTime = ContinuousClock.now
 
-        // Concurrently count total roles across all users
-        let totalRoles = await withTaskGroup(of: Int.self, returning: Int.self) { group in
+        // Concurrently count total fullName length across all users
+        let totalLength = await withTaskGroup(of: Int.self, returning: Int.self) { group in
             for user in users {
                 group.addTask {
-                    user.roleIDs.count
+                    user.fullName.count
                 }
             }
 
@@ -332,9 +322,12 @@ struct ConcurrencyPerformanceTests {
 
         let elapsed = ContinuousClock.now - startTime
 
-        // Expected: sum of 0..9 repeated 10 times = 45 * 10 = 450
-        let expectedTotal = (0..<100).reduce(0) { $0 + ($1 % 10) }
-        #expect(totalRoles == expectedTotal)
+        // Expected: "User 0" to "User 99" - calculate actual expected length
+        // "User " = 5 chars + digit length (1 or 2)
+        // 0-9: 10 users * (5 + 1) = 60
+        // 10-99: 90 users * (5 + 2) = 630
+        let expectedTotal = 10 * 6 + 90 * 7  // = 60 + 630 = 690
+        #expect(totalLength == expectedTotal)
         #expect(elapsed < .seconds(1), "Aggregation took too long: \(elapsed)")
     }
 
@@ -350,11 +343,12 @@ struct ConcurrencyPerformanceTests {
                 group.addTask {
                     var operationCount = 0
 
-                    // Create and modify user
+                    // Create and modify user (5 operations)
                     // swiftlint:disable:next force_try
-                    var user = try! User(name: "Stress \(i)", email: "stress\(i)@test.com")
-                    for _ in 0..<5 {
-                        user = user.addRole(UUID())
+                    var user = try! User(firstName: "Stress", lastName: "\(i)", email: "stress\(i)@test.com")
+                    for j in 0..<5 {
+                        // swiftlint:disable:next force_try
+                        user = try! user.with(firstName: "Stress\(j)")
                         operationCount += 1
                     }
 

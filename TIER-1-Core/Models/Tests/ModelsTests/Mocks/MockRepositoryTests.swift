@@ -29,7 +29,7 @@ struct MockUserRepositoryTests {
     @Test("save stores user and can be retrieved")
     func saveAndRetrieve() async throws {
         let mock = MockUserRepository()
-        let user = try User(name: "John Doe", email: "john@example.com")
+        let user = try User(firstName: "John", lastName: "Doe", email: "john@example.com")
 
         try await mock.save(user)
         let retrieved = try await mock.get(id: user.id)
@@ -42,7 +42,7 @@ struct MockUserRepositoryTests {
     @Test("delete removes user from storage")
     func deleteRemovesUser() async throws {
         let mock = MockUserRepository()
-        let user = try User(name: "Jane Doe", email: "jane@example.com")
+        let user = try User(firstName: "Jane", lastName: "Doe", email: "jane@example.com")
 
         try await mock.save(user)
         #expect(await mock.contains(id: user.id))
@@ -56,8 +56,8 @@ struct MockUserRepositoryTests {
     @Test("list returns all stored users")
     func listReturnsAllUsers() async throws {
         let mock = MockUserRepository()
-        let user1 = try User(name: "User One", email: "one@example.com")
-        let user2 = try User(name: "User Two", email: "two@example.com")
+        let user1 = try User(firstName: "User", lastName: "One", email: "one@example.com")
+        let user2 = try User(firstName: "User", lastName: "Two", email: "two@example.com")
 
         try await mock.save(user1)
         try await mock.save(user2)
@@ -73,8 +73,8 @@ struct MockUserRepositoryTests {
     @Test("stubbedUser overrides storage lookup")
     func stubbedUserOverridesStorage() async throws {
         let mock = MockUserRepository()
-        let storedUser = try User(name: "Stored", email: "stored@example.com")
-        let stubbedUser = try User(name: "Stubbed", email: "stubbed@example.com")
+        let storedUser = try User(firstName: "Stored", lastName: "User", email: "stored@example.com")
+        let stubbedUser = try User(firstName: "Stubbed", lastName: "User", email: "stubbed@example.com")
 
         try await mock.save(storedUser)
         await mock.setStubbedUser(stubbedUser)
@@ -94,7 +94,7 @@ struct MockUserRepositoryTests {
         }
 
         await #expect(throws: TestError.self) {
-            let user = try User(name: "Test", email: "test@example.com")
+            let user = try User(firstName: "Test", lastName: "User", email: "test@example.com")
             try await mock.save(user)
         }
     }
@@ -104,7 +104,7 @@ struct MockUserRepositoryTests {
     @Test("reset clears all state")
     func resetClearsState() async throws {
         let mock = MockUserRepository()
-        let user = try User(name: "Test", email: "test@example.com")
+        let user = try User(firstName: "Test", lastName: "User", email: "test@example.com")
 
         try await mock.save(user)
         _ = try await mock.get(id: user.id)
@@ -122,8 +122,8 @@ struct MockUserRepositoryTests {
 
     @Test("init with users preloads storage")
     func initWithUsersPreloads() async throws {
-        let user1 = try User(name: "User One", email: "one@example.com")
-        let user2 = try User(name: "User Two", email: "two@example.com")
+        let user1 = try User(firstName: "User", lastName: "One", email: "one@example.com")
+        let user2 = try User(firstName: "User", lastName: "Two", email: "two@example.com")
 
         let mock = MockUserRepository(users: [user1, user2])
 

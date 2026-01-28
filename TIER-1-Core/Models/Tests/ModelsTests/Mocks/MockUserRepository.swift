@@ -17,7 +17,7 @@ import Foundation
 /// ## Ejemplo de uso:
 /// ```swift
 /// let mock = MockUserRepository()
-/// let user = try User(name: "Test", email: "test@example.com")
+/// let user = try User(firstName: "Test", lastName: "User", email: "test@example.com")
 /// mock.stubbedUser = user
 ///
 /// let result = try await mock.get(id: user.id)
