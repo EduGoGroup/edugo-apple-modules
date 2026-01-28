@@ -32,6 +32,9 @@ let package = Package(
         .testTarget(
             name: "ModelsTests",
             dependencies: ["Models"],
+            resources: [
+                .copy("Fixtures/JSON")
+            ],
             swiftSettings: [
                 .swiftLanguageMode(.v6),
                 .enableExperimentalFeature("StrictConcurrency=complete")
