@@ -16,7 +16,7 @@ final class TestItem {
     }
 }
 
-// MARK: - Configuration Tests
+// MARK: - Configuration Tests (No shared state)
 
 @Suite("LocalPersistenceConfiguration Tests")
 struct LocalPersistenceConfigurationTests {
@@ -60,29 +60,20 @@ struct LocalPersistenceConfigurationTests {
     }
 }
 
-// MARK: - Container Provider Tests
+// MARK: - Container Provider Tests (All tests that use shared singleton)
 
 @Suite("PersistenceContainerProvider Tests", .serialized)
 struct PersistenceContainerProviderTests {
+    private let schema = Schema([TestItem.self])
+
     @Test("Shared instance is accessible")
     func testSharedInstance() async {
         let provider = PersistenceContainerProvider.shared
-        // Provider should be accessible
         _ = provider
-    }
-
-    @Test("Container is not initialized before configuration")
-    func testNotInitializedBeforeConfiguration() async {
-        // The shared instance may or may not be initialized depending on test order
-        // This test just verifies the property is accessible
-        let isInitialized = await PersistenceContainerProvider.shared.isInitialized
-        _ = isInitialized
     }
 
     @Test("Configure with inMemory storage succeeds")
     func testConfigureInMemory() async throws {
-        let schema = Schema([TestItem.self])
-
         try await PersistenceContainerProvider.shared.configure(
             with: .testing,
             schema: schema
@@ -94,14 +85,11 @@ struct PersistenceContainerProviderTests {
 
     @Test("perform executes operation after configuration")
     func testPerformOperation() async throws {
-        let schema = Schema([TestItem.self])
-
         try await PersistenceContainerProvider.shared.configure(
             with: .testing,
             schema: schema
         )
 
-        // Perform should work and return a value
         let result = try await PersistenceContainerProvider.shared.perform { _ in
             return 42
         }
@@ -111,34 +99,30 @@ struct PersistenceContainerProviderTests {
 
     @Test("Can insert and fetch items using perform")
     func testInsertAndFetch() async throws {
-        let schema = Schema([TestItem.self])
-
         try await PersistenceContainerProvider.shared.configure(
             with: .testing,
             schema: schema
         )
 
-        // Insert a test item
+        let itemName = "TestItem-\(UUID().uuidString.prefix(8))"
+
         try await PersistenceContainerProvider.shared.perform { context in
-            let testItem = TestItem(name: "Test Item")
+            let testItem = TestItem(name: itemName)
             context.insert(testItem)
             try context.save()
         }
 
-        // Fetch items in a separate perform call
         let fetchedName = try await PersistenceContainerProvider.shared.perform { context in
             let descriptor = FetchDescriptor<TestItem>()
             let items = try context.fetch(descriptor)
-            return items.first?.name
+            return items.first(where: { $0.name == itemName })?.name
         }
 
-        #expect(fetchedName == "Test Item")
+        #expect(fetchedName == itemName)
     }
 
     @Test("Reset clears the container")
-    func testReset() async throws {
-        let schema = Schema([TestItem.self])
-
+    func testResetClearsContainer() async throws {
         try await PersistenceContainerProvider.shared.configure(
             with: .testing,
             schema: schema
@@ -148,15 +132,17 @@ struct PersistenceContainerProviderTests {
 
         let isInitialized = await PersistenceContainerProvider.shared.isInitialized
         #expect(isInitialized == false)
+
+        // Reconfigure for subsequent tests
+        try await PersistenceContainerProvider.shared.configure(
+            with: .testing,
+            schema: schema
+        )
     }
-}
 
-// MARK: - Error Tests
-
-@Suite("PersistenceError Tests", .serialized)
-struct PersistenceErrorTests {
     @Test("perform throws notConfigured when not configured")
-    func testPerformThrowsWhenNotConfigured() async {
+    func testPerformThrowsWhenNotConfigured() async throws {
+        // Reset first
         await PersistenceContainerProvider.shared.reset()
 
         do {
@@ -173,5 +159,11 @@ struct PersistenceErrorTests {
         } catch {
             Issue.record("Unexpected error type: \(error)")
         }
+
+        // Reconfigure for subsequent tests
+        try await PersistenceContainerProvider.shared.configure(
+            with: .testing,
+            schema: schema
+        )
     }
 }
