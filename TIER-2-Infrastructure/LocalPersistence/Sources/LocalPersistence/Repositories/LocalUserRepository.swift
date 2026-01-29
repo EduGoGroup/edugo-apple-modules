@@ -2,6 +2,7 @@ import Foundation
 import SwiftData
 import Models
 import EduGoCommon
+import Logger
 
 /// Local repository for User entities using SwiftData
 ///
@@ -13,6 +14,11 @@ import EduGoCommon
 /// As an actor, all operations are automatically serialized, ensuring
 /// thread-safe access to the underlying SwiftData context.
 ///
+/// ## Batch Operations
+///
+/// This repository integrates `TaskGroupCoordinator` for efficient batch
+/// operations with configurable concurrency limits and error aggregation.
+///
 /// ## Usage
 ///
 /// ```swift
@@ -21,6 +27,12 @@ import EduGoCommon
 /// // Save a user
 /// let user = try User(name: "John", email: "john@example.com")
 /// try await repository.save(user)
+///
+/// // Batch save with partial error handling
+/// let result = try await repository.saveUsers(usersToCreate)
+/// if result.hasPartialSuccess {
+///     print("Some users failed to save")
+/// }
 ///
 /// // Fetch a user
 /// if let fetched = try await repository.get(id: user.id) {
@@ -34,15 +46,37 @@ import EduGoCommon
 /// try await repository.delete(id: user.id)
 /// ```
 public actor LocalUserRepository: UserRepositoryProtocol {
+    // MARK: - Constants
+
+    /// Maximum number of concurrent batch operations.
+    private static let maxConcurrency = 10
+
+    /// Maximum number of items allowed in a single batch operation.
+    private static let maxBatchSize = 100
+
+    // MARK: - Properties
+
     private let containerProvider: PersistenceContainerProvider
     private var cachedUsers: [User]?
+
+    /// Coordinator for batch operations with Void result type.
+    private let voidCoordinator: TaskGroupCoordinator<Void>
+
+    /// Coordinator for batch operations returning User.
+    private let userCoordinator: TaskGroupCoordinator<User?>
+
+    // MARK: - Initialization
 
     /// Creates a new LocalUserRepository
     ///
     /// - Parameter containerProvider: The persistence container provider (defaults to shared)
     public init(containerProvider: PersistenceContainerProvider = .shared) {
         self.containerProvider = containerProvider
+        self.voidCoordinator = TaskGroupCoordinator<Void>()
+        self.userCoordinator = TaskGroupCoordinator<User?>()
     }
+
+    // MARK: - Single-Item Operations
 
     /// Retrieves a user by ID
     ///
@@ -177,6 +211,239 @@ public actor LocalUserRepository: UserRepositoryProtocol {
             throw RepositoryError.fetchFailed(reason: "Failed to map users: \(error.localizedDescription)")
         } catch {
             throw RepositoryError.fetchFailed(reason: error.localizedDescription)
+        }
+    }
+
+    // MARK: - Batch Operations
+
+    /// Saves multiple users concurrently using TaskGroupCoordinator.
+    ///
+    /// Operations are executed in parallel with a maximum concurrency of 10
+    /// to prevent resource exhaustion. Partial errors do not stop the entire
+    /// batch operation.
+    ///
+    /// - Parameter users: Array of users to save.
+    /// - Returns: Result with successes and failures for each operation.
+    /// - Throws: `RepositoryError.saveFailed` if input validation fails.
+    ///
+    /// ## Rate Limiting
+    ///
+    /// Uses `maxConcurrency` of 10 concurrent operations to balance
+    /// throughput and resource usage.
+    ///
+    /// ## Example
+    ///
+    /// ```swift
+    /// let users = [user1, user2, user3]
+    /// let result = try await repository.saveUsers(users)
+    ///
+    /// print("Saved: \(result.successes.count)")
+    /// print("Failed: \(result.failures.count)")
+    ///
+    /// if result.hasPartialSuccess {
+    ///     // Handle partial failures
+    ///     for (index, error) in result.failures {
+    ///         print("User at index \(index) failed: \(error)")
+    ///     }
+    /// }
+    /// ```
+    public func saveUsers(_ users: [User]) async throws -> BatchOperationResult<User> {
+        // Input validation
+        guard !users.isEmpty else {
+            throw RepositoryError.saveFailed(reason: "Cannot save empty user list")
+        }
+
+        guard users.count <= Self.maxBatchSize else {
+            throw RepositoryError.saveFailed(
+                reason: "Batch size \(users.count) exceeds maximum of \(Self.maxBatchSize)"
+            )
+        }
+
+        await logBatchStart(operation: "saveUsers", count: users.count)
+
+        // Create operations for each user
+        let operations: [@Sendable () async throws -> Void] = users.map { user in
+            { [weak self] in
+                guard let self else { throw RepositoryError.saveFailed(reason: "Repository deallocated") }
+                try await self.save(user)
+            }
+        }
+
+        // Execute batch with rate limiting
+        let batchResult = await voidCoordinator.executeBatchCollecting(
+            operations,
+            options: TaskBatchOptions(
+                configuration: TaskGroupConfiguration(maxConcurrency: Self.maxConcurrency)
+            )
+        )
+
+        // Convert to BatchOperationResult
+        let successes: [(index: Int, value: User)] = batchResult.successes.map { item in
+            (item.index, users[item.index])
+        }
+
+        let failures: [(index: Int, error: String)] = batchResult.failures.map { item in
+            (item.index, item.error.description)
+        }
+
+        // Update cache if needed
+        if cachedUsers != nil {
+            for (_, user) in successes {
+                if let existingIndex = cachedUsers?.firstIndex(where: { $0.id == user.id }) {
+                    cachedUsers?[existingIndex] = user
+                } else {
+                    cachedUsers?.append(user)
+                }
+            }
+        }
+
+        let result = BatchOperationResult(successes: successes, failures: failures)
+        await logBatchComplete(operation: "saveUsers", result: result)
+
+        return result
+    }
+
+    /// Deletes multiple users concurrently using TaskGroupCoordinator.
+    ///
+    /// Operations are executed in parallel with rate limiting.
+    /// Partial errors do not stop the entire batch operation.
+    ///
+    /// - Parameter ids: Array of UUIDs of users to delete.
+    /// - Returns: Result with successfully deleted IDs and failures.
+    /// - Throws: `RepositoryError.deleteFailed` if input validation fails.
+    public func deleteUsers(ids: [UUID]) async throws -> BatchOperationResult<UUID> {
+        // Input validation
+        guard !ids.isEmpty else {
+            throw RepositoryError.deleteFailed(reason: "Cannot delete empty ID list")
+        }
+
+        guard ids.count <= Self.maxBatchSize else {
+            throw RepositoryError.deleteFailed(
+                reason: "Batch size \(ids.count) exceeds maximum of \(Self.maxBatchSize)"
+            )
+        }
+
+        await logBatchStart(operation: "deleteUsers", count: ids.count)
+
+        // Create operations for each ID
+        let operations: [@Sendable () async throws -> Void] = ids.map { id in
+            { [weak self] in
+                guard let self else { throw RepositoryError.deleteFailed(reason: "Repository deallocated") }
+                try await self.delete(id: id)
+            }
+        }
+
+        // Execute batch with rate limiting
+        let batchResult = await voidCoordinator.executeBatchCollecting(
+            operations,
+            options: TaskBatchOptions(
+                configuration: TaskGroupConfiguration(maxConcurrency: Self.maxConcurrency)
+            )
+        )
+
+        // Convert to BatchOperationResult
+        let successes: [(index: Int, value: UUID)] = batchResult.successes.map { item in
+            (item.index, ids[item.index])
+        }
+
+        let failures: [(index: Int, error: String)] = batchResult.failures.map { item in
+            (item.index, item.error.description)
+        }
+
+        // Update cache if needed
+        if cachedUsers != nil {
+            let deletedIDs = Set(successes.map { $0.value })
+            cachedUsers?.removeAll { deletedIDs.contains($0.id) }
+        }
+
+        let result = BatchOperationResult(successes: successes, failures: failures)
+        await logBatchComplete(operation: "deleteUsers", result: result)
+
+        return result
+    }
+
+    /// Gets multiple users concurrently using TaskGroupCoordinator.
+    ///
+    /// Operations are executed in parallel with rate limiting.
+    /// Users not found are reported as failures.
+    ///
+    /// - Parameter ids: Array of UUIDs of users to fetch.
+    /// - Returns: Result with found users and failures.
+    /// - Throws: `RepositoryError.fetchFailed` if input validation fails.
+    public func getUsers(ids: [UUID]) async throws -> BatchOperationResult<User> {
+        // Input validation
+        guard !ids.isEmpty else {
+            throw RepositoryError.fetchFailed(reason: "Cannot fetch empty ID list")
+        }
+
+        guard ids.count <= Self.maxBatchSize else {
+            throw RepositoryError.fetchFailed(
+                reason: "Batch size \(ids.count) exceeds maximum of \(Self.maxBatchSize)"
+            )
+        }
+
+        await logBatchStart(operation: "getUsers", count: ids.count)
+
+        // Create operations for each ID
+        let operations: [@Sendable () async throws -> User?] = ids.map { id in
+            { [weak self] in
+                guard let self else { throw RepositoryError.fetchFailed(reason: "Repository deallocated") }
+                return try await self.get(id: id)
+            }
+        }
+
+        // Execute batch with rate limiting
+        let batchResult = await userCoordinator.executeBatchCollecting(
+            operations,
+            options: TaskBatchOptions(
+                configuration: TaskGroupConfiguration(maxConcurrency: Self.maxConcurrency)
+            )
+        )
+
+        // Convert to BatchOperationResult, treating nil as "not found"
+        var successes: [(index: Int, value: User)] = []
+        var failures: [(index: Int, error: String)] = batchResult.failures.map { item in
+            (item.index, item.error.description)
+        }
+
+        for item in batchResult.successes {
+            if let user = item.value {
+                successes.append((item.index, user))
+            } else {
+                failures.append((item.index, "User not found with id: \(ids[item.index])"))
+            }
+        }
+
+        let result = BatchOperationResult(successes: successes, failures: failures)
+        await logBatchComplete(operation: "getUsers", result: result)
+
+        return result
+    }
+
+    // MARK: - Private Logging Helpers
+
+    private func logBatchStart(operation: String, count: Int) async {
+        await Logger.shared.info(
+            "[LocalUserRepository] Batch \(operation) started - Items: \(count), Max concurrency: \(Self.maxConcurrency)"
+        )
+    }
+
+    private func logBatchComplete<T>(operation: String, result: BatchOperationResult<T>) async {
+        let message = "[LocalUserRepository] Batch \(operation) completed - Total: \(result.totalCount), Successes: \(result.successes.count), Failures: \(result.failures.count), Success rate: \(String(format: "%.1f%%", result.successRate * 100))"
+
+        if result.allSucceeded {
+            await Logger.shared.info(message)
+        } else if result.allFailed {
+            await Logger.shared.error(message)
+        } else {
+            await Logger.shared.info(message)
+        }
+
+        // Log individual failures at debug level
+        if !result.failures.isEmpty {
+            for (index, error) in result.failures {
+                await Logger.shared.debug("[LocalUserRepository] \(operation) failed at index \(index): \(error)")
+            }
         }
     }
 }
