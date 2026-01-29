@@ -1,4 +1,5 @@
 import Foundation
+import Utilities
 #if canImport(os)
 import os
 #endif
@@ -46,11 +47,8 @@ public actor NetworkClient: NetworkClientProtocol {
     /// Sesión URL para realizar requests.
     private let urlSession: URLSession
 
-    /// Decoder JSON configurado para la aplicación.
-    private let jsonDecoder: JSONDecoder
-
-    /// Encoder JSON configurado para la aplicación.
-    private let jsonEncoder: JSONEncoder
+    /// Serializer thread-safe para encoding/decoding JSON.
+    private let serializer: CodableSerializer
 
     /// Headers globales aplicados a todas las requests.
     private var globalHeaders: [String: String] = [
@@ -88,17 +86,8 @@ public actor NetworkClient: NetworkClientProtocol {
             "User-Agent": "EduGo-iOS/1.0"
         ]
 
-        let decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
-        decoder.dateDecodingStrategy = .iso8601
-
-        let encoder = JSONEncoder()
-        encoder.keyEncodingStrategy = .convertToSnakeCase
-        encoder.dateEncodingStrategy = .iso8601
-
         self.urlSession = URLSession(configuration: configuration)
-        self.jsonDecoder = decoder
-        self.jsonEncoder = encoder
+        self.serializer = CodableSerializer.shared
         self.interceptorChain = InterceptorChain([])
         self.maxRetryTimeout = 120
     }
@@ -117,14 +106,6 @@ public actor NetworkClient: NetworkClientProtocol {
             "User-Agent": "EduGo-iOS/1.0"
         ]
 
-        let decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
-        decoder.dateDecodingStrategy = .iso8601
-
-        let encoder = JSONEncoder()
-        encoder.keyEncodingStrategy = .convertToSnakeCase
-        encoder.dateEncodingStrategy = .iso8601
-
         var configuredInterceptors = interceptors
         if let retryPolicy,
            !configuredInterceptors.contains(where: { $0 is RetryInterceptor }) {
@@ -134,19 +115,19 @@ public actor NetworkClient: NetworkClientProtocol {
         self.interceptorChain = InterceptorChain(configuredInterceptors)
         self.maxRetryTimeout = maxRetryTimeout
         self.urlSession = URLSession(configuration: configuration)
-        self.jsonDecoder = decoder
-        self.jsonEncoder = encoder
+        self.serializer = CodableSerializer.shared
     }
 
     /// Inicializa el cliente con una configuración personalizada.
     /// - Parameters:
     ///   - configuration: Configuración de URLSession
-    ///   - decoder: Decoder JSON personalizado
-    ///   - encoder: Encoder JSON personalizado
+    ///   - serializer: Serializer JSON personalizado (opcional, usa shared por defecto)
+    ///   - interceptors: Lista de interceptors
+    ///   - maxRetryTimeout: Timeout máximo para reintentos
+    ///   - retryPolicy: Política de reintentos
     public init(
         configuration: URLSessionConfiguration,
-        decoder: JSONDecoder = JSONDecoder(),
-        encoder: JSONEncoder = JSONEncoder(),
+        serializer: CodableSerializer? = nil,
         interceptors: [any RequestInterceptor] = [],
         maxRetryTimeout: TimeInterval = 120,
         retryPolicy: (any RetryPolicy)? = nil
@@ -160,8 +141,7 @@ public actor NetworkClient: NetworkClientProtocol {
         self.interceptorChain = InterceptorChain(configuredInterceptors)
         self.maxRetryTimeout = maxRetryTimeout
         self.urlSession = URLSession(configuration: configuration)
-        self.jsonDecoder = decoder
-        self.jsonEncoder = encoder
+        self.serializer = serializer ?? CodableSerializer.shared
     }
 
     // MARK: - Header Management
@@ -209,14 +189,13 @@ public actor NetworkClient: NetworkClientProtocol {
         }
 
         do {
-            let decoded = try jsonDecoder.decode(T.self, from: data)
+            let decoded: T = try await serializer.decode(T.self, from: data)
             return decoded
-        } catch let decodingError as DecodingError {
-            let errorDescription = describeDecodingError(decodingError)
-            logError("Decoding error for \(T.self): \(errorDescription)")
+        } catch let serializationError as SerializationError {
+            logError("Decoding error for \(T.self): \(serializationError.localizedDescription)")
             throw NetworkError.decodingError(
                 type: String(describing: T.self),
-                underlyingError: errorDescription
+                underlyingError: serializationError.localizedDescription
             )
         } catch {
             throw NetworkError.decodingError(
@@ -266,12 +245,11 @@ public actor NetworkClient: NetworkClientProtocol {
         )
 
         do {
-            return try jsonDecoder.decode(T.self, from: responseData)
-        } catch let decodingError as DecodingError {
-            let errorDescription = describeDecodingError(decodingError)
+            return try await serializer.decode(T.self, from: responseData)
+        } catch let serializationError as SerializationError {
             throw NetworkError.decodingError(
                 type: String(describing: T.self),
-                underlyingError: errorDescription
+                underlyingError: serializationError.localizedDescription
             )
         } catch {
             throw NetworkError.decodingError(
@@ -300,12 +278,11 @@ public actor NetworkClient: NetworkClientProtocol {
         )
 
         do {
-            return try jsonDecoder.decode(T.self, from: responseData)
-        } catch let decodingError as DecodingError {
-            let errorDescription = describeDecodingError(decodingError)
+            return try await serializer.decode(T.self, from: responseData)
+        } catch let serializationError as SerializationError {
             throw NetworkError.decodingError(
                 type: String(describing: T.self),
-                underlyingError: errorDescription
+                underlyingError: serializationError.localizedDescription
             )
         } catch {
             throw NetworkError.decodingError(
@@ -491,12 +468,16 @@ public actor NetworkClient: NetworkClientProtocol {
     /// Extrae el mensaje de error del body de la respuesta.
     private func extractErrorMessage(from data: Data) -> String? {
         // Intentar decodificar como JSON con campo "message" o "error"
+        // Usa un decoder simple ya que los mensajes de error no requieren estrategias especiales
         struct ErrorResponse: Decodable {
             let message: String?
             let error: String?
         }
 
-        guard let errorResponse = try? jsonDecoder.decode(ErrorResponse.self, from: data) else {
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+
+        guard let errorResponse = try? decoder.decode(ErrorResponse.self, from: data) else {
             return nil
         }
 
