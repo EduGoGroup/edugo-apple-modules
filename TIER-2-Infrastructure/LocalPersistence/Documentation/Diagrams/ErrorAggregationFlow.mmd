@@ -1,0 +1,61 @@
+%% Error Aggregation Flow Diagram
+%% Render with: https://mermaid.live or any Mermaid-compatible viewer
+
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4a90d9', 'primaryTextColor': '#fff', 'primaryBorderColor': '#2e6da4', 'lineColor': '#5c6370', 'secondaryColor': '#61afef', 'tertiaryColor': '#98c379'}}}%%
+
+---
+title: Error Aggregation in Batch Operations
+---
+
+flowchart TB
+    subgraph Input["Input Operations"]
+        O1["Op 1 ✓"]
+        O2["Op 2 ✗"]
+        O3["Op 3 ✓"]
+        O4["Op 4 ✗"]
+        O5["Op 5 ✓"]
+    end
+
+    subgraph Collection["Result Collection"]
+        direction LR
+        S["Successes<br/>[(0, R1), (2, R3), (4, R5)]"]
+        F["Failures<br/>[(1, E2), (3, E4)]"]
+    end
+
+    subgraph Analysis["Result Analysis"]
+        A{All Succeeded?}
+        B{All Failed?}
+        C{Has Partial?}
+    end
+
+    subgraph Output["Output Decision"]
+        D["Return [R1, R3, R5]"]
+        E["Throw allFailed([E2, E4])"]
+        G{throwOnAnyFailure?}
+        H["Throw partialFailure(3, [E2, E4])"]
+        I["Return BatchResult"]
+    end
+
+    O1 & O2 & O3 & O4 & O5 --> Collection
+    S --> A
+    F --> A
+
+    A -->|Yes| D
+    A -->|No| B
+    B -->|Yes| E
+    B -->|No| C
+    C -->|Yes| G
+    G -->|Yes| H
+    G -->|No| I
+
+    style O1 fill:#98c379,color:#fff
+    style O3 fill:#98c379,color:#fff
+    style O5 fill:#98c379,color:#fff
+    style O2 fill:#e06c75,color:#fff
+    style O4 fill:#e06c75,color:#fff
+    style S fill:#98c379,color:#fff
+    style F fill:#e06c75,color:#fff
+    style D fill:#98c379,color:#fff
+    style E fill:#e06c75,color:#fff
+    style H fill:#e5c07b,color:#000
+    style I fill:#61afef,color:#fff

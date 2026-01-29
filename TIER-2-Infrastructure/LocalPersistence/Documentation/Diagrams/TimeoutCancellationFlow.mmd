@@ -1,0 +1,47 @@
+%% Timeout and Cancellation Flow Diagram
+%% Render with: https://mermaid.live or any Mermaid-compatible viewer
+
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4a90d9', 'primaryTextColor': '#fff', 'primaryBorderColor': '#2e6da4', 'lineColor': '#5c6370', 'secondaryColor': '#61afef', 'tertiaryColor': '#98c379'}}}%%
+
+---
+title: Timeout and Cancellation Handling
+---
+
+sequenceDiagram
+    participant Client
+    participant Handler as CancellationHandler
+    participant TaskGroup
+    participant TimeoutTask as Timeout Task
+    participant OpTask as Operation Task
+
+    Client->>Handler: withTimeout(duration, operation)
+    Handler->>Handler: Check Task.isCancelled
+
+    alt Already Cancelled
+        Handler-->>Client: throw parentTaskCancelled
+    else Not Cancelled
+        Handler->>TaskGroup: withThrowingTaskGroup
+
+        par Race Condition
+            TaskGroup->>TimeoutTask: Sleep(duration)
+            TaskGroup->>OpTask: Execute operation
+        end
+
+        alt Operation Completes First
+            OpTask-->>TaskGroup: Result
+            TaskGroup->>TaskGroup: cancelAll()
+            TaskGroup-->>Handler: Result
+            Handler-->>Client: Return result
+        else Timeout Expires First
+            TimeoutTask-->>TaskGroup: Timeout signal
+            TaskGroup->>TaskGroup: cancelAll()
+            TaskGroup-->>Handler: Timeout
+            Handler->>Handler: Call onCancellation cleanup
+            Handler-->>Client: throw timeout(duration)
+        else External Cancellation
+            Note over Client,OpTask: Task.cancel() called
+            TaskGroup->>TaskGroup: cancelAll()
+            Handler->>Handler: Call onCancellation cleanup
+            Handler-->>Client: throw parentTaskCancelled
+        end
+    end

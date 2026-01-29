@@ -1,0 +1,59 @@
+%% Batch Operation Flow Diagram
+%% Render with: https://mermaid.live or any Mermaid-compatible viewer
+
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4a90d9', 'primaryTextColor': '#fff', 'primaryBorderColor': '#2e6da4', 'lineColor': '#5c6370', 'secondaryColor': '#61afef', 'tertiaryColor': '#98c379'}}}%%
+
+---
+title: TaskGroupCoordinator - Batch Operation Flow
+---
+
+flowchart TB
+    subgraph Client["Client Code"]
+        A[Start Batch Operation]
+        Z[Receive Results]
+    end
+
+    subgraph Coordinator["TaskGroupCoordinator<T>"]
+        B{Validate Operations}
+        C[Check Cancellation]
+        D[Create TaskGroup]
+
+        subgraph Execution["Parallel Execution"]
+            E1[Operation 1]
+            E2[Operation 2]
+            E3[Operation N]
+        end
+
+        F[Collect Results]
+        G{All Succeeded?}
+        H[Return Results Array]
+        I{Has Partial Success?}
+        J[Return BatchResult]
+        K[Throw allFailed]
+    end
+
+    A --> B
+    B -->|Empty| L[Throw emptyBatch]
+    B -->|Valid| C
+    C -->|Cancelled| M[Throw cancelled]
+    C -->|OK| D
+    D --> E1 & E2 & E3
+    E1 & E2 & E3 --> F
+    F --> G
+    G -->|Yes| H
+    G -->|No| I
+    I -->|Yes| J
+    I -->|No| K
+    H --> Z
+    J --> Z
+    K --> Z
+    L --> Z
+    M --> Z
+
+    style A fill:#4a90d9,color:#fff
+    style Z fill:#98c379,color:#fff
+    style L fill:#e06c75,color:#fff
+    style M fill:#e06c75,color:#fff
+    style K fill:#e06c75,color:#fff
+    style H fill:#98c379,color:#fff
+    style J fill:#e5c07b,color:#000
