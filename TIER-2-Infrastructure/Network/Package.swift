@@ -36,6 +36,9 @@ let package = Package(
         .testTarget(
             name: "NetworkTests",
             dependencies: ["Network"],
+            resources: [
+                .copy("Fixtures")
+            ],
             swiftSettings: [
                 .swiftLanguageMode(.v6),
                 .enableExperimentalFeature("StrictConcurrency=complete")
