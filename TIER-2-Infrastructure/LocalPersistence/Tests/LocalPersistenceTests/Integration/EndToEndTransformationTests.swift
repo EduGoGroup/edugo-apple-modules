@@ -40,8 +40,6 @@ struct EndToEndTransformationTests {
     @Test("User: JSON → DTO → Domain → SwiftData → Domain → DTO → JSON roundtrip")
     func testUserFullRoundtrip() async throws {
         let repos = try await setupRepositories()
-        let decoder = IntegrationTestFixtures.decoder
-        let encoder = IntegrationTestFixtures.encoder
 
         // Generate original JSON
         let originalJSONs = IntegrationTestFixtures.generateUserJSONBatch(count: 5)
@@ -49,7 +47,7 @@ struct EndToEndTransformationTests {
         for originalJSON in originalJSONs {
             // JSON → DTO
             let jsonData = Data(originalJSON.utf8)
-            let dto = try decoder.decode(UserDTO.self, from: jsonData)
+            let dto = try await IntegrationTestFixtures.decode(UserDTO.self, from: jsonData)
 
             // DTO → Domain
             let domain = try dto.toDomain()
@@ -65,8 +63,8 @@ struct EndToEndTransformationTests {
             let restoredDTO = restored!.toDTO()
 
             // DTO → JSON
-            let restoredJSONData = try encoder.encode(restoredDTO)
-            let restoredDTO2 = try decoder.decode(UserDTO.self, from: restoredJSONData)
+            let restoredJSONData = try await IntegrationTestFixtures.encode(restoredDTO)
+            let restoredDTO2 = try await IntegrationTestFixtures.decode(UserDTO.self, from: restoredJSONData)
 
             // Verify data integrity
             #expect(restoredDTO2.id == dto.id)
@@ -112,14 +110,12 @@ struct EndToEndTransformationTests {
     @Test("School: JSON → DTO → Domain → SwiftData → Domain → DTO → JSON roundtrip")
     func testSchoolFullRoundtrip() async throws {
         let repos = try await setupRepositories()
-        let decoder = IntegrationTestFixtures.decoder
-        let encoder = IntegrationTestFixtures.encoder
 
         let originalJSONs = IntegrationTestFixtures.generateSchoolJSONBatch(count: 5)
 
         for originalJSON in originalJSONs {
             let jsonData = Data(originalJSON.utf8)
-            let dto = try decoder.decode(SchoolDTO.self, from: jsonData)
+            let dto = try await IntegrationTestFixtures.decode(SchoolDTO.self, from: jsonData)
             let domain = try dto.toDomain()
 
             try await repos.schoolRepo.save(domain)
@@ -128,8 +124,8 @@ struct EndToEndTransformationTests {
             #expect(restored != nil)
 
             let restoredDTO = restored!.toDTO()
-            let restoredJSONData = try encoder.encode(restoredDTO)
-            let restoredDTO2 = try decoder.decode(SchoolDTO.self, from: restoredJSONData)
+            let restoredJSONData = try await IntegrationTestFixtures.encode(restoredDTO)
+            let restoredDTO2 = try await IntegrationTestFixtures.decode(SchoolDTO.self, from: restoredJSONData)
 
             #expect(restoredDTO2.id == dto.id)
             #expect(restoredDTO2.name == dto.name)
@@ -174,14 +170,12 @@ struct EndToEndTransformationTests {
     @Test("Membership: JSON → DTO → Domain → SwiftData → Domain → DTO → JSON roundtrip")
     func testMembershipFullRoundtrip() async throws {
         let repos = try await setupRepositories()
-        let decoder = IntegrationTestFixtures.decoder
-        let encoder = IntegrationTestFixtures.encoder
 
         let originalJSONs = IntegrationTestFixtures.generateMembershipJSONBatch(count: 5)
 
         for originalJSON in originalJSONs {
             let jsonData = Data(originalJSON.utf8)
-            let dto = try decoder.decode(MembershipDTO.self, from: jsonData)
+            let dto = try await IntegrationTestFixtures.decode(MembershipDTO.self, from: jsonData)
             let domain = try dto.toDomain()
 
             try await repos.membershipRepo.save(domain)
@@ -190,8 +184,8 @@ struct EndToEndTransformationTests {
             #expect(restored != nil)
 
             let restoredDTO = restored!.toDTO()
-            let restoredJSONData = try encoder.encode(restoredDTO)
-            let restoredDTO2 = try decoder.decode(MembershipDTO.self, from: restoredJSONData)
+            let restoredJSONData = try await IntegrationTestFixtures.encode(restoredDTO)
+            let restoredDTO2 = try await IntegrationTestFixtures.decode(MembershipDTO.self, from: restoredJSONData)
 
             #expect(restoredDTO2.id == dto.id)
             #expect(restoredDTO2.userID == dto.userID)
@@ -227,15 +221,13 @@ struct EndToEndTransformationTests {
     @Test("Material: JSON → DTO → Domain → SwiftData → Domain → DTO → JSON roundtrip")
     func testMaterialFullRoundtrip() async throws {
         let repos = try await setupRepositories()
-        let decoder = IntegrationTestFixtures.decoder
-        let encoder = IntegrationTestFixtures.encoder
 
         let schoolID = UUID()
         let originalJSONs = IntegrationTestFixtures.generateMaterialJSONBatch(count: 5, schoolID: schoolID)
 
         for originalJSON in originalJSONs {
             let jsonData = Data(originalJSON.utf8)
-            let dto = try decoder.decode(MaterialDTO.self, from: jsonData)
+            let dto = try await IntegrationTestFixtures.decode(MaterialDTO.self, from: jsonData)
             let domain = try dto.toDomain()
 
             try await repos.materialRepo.save(domain)
@@ -244,8 +236,8 @@ struct EndToEndTransformationTests {
             #expect(restored != nil)
 
             let restoredDTO = restored!.toDTO()
-            let restoredJSONData = try encoder.encode(restoredDTO)
-            let restoredDTO2 = try decoder.decode(MaterialDTO.self, from: restoredJSONData)
+            let restoredJSONData = try await IntegrationTestFixtures.encode(restoredDTO)
+            let restoredDTO2 = try await IntegrationTestFixtures.decode(MaterialDTO.self, from: restoredJSONData)
 
             #expect(restoredDTO2.id == dto.id)
             #expect(restoredDTO2.title == dto.title)
@@ -282,15 +274,13 @@ struct EndToEndTransformationTests {
     @Test("AcademicUnit: JSON → DTO → Domain → SwiftData → Domain → DTO → JSON roundtrip")
     func testAcademicUnitFullRoundtrip() async throws {
         let repos = try await setupRepositories()
-        let decoder = IntegrationTestFixtures.decoder
-        let encoder = IntegrationTestFixtures.encoder
 
         let schoolID = UUID()
         let originalJSONs = IntegrationTestFixtures.generateAcademicUnitJSONBatch(count: 5, schoolID: schoolID)
 
         for originalJSON in originalJSONs {
             let jsonData = Data(originalJSON.utf8)
-            let dto = try decoder.decode(AcademicUnitDTO.self, from: jsonData)
+            let dto = try await IntegrationTestFixtures.decode(AcademicUnitDTO.self, from: jsonData)
             let domain = try dto.toDomain()
 
             try await repos.unitRepo.save(domain)
@@ -299,8 +289,8 @@ struct EndToEndTransformationTests {
             #expect(restored != nil)
 
             let restoredDTO = restored!.toDTO()
-            let restoredJSONData = try encoder.encode(restoredDTO)
-            let restoredDTO2 = try decoder.decode(AcademicUnitDTO.self, from: restoredJSONData)
+            let restoredJSONData = try await IntegrationTestFixtures.encode(restoredDTO)
+            let restoredDTO2 = try await IntegrationTestFixtures.decode(AcademicUnitDTO.self, from: restoredJSONData)
 
             #expect(restoredDTO2.id == dto.id)
             #expect(restoredDTO2.displayName == dto.displayName)
@@ -394,13 +384,12 @@ struct EndToEndTransformationTests {
 
     @Test("Invalid JSON produces decoding errors")
     func testInvalidJSONDecodingErrors() async throws {
-        let decoder = IntegrationTestFixtures.decoder
         let invalidJSONs = IntegrationTestFixtures.generateInvalidUserJSON()
 
         for invalidJSON in invalidJSONs {
             let jsonData = Data(invalidJSON.utf8)
             do {
-                _ = try decoder.decode(UserDTO.self, from: jsonData)
+                _ = try await IntegrationTestFixtures.decode(UserDTO.self, from: jsonData)
                 Issue.record("Expected decoding error for invalid JSON")
             } catch {
                 // Expected: decoding should fail
@@ -410,7 +399,6 @@ struct EndToEndTransformationTests {
 
     @Test("Invalid enum values produce domain errors")
     func testInvalidEnumValueErrors() async throws {
-        let decoder = IntegrationTestFixtures.decoder
         let invalidJSONs = IntegrationTestFixtures.generateInvalidEnumJSON()
 
         for invalidJSON in invalidJSONs {
@@ -418,15 +406,15 @@ struct EndToEndTransformationTests {
             // DTOs decode strings for enums, validation happens in toDomain()
             do {
                 if invalidJSON.contains("\"role\"") {
-                    let dto = try decoder.decode(MembershipDTO.self, from: jsonData)
+                    let dto = try await IntegrationTestFixtures.decode(MembershipDTO.self, from: jsonData)
                     _ = try dto.toDomain() // This should throw for invalid role
                     Issue.record("Expected domain error for invalid role")
                 } else if invalidJSON.contains("\"status\"") {
-                    let dto = try decoder.decode(MaterialDTO.self, from: jsonData)
+                    let dto = try await IntegrationTestFixtures.decode(MaterialDTO.self, from: jsonData)
                     _ = try dto.toDomain() // This should throw for invalid status
                     Issue.record("Expected domain error for invalid status")
                 } else if invalidJSON.contains("\"type\"") {
-                    let dto = try decoder.decode(AcademicUnitDTO.self, from: jsonData)
+                    let dto = try await IntegrationTestFixtures.decode(AcademicUnitDTO.self, from: jsonData)
                     _ = try dto.toDomain() // This should throw for invalid type
                     Issue.record("Expected domain error for invalid type")
                 }
@@ -441,8 +429,6 @@ struct EndToEndTransformationTests {
     @Test("Timestamps maintain precision through transformation chain")
     func testTimestampPrecision() async throws {
         let repos = try await setupRepositories()
-        let decoder = IntegrationTestFixtures.decoder
-        let encoder = IntegrationTestFixtures.encoder
 
         // Create a timestamp with specific precision
         let specificDate = Date(timeIntervalSince1970: 1704067200.123)
@@ -466,7 +452,7 @@ struct EndToEndTransformationTests {
 
         // Note: Standard ISO8601DateFormatter may lose fractional seconds
         // This test verifies the transformation chain handles dates consistently
-        let dto = try decoder.decode(UserDTO.self, from: jsonData)
+        let dto = try await IntegrationTestFixtures.decode(UserDTO.self, from: jsonData)
         let domain = try dto.toDomain()
 
         try await repos.userRepo.save(domain)
@@ -475,7 +461,7 @@ struct EndToEndTransformationTests {
         #expect(restored != nil)
 
         let restoredDTO = restored!.toDTO()
-        _ = try encoder.encode(restoredDTO)
+        _ = try await IntegrationTestFixtures.encode(restoredDTO)
 
         // Verify dates are consistent (within 1 second tolerance for precision loss)
         let timeDifference = abs(restored!.createdAt.timeIntervalSince(dto.createdAt))

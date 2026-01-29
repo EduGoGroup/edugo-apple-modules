@@ -18,7 +18,8 @@ let package = Package(
     dependencies: [
         .package(path: "../../TIER-0-Foundation/EduGoCommon"),
         .package(path: "../../TIER-1-Core/Logger"),
-        .package(path: "../../TIER-1-Core/Models")
+        .package(path: "../../TIER-1-Core/Models"),
+        .package(path: "../../TIER-1-Core/Utilities")
     ],
     targets: [
         .target(
@@ -35,7 +36,10 @@ let package = Package(
         ),
         .testTarget(
             name: "LocalPersistenceTests",
-            dependencies: ["LocalPersistence"],
+            dependencies: [
+                "LocalPersistence",
+                .product(name: "Utilities", package: "Utilities")
+            ],
             swiftSettings: [
                 .swiftLanguageMode(.v6),
                 .enableExperimentalFeature("StrictConcurrency=complete")

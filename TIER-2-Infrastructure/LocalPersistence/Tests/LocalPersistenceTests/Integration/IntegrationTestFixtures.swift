@@ -1,5 +1,6 @@
 import Foundation
 import Models
+import Utilities
 
 /// Fixtures for integration tests supporting complete transformation chains.
 ///
@@ -7,23 +8,31 @@ import Models
 /// Used for end-to-end transformation tests: JSON → DTO → Domain → SwiftData → Domain → DTO → JSON.
 enum IntegrationTestFixtures {
 
-    // MARK: - JSON Decoder/Encoder Configuration
+    // MARK: - CodableSerializer Access
 
-    /// Configured decoder for API responses (ISO8601 dates).
-    /// Note: DTOs use CodingKeys for snake_case mapping, so no keyDecodingStrategy needed.
-    static var decoder: JSONDecoder {
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        return decoder
+    /// Thread-safe serializer for encoding/decoding DTOs.
+    /// Uses CodableSerializer.dtoSerializer with ISO8601 dates.
+    /// DTOs have explicit CodingKeys for snake_case, so no key conversion needed.
+    static var serializer: CodableSerializer {
+        CodableSerializer.dtoSerializer
     }
 
-    /// Configured encoder for API requests (ISO8601 dates).
-    /// Note: DTOs use CodingKeys for snake_case mapping, so no keyEncodingStrategy needed.
-    static var encoder: JSONEncoder {
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
-        encoder.outputFormatting = [.sortedKeys]
-        return encoder
+    /// Decodes a DTO from JSON data using the shared CodableSerializer.
+    /// - Parameters:
+    ///   - type: The type to decode.
+    ///   - data: The JSON data.
+    /// - Returns: The decoded value.
+    static func decode<T: Decodable & Sendable>(_ type: T.Type, from data: Data) async throws -> T {
+        try await serializer.decode(type, from: data)
+    }
+
+    /// Encodes a value to JSON data using the shared CodableSerializer.
+    /// - Parameters:
+    ///   - value: The value to encode.
+    ///   - prettyPrinted: Whether to format the output.
+    /// - Returns: The encoded JSON data.
+    static func encode<T: Encodable & Sendable>(_ value: T, prettyPrinted: Bool = false) async throws -> Data {
+        try await serializer.encode(value, prettyPrinted: prettyPrinted)
     }
 
     // MARK: - User Generators

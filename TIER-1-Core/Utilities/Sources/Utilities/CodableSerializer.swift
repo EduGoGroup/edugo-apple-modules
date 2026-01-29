@@ -38,8 +38,13 @@ public actor CodableSerializer: Sendable {
 
     // MARK: - Singleton
 
-    /// Shared instance with default configuration.
+    /// Shared instance with default configuration (snake_case key conversion).
+    /// Use for types WITHOUT explicit CodingKeys.
     public static let shared = CodableSerializer()
+
+    /// Shared instance for DTOs with explicit CodingKeys.
+    /// Uses ISO8601 dates but NO key conversion (DTOs handle snake_case themselves).
+    public static let dtoSerializer = CodableSerializer(configuration: .dtoCompatible)
 
     // MARK: - Private Properties
 
@@ -262,6 +267,7 @@ public struct SerializerConfiguration: Sendable {
     public let outputFormatting: JSONEncoder.OutputFormatting?
 
     /// Default configuration with ISO8601 dates and snake_case keys.
+    /// Use this for types WITHOUT explicit CodingKeys.
     public static let `default` = SerializerConfiguration(
         dateEncodingStrategy: .iso8601,
         keyEncodingStrategy: .convertToSnakeCase,
@@ -277,6 +283,16 @@ public struct SerializerConfiguration: Sendable {
         dateDecodingStrategy: .iso8601,
         keyDecodingStrategy: .convertFromSnakeCase,
         outputFormatting: [.prettyPrinted, .sortedKeys]
+    )
+
+    /// Configuration for DTOs that have explicit CodingKeys for snake_case mapping.
+    /// Uses ISO8601 dates but NO key conversion (DTOs handle it themselves).
+    public static let dtoCompatible = SerializerConfiguration(
+        dateEncodingStrategy: .iso8601,
+        keyEncodingStrategy: .useDefaultKeys,
+        dateDecodingStrategy: .iso8601,
+        keyDecodingStrategy: .useDefaultKeys,
+        outputFormatting: nil
     )
 
     /// Creates a custom configuration.

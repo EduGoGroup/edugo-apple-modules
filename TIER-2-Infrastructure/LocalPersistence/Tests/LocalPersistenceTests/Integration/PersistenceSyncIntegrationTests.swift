@@ -42,7 +42,6 @@ struct PersistenceSyncIntegrationTests {
     @Test("Simulated API fetch saves users to local persistence")
     func testSimulatedUserFetchToLocal() async throws {
         let repos = try await setupRepositories()
-        let decoder = IntegrationTestFixtures.decoder
 
         // Simulate API response (batch of JSON)
         let apiResponseJSONs = IntegrationTestFixtures.generateUserJSONBatch(count: 50)
@@ -50,7 +49,7 @@ struct PersistenceSyncIntegrationTests {
         // Parse and save to local persistence
         var savedIDs: [UUID] = []
         for json in apiResponseJSONs {
-            let dto = try decoder.decode(UserDTO.self, from: Data(json.utf8))
+            let dto = try await IntegrationTestFixtures.decode(UserDTO.self, from: Data(json.utf8))
             let domain = try dto.toDomain()
             try await repos.userRepo.save(domain)
             savedIDs.append(domain.id)
@@ -69,13 +68,12 @@ struct PersistenceSyncIntegrationTests {
     @Test("Simulated API fetch saves schools with metadata to local persistence")
     func testSimulatedSchoolFetchToLocal() async throws {
         let repos = try await setupRepositories()
-        let decoder = IntegrationTestFixtures.decoder
 
         let apiResponseJSONs = IntegrationTestFixtures.generateSchoolJSONBatch(count: 25)
 
         var savedSchools: [School] = []
         for json in apiResponseJSONs {
-            let dto = try decoder.decode(SchoolDTO.self, from: Data(json.utf8))
+            let dto = try await IntegrationTestFixtures.decode(SchoolDTO.self, from: Data(json.utf8))
             let domain = try dto.toDomain()
             try await repos.schoolRepo.save(domain)
             savedSchools.append(domain)
@@ -357,7 +355,6 @@ struct PersistenceSyncIntegrationTests {
     @Test("Batch sync of 200 users completes successfully")
     func testBatchUserSync() async throws {
         let repos = try await setupRepositories()
-        let decoder = IntegrationTestFixtures.decoder
 
         let batchSize = 200
         let jsonBatch = IntegrationTestFixtures.generateUserJSONBatch(count: batchSize)
@@ -365,7 +362,7 @@ struct PersistenceSyncIntegrationTests {
         let startTime = ContinuousClock.now
 
         for json in jsonBatch {
-            let dto = try decoder.decode(UserDTO.self, from: Data(json.utf8))
+            let dto = try await IntegrationTestFixtures.decode(UserDTO.self, from: Data(json.utf8))
             let domain = try dto.toDomain()
             try await repos.userRepo.save(domain)
         }
@@ -566,7 +563,6 @@ struct PersistenceSyncIntegrationTests {
     @Test("Sync handles partial failures gracefully")
     func testSyncPartialFailures() async throws {
         let repos = try await setupRepositories()
-        let decoder = IntegrationTestFixtures.decoder
 
         // Mix of valid and potentially invalid data
         let validJSONs = IntegrationTestFixtures.generateUserJSONBatch(count: 10)
@@ -578,7 +574,7 @@ struct PersistenceSyncIntegrationTests {
         // Try to sync all
         for json in validJSONs + invalidJSONs {
             do {
-                let dto = try decoder.decode(UserDTO.self, from: Data(json.utf8))
+                let dto = try await IntegrationTestFixtures.decode(UserDTO.self, from: Data(json.utf8))
                 let domain = try dto.toDomain()
                 try await repos.userRepo.save(domain)
                 successCount += 1
