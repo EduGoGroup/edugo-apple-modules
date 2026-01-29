@@ -326,7 +326,8 @@ public actor CancellationHandler {
 // MARK: - Internal Types
 
 /// Resultado interno para race entre timeout y operación.
-private enum TimeoutResult<T: Sendable>: Sendable {
+/// Usado tanto por CancellationHandler como por las funciones globales de timeout.
+enum TimeoutResult<T: Sendable>: Sendable {
     case timeout
     case result(T)
 }
@@ -358,7 +359,7 @@ public func withTimeout<T: Sendable>(
     // Verificar cancelación antes de empezar
     try Task.checkCancellation()
 
-    return try await withThrowingTaskGroup(of: TimeoutResultGlobal<T>.self) { group in
+    return try await withThrowingTaskGroup(of: TimeoutResult<T>.self) { group in
         // Task de timeout
         group.addTask {
             try await Task.sleep(for: timeout)
@@ -410,12 +411,6 @@ public func withTimeout<T: Sendable>(
         }
         throw error
     }
-}
-
-/// Resultado interno para función global de timeout.
-private enum TimeoutResultGlobal<T: Sendable>: Sendable {
-    case timeout
-    case result(T)
 }
 
 // MARK: - Task Extension
