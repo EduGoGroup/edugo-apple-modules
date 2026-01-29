@@ -52,8 +52,8 @@ public actor AuthenticationInterceptor: RequestInterceptor {
     /// URLs que no requieren autenticación (e.g., login, registro).
     private let excludedPaths: Set<String>
 
-    /// Flag para evitar refresh loops.
-    private var isRefreshing: Bool = false
+    /// Tarea compartida para refresh concurrente.
+    private var refreshTask: Task<String?, Never>?
 
     /// Inicializador con configuración completa.
     /// - Parameters:
@@ -168,18 +168,14 @@ public actor AuthenticationInterceptor: RequestInterceptor {
 
     @discardableResult
     private func refreshTokenIfNeeded() async -> Bool {
-        // Evitar refresh concurrentes
-        guard !isRefreshing else {
-            // Esperar a que termine el refresh en curso
-            try? await Task.sleep(for: .milliseconds(100))
-            return await tokenProvider.getAccessToken() != nil
+        if let refreshTask {
+            return await refreshTask.value != nil
         }
 
-        isRefreshing = true
-        defer { isRefreshing = false }
-
-        // Intentar refresh
-        let newToken = await tokenProvider.refreshToken()
+        let task = Task { await tokenProvider.refreshToken() }
+        refreshTask = task
+        let newToken = await task.value
+        refreshTask = nil
         return newToken != nil
     }
 }

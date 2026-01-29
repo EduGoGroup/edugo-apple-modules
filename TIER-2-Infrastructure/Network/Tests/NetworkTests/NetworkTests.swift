@@ -6,7 +6,7 @@ import Foundation
 struct NetworkTests {
     @Test("NetworkClient shared instance is accessible")
     func testSharedInstance() {
-        let client = NetworkClient.shared
+        _ = NetworkClient.shared
         // Client should be accessible
     }
 

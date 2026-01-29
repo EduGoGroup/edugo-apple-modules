@@ -36,7 +36,10 @@ public actor NetworkClient: NetworkClientProtocol {
     // MARK: - Singleton
 
     /// Instancia compartida del cliente de red.
-    public static let shared = NetworkClient()
+    public static let shared = NetworkClient(
+        interceptors: [],
+        retryPolicy: ExponentialBackoffRetryPolicy(maxRetryCount: 3)
+    )
 
     // MARK: - Properties
 
@@ -54,6 +57,12 @@ public actor NetworkClient: NetworkClientProtocol {
         "Accept": "application/json",
         "Content-Type": "application/json"
     ]
+
+    /// Cadena de interceptors (puede estar vacía).
+    private let interceptorChain: InterceptorChain
+
+    /// Timeout máximo total para reintentos.
+    private let maxRetryTimeout: TimeInterval
 
     #if canImport(os)
     /// Logger para debugging.
@@ -79,15 +88,54 @@ public actor NetworkClient: NetworkClientProtocol {
             "User-Agent": "EduGo-iOS/1.0"
         ]
 
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        decoder.dateDecodingStrategy = .iso8601
+
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        encoder.dateEncodingStrategy = .iso8601
+
         self.urlSession = URLSession(configuration: configuration)
+        self.jsonDecoder = decoder
+        self.jsonEncoder = encoder
+        self.interceptorChain = InterceptorChain([])
+        self.maxRetryTimeout = 120
+    }
 
-        self.jsonDecoder = JSONDecoder()
-        self.jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
-        self.jsonDecoder.dateDecodingStrategy = .iso8601
+    /// Inicializa el cliente con interceptors usando la configuración por defecto.
+    public init(
+        interceptors: [any RequestInterceptor] = [],
+        retryPolicy: (any RetryPolicy)? = nil,
+        maxRetryTimeout: TimeInterval = 120
+    ) {
+        let configuration = URLSessionConfiguration.default
+        configuration.timeoutIntervalForRequest = 30
+        configuration.timeoutIntervalForResource = 60
+        configuration.waitsForConnectivity = true
+        configuration.httpAdditionalHeaders = [
+            "User-Agent": "EduGo-iOS/1.0"
+        ]
 
-        self.jsonEncoder = JSONEncoder()
-        self.jsonEncoder.keyEncodingStrategy = .convertToSnakeCase
-        self.jsonEncoder.dateEncodingStrategy = .iso8601
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        decoder.dateDecodingStrategy = .iso8601
+
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        encoder.dateEncodingStrategy = .iso8601
+
+        var configuredInterceptors = interceptors
+        if let retryPolicy,
+           !configuredInterceptors.contains(where: { $0 is RetryInterceptor }) {
+            configuredInterceptors.append(RetryInterceptor(policy: retryPolicy))
+        }
+
+        self.interceptorChain = InterceptorChain(configuredInterceptors)
+        self.maxRetryTimeout = maxRetryTimeout
+        self.urlSession = URLSession(configuration: configuration)
+        self.jsonDecoder = decoder
+        self.jsonEncoder = encoder
     }
 
     /// Inicializa el cliente con una configuración personalizada.
@@ -98,8 +146,19 @@ public actor NetworkClient: NetworkClientProtocol {
     public init(
         configuration: URLSessionConfiguration,
         decoder: JSONDecoder = JSONDecoder(),
-        encoder: JSONEncoder = JSONEncoder()
+        encoder: JSONEncoder = JSONEncoder(),
+        interceptors: [any RequestInterceptor] = [],
+        maxRetryTimeout: TimeInterval = 120,
+        retryPolicy: (any RetryPolicy)? = nil
     ) {
+        var configuredInterceptors = interceptors
+        if let retryPolicy,
+           !configuredInterceptors.contains(where: { $0 is RetryInterceptor }) {
+            configuredInterceptors.append(RetryInterceptor(policy: retryPolicy))
+        }
+
+        self.interceptorChain = InterceptorChain(configuredInterceptors)
+        self.maxRetryTimeout = maxRetryTimeout
         self.urlSession = URLSession(configuration: configuration)
         self.jsonDecoder = decoder
         self.jsonEncoder = encoder
@@ -159,6 +218,11 @@ public actor NetworkClient: NetworkClientProtocol {
                 type: String(describing: T.self),
                 underlyingError: errorDescription
             )
+        } catch {
+            throw NetworkError.decodingError(
+                type: String(describing: T.self),
+                underlyingError: error.localizedDescription
+            )
         }
     }
 
@@ -169,32 +233,15 @@ public actor NetworkClient: NetworkClientProtocol {
     public func requestData(
         _ request: HTTPRequest
     ) async throws -> (Data, HTTPURLResponse) {
-        let urlRequest = try buildURLRequest(from: request)
+        let (data, response) = try await performWithRetry(
+            originalRequest: request,
+            dataForInterceptors: { $0 },
+            execute: { request in
+                try await urlSession.data(for: request)
+            }
+        )
 
-        logRequest(urlRequest)
-
-        let data: Data
-        let response: URLResponse
-
-        do {
-            (data, response) = try await urlSession.data(for: urlRequest)
-        } catch let error as URLError {
-            logError("URL error: \(error.localizedDescription)")
-            throw NetworkError.from(urlError: error)
-        } catch {
-            logError("Unknown error: \(error.localizedDescription)")
-            throw NetworkError.networkFailure(underlyingError: error.localizedDescription)
-        }
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw NetworkError.networkFailure(underlyingError: "Invalid response type")
-        }
-
-        logResponse(httpResponse, data: data)
-
-        try validateResponse(httpResponse, data: data)
-
-        return (data, httpResponse)
+        return (data, response)
     }
 
     /// Sube datos al servidor.
@@ -207,28 +254,31 @@ public actor NetworkClient: NetworkClientProtocol {
         data: Data,
         request: HTTPRequest
     ) async throws -> T {
-        var urlRequest = try buildURLRequest(from: request)
-        urlRequest.httpBody = data
-
-        logRequest(urlRequest)
-
-        let responseData: Data
-        let response: URLResponse
+        let (responseData, _) = try await performWithRetry(
+            originalRequest: request,
+            prepare: { urlRequest in
+                urlRequest.httpBody = data
+            },
+            dataForInterceptors: { $0 },
+            execute: { urlRequest in
+                try await urlSession.upload(for: urlRequest, from: data)
+            }
+        )
 
         do {
-            (responseData, response) = try await urlSession.upload(for: urlRequest, from: data)
-        } catch let error as URLError {
-            throw NetworkError.from(urlError: error)
+            return try jsonDecoder.decode(T.self, from: responseData)
+        } catch let decodingError as DecodingError {
+            let errorDescription = describeDecodingError(decodingError)
+            throw NetworkError.decodingError(
+                type: String(describing: T.self),
+                underlyingError: errorDescription
+            )
+        } catch {
+            throw NetworkError.decodingError(
+                type: String(describing: T.self),
+                underlyingError: error.localizedDescription
+            )
         }
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw NetworkError.networkFailure(underlyingError: "Invalid response type")
-        }
-
-        logResponse(httpResponse, data: responseData)
-        try validateResponse(httpResponse, data: responseData)
-
-        return try jsonDecoder.decode(T.self, from: responseData)
     }
 
     /// Sube un archivo al servidor.
@@ -241,27 +291,28 @@ public actor NetworkClient: NetworkClientProtocol {
         fileURL: URL,
         request: HTTPRequest
     ) async throws -> T {
-        let urlRequest = try buildURLRequest(from: request)
-
-        logRequest(urlRequest)
-
-        let responseData: Data
-        let response: URLResponse
+        let (responseData, _) = try await performWithRetry(
+            originalRequest: request,
+            dataForInterceptors: { $0 },
+            execute: { urlRequest in
+                try await urlSession.upload(for: urlRequest, fromFile: fileURL)
+            }
+        )
 
         do {
-            (responseData, response) = try await urlSession.upload(for: urlRequest, fromFile: fileURL)
-        } catch let error as URLError {
-            throw NetworkError.from(urlError: error)
+            return try jsonDecoder.decode(T.self, from: responseData)
+        } catch let decodingError as DecodingError {
+            let errorDescription = describeDecodingError(decodingError)
+            throw NetworkError.decodingError(
+                type: String(describing: T.self),
+                underlyingError: errorDescription
+            )
+        } catch {
+            throw NetworkError.decodingError(
+                type: String(describing: T.self),
+                underlyingError: error.localizedDescription
+            )
         }
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw NetworkError.networkFailure(underlyingError: "Invalid response type")
-        }
-
-        logResponse(httpResponse, data: responseData)
-        try validateResponse(httpResponse, data: responseData)
-
-        return try jsonDecoder.decode(T.self, from: responseData)
     }
 
     /// Descarga un archivo del servidor.
@@ -269,25 +320,13 @@ public actor NetworkClient: NetworkClientProtocol {
     /// - Returns: URL del archivo descargado
     /// - Throws: `NetworkError` si la descarga falla
     public func download(_ request: HTTPRequest) async throws -> URL {
-        let urlRequest = try buildURLRequest(from: request)
-
-        logRequest(urlRequest)
-
-        let fileURL: URL
-        let response: URLResponse
-
-        do {
-            (fileURL, response) = try await urlSession.download(for: urlRequest)
-        } catch let error as URLError {
-            throw NetworkError.from(urlError: error)
-        }
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw NetworkError.networkFailure(underlyingError: "Invalid response type")
-        }
-
-        logResponse(httpResponse, data: nil)
-        try validateResponse(httpResponse, data: nil)
+        let (fileURL, _) = try await performWithRetry(
+            originalRequest: request,
+            dataForInterceptors: { _ in Data() },
+            execute: { urlRequest in
+                try await urlSession.download(for: urlRequest)
+            }
+        )
 
         return fileURL
     }
@@ -318,6 +357,95 @@ public actor NetworkClient: NetworkClientProtocol {
     }
 
     // MARK: - Private Helpers
+
+    private func performWithRetry<Response>(
+        originalRequest: HTTPRequest,
+        prepare: @Sendable (inout URLRequest) -> Void = { _ in },
+        dataForInterceptors: @Sendable (Response) -> Data?,
+        execute: @Sendable (URLRequest) async throws -> (Response, URLResponse)
+    ) async throws -> (Response, HTTPURLResponse) {
+        let startTime = Date()
+        var context = RequestContext(originalRequest: originalRequest)
+
+        var baseRequest = try buildURLRequest(from: originalRequest)
+        prepare(&baseRequest)
+
+        var lastRequest = baseRequest
+
+        while true {
+            do {
+                lastRequest = try await interceptorChain.adapt(baseRequest, context: context)
+                logRequest(lastRequest)
+
+                let (result, response) = try await execute(lastRequest)
+
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    throw NetworkError.networkFailure(underlyingError: "Invalid response type")
+                }
+
+                let responseData = dataForInterceptors(result)
+                logResponse(httpResponse, data: responseData)
+
+                try validateResponse(httpResponse, data: responseData)
+
+                await interceptorChain.didReceive(
+                    response: httpResponse,
+                    data: responseData ?? Data(),
+                    for: lastRequest,
+                    context: context
+                )
+
+                return (result, httpResponse)
+            } catch {
+                let networkError = mapNetworkError(error)
+                logError("Request failed: \(networkError.localizedDescription)")
+
+                let elapsed = Date().timeIntervalSince(startTime)
+                if elapsed >= maxRetryTimeout {
+                    throw networkError
+                }
+
+                let decision = await interceptorChain.retry(
+                    lastRequest,
+                    dueTo: networkError,
+                    context: context
+                )
+
+                switch decision {
+                case .doNotRetry:
+                    throw networkError
+                case .retryImmediately:
+                    context = context.nextAttempt(elapsedTime: elapsed)
+                    baseRequest = try buildURLRequest(from: originalRequest)
+                    prepare(&baseRequest)
+                case .retryAfter(let delay):
+                    try await Task.sleep(for: .seconds(delay))
+                    context = context.nextAttempt(elapsedTime: Date().timeIntervalSince(startTime))
+                    baseRequest = try buildURLRequest(from: originalRequest)
+                    prepare(&baseRequest)
+                case .retryWithRequest(let newRequest):
+                    baseRequest = newRequest
+                    context = context.nextAttempt(elapsedTime: elapsed)
+                }
+            }
+        }
+    }
+
+    private func mapNetworkError(_ error: Error) -> NetworkError {
+        if let networkError = error as? NetworkError {
+            return networkError
+        }
+
+        if let urlError = error as? URLError {
+            return NetworkError.from(urlError: urlError)
+        }
+
+        if error is CancellationError {
+            return .cancelled
+        }
+
+        return NetworkError.networkFailure(underlyingError: error.localizedDescription)
+    }
 
     /// Construye un URLRequest a partir de HTTPRequest aplicando headers globales.
     private func buildURLRequest(from request: HTTPRequest) throws -> URLRequest {

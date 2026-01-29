@@ -108,7 +108,12 @@ public struct ExponentialBackoffRetryPolicy: RetryPolicy {
 
         // Calcular jitter aleatorio
         let jitterRange = baseDelay * jitterFactor
-        let jitter = Double.random(in: 0..<jitterRange)
+        let jitter: Double
+        if jitterRange > 0 {
+            jitter = Double.random(in: 0..<jitterRange)
+        } else {
+            jitter = 0
+        }
 
         // Aplicar límite máximo
         let totalDelay = min(exponentialDelay + jitter, maxDelay)

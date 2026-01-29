@@ -313,6 +313,7 @@ extension HTTPRequest: Equatable {
         lhs.headers == rhs.headers &&
         lhs.queryParameters == rhs.queryParameters &&
         lhs.body == rhs.body &&
-        lhs.timeoutInterval == rhs.timeoutInterval
+        lhs.timeoutInterval == rhs.timeoutInterval &&
+        lhs.cachePolicy == rhs.cachePolicy
     }
 }

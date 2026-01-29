@@ -13,17 +13,6 @@ Este proyecto define e implementa un **Swift Package Manager (SPM)** modular con
 
 
 ## Fase 0
-Carpeta de ubicacion de los comandos slash
-/Users/jhoanmedina/source/GeneratorEco/MCPEco/LLMs/Claude4
-
-Carpeta de trabajo del codigo
-/Users/jhoanmedina/source/EduGo/EduUI/Modules/Apple/
-
-Archivo con el plan de trabajo
-/Users/jhoanmedina/source/EduGo/repos-separados/edugo_analisis/mobile-shared-modules/01-SWIFT-SETUP-PLAN.md
-
-Archivo de guia
-/Users/jhoanmedina/source/EduGo/repos-separados/edugo_analisis/mobile-shared-modules/GUIA_LLM.md
 
 Nivel del proyecto
 Enterprite
@@ -563,5 +552,3 @@ Este documento debe consultarse en CADA desglose:
 
 **Última actualización**: Enero 2026  
 **Versión del README**: 1.0.0
-
-
