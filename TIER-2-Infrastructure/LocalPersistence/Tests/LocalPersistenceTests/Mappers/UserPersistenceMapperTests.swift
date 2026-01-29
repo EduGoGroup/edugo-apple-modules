@@ -190,4 +190,110 @@ struct UserPersistenceMapperTests {
             _ = try UserPersistenceMapper.toDomain(model)
         }
     }
+
+    // MARK: - Extended Persistence Tests
+
+    @Test("Roundtrip with minimal user data")
+    func testRoundtripMinimalUser() throws {
+        let original = try TestDataFactory.makeMinimalUser()
+
+        let model = UserPersistenceMapper.toModel(original, existing: nil)
+        let restored = try UserPersistenceMapper.toDomain(model)
+
+        #expect(restored.id == original.id)
+        #expect(restored.firstName == original.firstName)
+        #expect(restored.lastName == original.lastName)
+        #expect(restored.email == original.email)
+    }
+
+    @Test("Multiple roundtrips produce consistent results")
+    func testMultipleRoundtrips() throws {
+        let original = try TestDataFactory.makeUser(
+            firstName: "Multiple",
+            lastName: "Roundtrip",
+            email: "multiple@roundtrip.com"
+        )
+
+        var current = original
+        for _ in 0..<5 {
+            let model = UserPersistenceMapper.toModel(current, existing: nil)
+            current = try UserPersistenceMapper.toDomain(model)
+        }
+
+        #expect(current.id == original.id)
+        #expect(current.firstName == original.firstName)
+        #expect(current.lastName == original.lastName)
+        #expect(current.email == original.email)
+        #expect(current.isActive == original.isActive)
+    }
+
+    @Test("Batch user mapping maintains data integrity")
+    func testBatchUserMapping() throws {
+        let users = try TestDataFactory.makeUsers(count: 50)
+
+        let models = users.map { UserPersistenceMapper.toModel($0, existing: nil) }
+        let restored = try models.map { try UserPersistenceMapper.toDomain($0) }
+
+        #expect(restored.count == users.count)
+        for (original, mapped) in zip(users, restored) {
+            #expect(mapped.id == original.id)
+            #expect(mapped.firstName == original.firstName)
+            #expect(mapped.lastName == original.lastName)
+            #expect(mapped.email == original.email)
+        }
+    }
+
+    @Test("toModel preserves ID across updates")
+    func testToModelPreservesIDOnUpdate() throws {
+        let user1 = try TestDataFactory.makeUser(firstName: "First")
+        let existingModel = UserPersistenceMapper.toModel(user1, existing: nil)
+        let originalModelID = ObjectIdentifier(existingModel)
+
+        let user2 = try User(
+            id: user1.id,
+            firstName: "Second",
+            lastName: user1.lastName,
+            email: user1.email,
+            isActive: user1.isActive,
+            createdAt: user1.createdAt,
+            updatedAt: Date()
+        )
+
+        let updatedModel = UserPersistenceMapper.toModel(user2, existing: existingModel)
+
+        #expect(ObjectIdentifier(updatedModel) == originalModelID)
+        #expect(updatedModel.id == user1.id)
+    }
+
+    @Test("toDomain handles whitespace in names")
+    func testToDomainHandlesWhitespaceInNames() {
+        let model = UserModel(
+            id: UUID(),
+            firstName: "   ",
+            lastName: "User",
+            email: "test@example.com",
+            isActive: true
+        )
+
+        #expect(throws: DomainError.self) {
+            _ = try UserPersistenceMapper.toDomain(model)
+        }
+    }
+
+    @Test("Roundtrip preserves exact timestamp precision")
+    func testRoundtripPreservesTimestampPrecision() throws {
+        let preciseCreatedAt = Date(timeIntervalSince1970: 1704067200.123456)
+        let preciseUpdatedAt = Date(timeIntervalSince1970: 1704153600.789012)
+
+        let original = try TestDataFactory.makeUser(
+            createdAt: preciseCreatedAt,
+            updatedAt: preciseUpdatedAt
+        )
+
+        let model = UserPersistenceMapper.toModel(original, existing: nil)
+        let restored = try UserPersistenceMapper.toDomain(model)
+
+        #expect(restored.createdAt.timeIntervalSince1970 == preciseCreatedAt.timeIntervalSince1970)
+        #expect(restored.updatedAt.timeIntervalSince1970 == preciseUpdatedAt.timeIntervalSince1970)
+    }
 }

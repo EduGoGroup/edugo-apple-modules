@@ -170,4 +170,122 @@ struct LocalUserRepositoryTests {
             #expect(listed.contains { $0.id == user.id })
         }
     }
+
+    // MARK: - Extended Repository Tests
+
+    @Test("Batch save and verify all users")
+    func testBatchSaveAndVerify() async throws {
+        let repository = try await setupRepository()
+        let users = try TestDataFactory.makeUsers(count: 100)
+
+        for user in users {
+            try await repository.save(user)
+        }
+
+        for user in users {
+            let fetched = try await repository.get(id: user.id)
+            #expect(fetched != nil)
+            #expect(fetched?.id == user.id)
+            #expect(fetched?.firstName == user.firstName)
+            #expect(fetched?.email == user.email)
+        }
+    }
+
+    @Test("Update preserves all fields correctly")
+    func testUpdatePreservesAllFields() async throws {
+        let repository = try await setupRepository()
+        let originalCreatedAt = Date(timeIntervalSince1970: 1704067200)
+        let user = try TestDataFactory.makeUser(
+            firstName: "Original",
+            lastName: "User",
+            email: "original@test.com",
+            isActive: true,
+            createdAt: originalCreatedAt
+        )
+
+        try await repository.save(user)
+
+        let newUpdatedAt = Date()
+        let updatedUser = try User(
+            id: user.id,
+            firstName: "Updated",
+            lastName: "Person",
+            email: user.email,
+            isActive: false,
+            createdAt: originalCreatedAt,
+            updatedAt: newUpdatedAt
+        )
+        try await repository.save(updatedUser)
+
+        let fetched = try await repository.get(id: user.id)
+
+        #expect(fetched?.firstName == "Updated")
+        #expect(fetched?.lastName == "Person")
+        #expect(fetched?.isActive == false)
+        #expect(fetched?.createdAt == originalCreatedAt)
+    }
+
+    @Test("Delete multiple users in sequence")
+    func testDeleteMultipleUsersInSequence() async throws {
+        let repository = try await setupRepository()
+        let users = try TestDataFactory.makeUsers(count: 10)
+
+        for user in users {
+            try await repository.save(user)
+        }
+
+        // Delete half of the users
+        for user in users.prefix(5) {
+            try await repository.delete(id: user.id)
+        }
+
+        let listed = try await repository.list()
+
+        for user in users.prefix(5) {
+            #expect(!listed.contains { $0.id == user.id })
+        }
+        for user in users.suffix(5) {
+            #expect(listed.contains { $0.id == user.id })
+        }
+    }
+
+    @Test("Save minimal user")
+    func testSaveMinimalUser() async throws {
+        let repository = try await setupRepository()
+        let user = try TestDataFactory.makeMinimalUser()
+
+        try await repository.save(user)
+        let fetched = try await repository.get(id: user.id)
+
+        #expect(fetched != nil)
+        #expect(fetched?.firstName == "A")
+        #expect(fetched?.lastName == "B")
+    }
+
+    @Test("List returns empty array when no users exist")
+    func testListReturnsEmptyArrayWhenNoUsers() async throws {
+        let repository = try await setupRepository()
+
+        let listed = try await repository.list()
+
+        #expect(listed.isEmpty)
+    }
+
+    @Test("Rapid save and delete cycles")
+    func testRapidSaveDeleteCycles() async throws {
+        let repository = try await setupRepository()
+
+        for i in 0..<50 {
+            let user = try TestDataFactory.makeUser(
+                firstName: "Cycle",
+                lastName: "\(i)",
+                email: "cycle\(i)@test.com"
+            )
+            try await repository.save(user)
+            try await repository.delete(id: user.id)
+
+            let fetched = try await repository.get(id: user.id)
+            #expect(fetched == nil)
+        }
+    }
 }

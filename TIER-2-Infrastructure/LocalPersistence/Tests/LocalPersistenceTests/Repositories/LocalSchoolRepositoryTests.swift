@@ -131,4 +131,162 @@ struct LocalSchoolRepositoryTests {
 
         #expect(fetched == nil)
     }
+
+    // MARK: - Extended Repository Tests
+
+    @Test("Batch save and verify schools")
+    func testBatchSaveAndVerify() async throws {
+        let repository = try await setupRepository()
+        let schools = try TestDataFactory.makeSchools(count: 50)
+
+        for school in schools {
+            try await repository.save(school)
+        }
+
+        for school in schools {
+            let fetched = try await repository.get(id: school.id)
+            #expect(fetched != nil)
+            #expect(fetched?.id == school.id)
+            #expect(fetched?.name == school.name)
+            #expect(fetched?.code == school.code)
+        }
+    }
+
+    @Test("Save and retrieve full school")
+    func testSaveAndRetrieveFullSchool() async throws {
+        let repository = try await setupRepository()
+        let school = try TestDataFactory.makeFullSchool()
+
+        try await repository.save(school)
+        let fetched = try await repository.get(id: school.id)
+
+        #expect(fetched != nil)
+        #expect(fetched?.name == school.name)
+        #expect(fetched?.code == school.code)
+        #expect(fetched?.address == school.address)
+        #expect(fetched?.city == school.city)
+        #expect(fetched?.country == school.country)
+        #expect(fetched?.contactEmail == school.contactEmail)
+        #expect(fetched?.maxStudents == school.maxStudents)
+        #expect(fetched?.subscriptionTier == school.subscriptionTier)
+        #expect(fetched?.metadata == school.metadata)
+    }
+
+    @Test("Save and retrieve minimal school")
+    func testSaveAndRetrieveMinimalSchool() async throws {
+        let repository = try await setupRepository()
+        let school = try TestDataFactory.makeMinimalSchool()
+
+        try await repository.save(school)
+        let fetched = try await repository.get(id: school.id)
+
+        #expect(fetched != nil)
+        #expect(fetched?.name == "S")
+        #expect(fetched?.code == "S1")
+    }
+
+    @Test("Update school preserves all fields")
+    func testUpdateSchoolPreservesAllFields() async throws {
+        let repository = try await setupRepository()
+        let originalCreatedAt = Date(timeIntervalSince1970: 1704067200)
+        let school = try TestDataFactory.makeSchool(
+            name: "Original School",
+            code: "ORIG-001",
+            createdAt: originalCreatedAt
+        )
+
+        try await repository.save(school)
+
+        let updatedSchool = try School(
+            id: school.id,
+            name: "Updated School",
+            code: school.code,
+            isActive: false,
+            address: "123 New Address",
+            city: "New City",
+            createdAt: originalCreatedAt,
+            updatedAt: Date()
+        )
+        try await repository.save(updatedSchool)
+
+        let fetched = try await repository.get(id: school.id)
+
+        #expect(fetched?.name == "Updated School")
+        #expect(fetched?.address == "123 New Address")
+        #expect(fetched?.city == "New City")
+        #expect(fetched?.isActive == false)
+        #expect(fetched?.createdAt == originalCreatedAt)
+    }
+
+    @Test("Get by code with multiple schools")
+    func testGetByCodeWithMultipleSchools() async throws {
+        let repository = try await setupRepository()
+
+        let school1 = try TestDataFactory.makeSchool(name: "School One", code: "CODE-001")
+        let school2 = try TestDataFactory.makeSchool(name: "School Two", code: "CODE-002")
+        let school3 = try TestDataFactory.makeSchool(name: "School Three", code: "CODE-003")
+
+        try await repository.save(school1)
+        try await repository.save(school2)
+        try await repository.save(school3)
+
+        let fetched = try await repository.getByCode(code: "CODE-002")
+
+        #expect(fetched != nil)
+        #expect(fetched?.id == school2.id)
+        #expect(fetched?.name == "School Two")
+    }
+
+    @Test("Delete multiple schools in sequence")
+    func testDeleteMultipleSchoolsInSequence() async throws {
+        let repository = try await setupRepository()
+        let schools = try TestDataFactory.makeSchools(count: 10)
+
+        for school in schools {
+            try await repository.save(school)
+        }
+
+        for school in schools.prefix(5) {
+            try await repository.delete(id: school.id)
+        }
+
+        let listed = try await repository.list()
+
+        for school in schools.prefix(5) {
+            #expect(!listed.contains { $0.id == school.id })
+        }
+        for school in schools.suffix(5) {
+            #expect(listed.contains { $0.id == school.id })
+        }
+    }
+
+    @Test("List returns empty array when no schools exist")
+    func testListReturnsEmptyArrayWhenNoSchools() async throws {
+        let repository = try await setupRepository()
+
+        let listed = try await repository.list()
+
+        #expect(listed.isEmpty)
+    }
+
+    @Test("Save school with metadata")
+    func testSaveSchoolWithMetadata() async throws {
+        let repository = try await setupRepository()
+        let metadata: [String: JSONValue] = [
+            "founded": .integer(1990),
+            "accredited": .bool(true),
+            "motto": .string("Excellence in Education")
+        ]
+
+        let school = try School(
+            name: "Metadata School",
+            code: "META-001",
+            metadata: metadata
+        )
+
+        try await repository.save(school)
+        let fetched = try await repository.get(id: school.id)
+
+        #expect(fetched?.metadata == metadata)
+    }
 }

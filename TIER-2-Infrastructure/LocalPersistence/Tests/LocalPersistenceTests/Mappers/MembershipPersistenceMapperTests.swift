@@ -223,4 +223,124 @@ struct MembershipPersistenceMapperTests {
 
         #expect(membership.withdrawnAt == nil)
     }
+
+    // MARK: - Extended Persistence Tests
+
+    @Test("Roundtrip with withdrawn membership")
+    func testRoundtripWithdrawnMembership() throws {
+        let original = TestDataFactory.makeWithdrawnMembership()
+
+        let model = MembershipPersistenceMapper.toModel(original, existing: nil)
+        let restored = try MembershipPersistenceMapper.toDomain(model)
+
+        #expect(restored.isActive == false)
+        #expect(restored.withdrawnAt != nil)
+        #expect(restored.withdrawnAt == original.withdrawnAt)
+    }
+
+    @Test("Multiple roundtrips produce consistent results")
+    func testMultipleRoundtrips() throws {
+        let original = TestDataFactory.makeMembership(role: .teacher)
+
+        var current = original
+        for _ in 0..<5 {
+            let model = MembershipPersistenceMapper.toModel(current, existing: nil)
+            current = try MembershipPersistenceMapper.toDomain(model)
+        }
+
+        #expect(current.id == original.id)
+        #expect(current.userID == original.userID)
+        #expect(current.unitID == original.unitID)
+        #expect(current.role == original.role)
+    }
+
+    @Test("Batch membership mapping maintains data integrity")
+    func testBatchMembershipMapping() throws {
+        let memberships = TestDataFactory.makeMemberships(count: 50)
+
+        let models = memberships.map { MembershipPersistenceMapper.toModel($0, existing: nil) }
+        let restored = try models.map { try MembershipPersistenceMapper.toDomain($0) }
+
+        #expect(restored.count == memberships.count)
+        for (original, mapped) in zip(memberships, restored) {
+            #expect(mapped.id == original.id)
+            #expect(mapped.userID == original.userID)
+            #expect(mapped.unitID == original.unitID)
+            #expect(mapped.role == original.role)
+        }
+    }
+
+    @Test("Roundtrip preserves all roles with all cases")
+    func testRoundtripAllRolesCases() throws {
+        let memberships = TestDataFactory.makeMembershipsWithAllRoles()
+
+        for original in memberships {
+            let model = MembershipPersistenceMapper.toModel(original, existing: nil)
+            let restored = try MembershipPersistenceMapper.toDomain(model)
+
+            #expect(restored.role == original.role)
+        }
+    }
+
+    @Test("toModel preserves instance across updates")
+    func testToModelPreservesInstance() {
+        let membership1 = TestDataFactory.makeMembership(role: .student, isActive: true)
+        let existingModel = MembershipPersistenceMapper.toModel(membership1, existing: nil)
+        let originalModelID = ObjectIdentifier(existingModel)
+
+        let membership2 = Membership(
+            id: membership1.id,
+            userID: membership1.userID,
+            unitID: membership1.unitID,
+            role: .teacher,
+            isActive: false,
+            enrolledAt: membership1.enrolledAt,
+            withdrawnAt: Date(),
+            createdAt: membership1.createdAt,
+            updatedAt: Date()
+        )
+
+        let updatedModel = MembershipPersistenceMapper.toModel(membership2, existing: existingModel)
+
+        #expect(ObjectIdentifier(updatedModel) == originalModelID)
+        #expect(updatedModel.role == "teacher")
+        #expect(updatedModel.isActive == false)
+    }
+
+    @Test("Roundtrip preserves exact timestamp precision")
+    func testRoundtripPreservesTimestampPrecision() throws {
+        let preciseEnrolledAt = Date(timeIntervalSince1970: 1704067200.123456)
+        let preciseCreatedAt = Date(timeIntervalSince1970: 1704153600.789012)
+        let preciseUpdatedAt = Date(timeIntervalSince1970: 1704240000.456789)
+
+        let original = TestDataFactory.makeMembership(
+            enrolledAt: preciseEnrolledAt,
+            createdAt: preciseCreatedAt,
+            updatedAt: preciseUpdatedAt
+        )
+
+        let model = MembershipPersistenceMapper.toModel(original, existing: nil)
+        let restored = try MembershipPersistenceMapper.toDomain(model)
+
+        #expect(restored.enrolledAt.timeIntervalSince1970 == preciseEnrolledAt.timeIntervalSince1970)
+        #expect(restored.createdAt.timeIntervalSince1970 == preciseCreatedAt.timeIntervalSince1970)
+        #expect(restored.updatedAt.timeIntervalSince1970 == preciseUpdatedAt.timeIntervalSince1970)
+    }
+
+    @Test("toDomain with case-insensitive role strings")
+    func testToDomainCaseInsensitiveRoles() {
+        // Test that roles must match exactly (case-sensitive)
+        let model = MembershipModel(
+            id: UUID(),
+            userID: UUID(),
+            unitID: UUID(),
+            role: "TEACHER",
+            isActive: true,
+            enrolledAt: Date()
+        )
+
+        #expect(throws: DomainError.self) {
+            _ = try MembershipPersistenceMapper.toDomain(model)
+        }
+    }
 }

@@ -307,4 +307,160 @@ struct MaterialPersistenceMapperTests {
         #expect(material.processingStartedAt == processingStartedAt)
         #expect(material.processingCompletedAt == processingCompletedAt)
     }
+
+    // MARK: - Extended Persistence Tests
+
+    @Test("Roundtrip with full material")
+    func testRoundtripFullMaterial() throws {
+        let schoolID = UUID()
+        let original = try TestDataFactory.makeFullMaterial(schoolID: schoolID)
+
+        let model = MaterialPersistenceMapper.toModel(original, existing: nil)
+        let restored = try MaterialPersistenceMapper.toDomain(model)
+
+        #expect(restored.id == original.id)
+        #expect(restored.title == original.title)
+        #expect(restored.description == original.description)
+        #expect(restored.status == original.status)
+        #expect(restored.fileURL == original.fileURL)
+        #expect(restored.fileType == original.fileType)
+        #expect(restored.fileSizeBytes == original.fileSizeBytes)
+        #expect(restored.schoolID == original.schoolID)
+        #expect(restored.academicUnitID == original.academicUnitID)
+        #expect(restored.uploadedByTeacherID == original.uploadedByTeacherID)
+        #expect(restored.subject == original.subject)
+        #expect(restored.grade == original.grade)
+        #expect(restored.isPublic == original.isPublic)
+    }
+
+    @Test("Multiple roundtrips produce consistent results")
+    func testMultipleRoundtrips() throws {
+        let original = try TestDataFactory.makeMaterial(title: "Roundtrip Material")
+
+        var current = original
+        for _ in 0..<5 {
+            let model = MaterialPersistenceMapper.toModel(current, existing: nil)
+            current = try MaterialPersistenceMapper.toDomain(model)
+        }
+
+        #expect(current.id == original.id)
+        #expect(current.title == original.title)
+        #expect(current.status == original.status)
+        #expect(current.schoolID == original.schoolID)
+    }
+
+    @Test("Batch material mapping maintains data integrity")
+    func testBatchMaterialMapping() throws {
+        let schoolID = UUID()
+        let materials = try TestDataFactory.makeMaterials(count: 50, schoolID: schoolID)
+
+        let models = materials.map { MaterialPersistenceMapper.toModel($0, existing: nil) }
+        let restored = try models.map { try MaterialPersistenceMapper.toDomain($0) }
+
+        #expect(restored.count == materials.count)
+        for (original, mapped) in zip(materials, restored) {
+            #expect(mapped.id == original.id)
+            #expect(mapped.title == original.title)
+            #expect(mapped.status == original.status)
+            #expect(mapped.schoolID == original.schoolID)
+        }
+    }
+
+    @Test("Roundtrip preserves all status values with factory")
+    func testRoundtripAllStatusesWithFactory() throws {
+        let schoolID = UUID()
+        let materials = try TestDataFactory.makeMaterialsWithAllStatuses(schoolID: schoolID)
+
+        for original in materials {
+            let model = MaterialPersistenceMapper.toModel(original, existing: nil)
+            let restored = try MaterialPersistenceMapper.toDomain(model)
+
+            #expect(restored.status == original.status)
+        }
+    }
+
+    @Test("toModel preserves instance across updates")
+    func testToModelPreservesInstance() throws {
+        let material1 = try TestDataFactory.makeMaterial(title: "Original", status: .uploaded)
+        let existingModel = MaterialPersistenceMapper.toModel(material1, existing: nil)
+        let originalModelID = ObjectIdentifier(existingModel)
+
+        let material2 = try Material(
+            id: material1.id,
+            title: "Updated",
+            status: .ready,
+            schoolID: material1.schoolID,
+            isPublic: true,
+            createdAt: material1.createdAt,
+            updatedAt: Date()
+        )
+
+        let updatedModel = MaterialPersistenceMapper.toModel(material2, existing: existingModel)
+
+        #expect(ObjectIdentifier(updatedModel) == originalModelID)
+        #expect(updatedModel.title == "Updated")
+        #expect(updatedModel.status == "ready")
+        #expect(updatedModel.isPublic == true)
+    }
+
+    @Test("Roundtrip preserves exact timestamp precision")
+    func testRoundtripPreservesTimestampPrecision() throws {
+        let preciseCreatedAt = Date(timeIntervalSince1970: 1704067200.123456)
+        let preciseUpdatedAt = Date(timeIntervalSince1970: 1704153600.789012)
+
+        let original = try TestDataFactory.makeMaterial(
+            createdAt: preciseCreatedAt,
+            updatedAt: preciseUpdatedAt
+        )
+
+        let model = MaterialPersistenceMapper.toModel(original, existing: nil)
+        let restored = try MaterialPersistenceMapper.toDomain(model)
+
+        #expect(restored.createdAt.timeIntervalSince1970 == preciseCreatedAt.timeIntervalSince1970)
+        #expect(restored.updatedAt.timeIntervalSince1970 == preciseUpdatedAt.timeIntervalSince1970)
+    }
+
+    @Test("toDomain with case-sensitive status strings")
+    func testToDomainCaseSensitiveStatus() {
+        let model = MaterialModel(
+            id: UUID(),
+            title: "Test Material",
+            status: "READY",
+            schoolID: UUID(),
+            isPublic: false
+        )
+
+        #expect(throws: DomainError.self) {
+            _ = try MaterialPersistenceMapper.toDomain(model)
+        }
+    }
+
+    @Test("Roundtrip with various URL formats")
+    func testRoundtripVariousURLFormats() throws {
+        let urls = [
+            "https://example.com/file.pdf",
+            "https://cdn.example.com/path/to/file.docx",
+            "https://storage.cloud.google.com/bucket/object",
+            "https://s3.amazonaws.com/bucket/key/file.pptx"
+        ]
+
+        for urlString in urls {
+            let url = URL(string: urlString)!
+            let material = try Material(
+                id: UUID(),
+                title: "URL Test Material",
+                status: .uploaded,
+                fileURL: url,
+                schoolID: UUID(),
+                isPublic: false,
+                createdAt: Date(),
+                updatedAt: Date()
+            )
+
+            let model = MaterialPersistenceMapper.toModel(material, existing: nil)
+            let restored = try MaterialPersistenceMapper.toDomain(model)
+
+            #expect(restored.fileURL?.absoluteString == urlString)
+        }
+    }
 }
