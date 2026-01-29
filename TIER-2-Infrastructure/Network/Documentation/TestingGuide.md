@@ -186,11 +186,12 @@ defer { URLProtocolMock.artificialDelay = 0 }
 ### Handler Personalizado
 
 ```swift
+let users = [User(id: "1", name: "Test")]
+let data = try await CodableSerializer.dtoSerializer.encode(users)
+
 URLProtocolMock.requestHandler = { request in
     // Logica custom basada en la request
     if request.url?.path == "/v1/users" {
-        let users = [User(id: "1", name: "Test")]
-        let data = try JSONEncoder().encode(users)
         let response = HTTPURLResponse(
             url: request.url!,
             statusCode: 200,
@@ -216,18 +217,15 @@ Los fixtures JSON proveen datos de prueba consistentes.
 // Ubicacion: Tests/NetworkTests/Fixtures/materials.json
 
 // Cargar en test (requiere Bundle.module)
-func loadFixture<T: Decodable>(_ name: String) throws -> T {
+func loadFixture<T: Decodable>(_ name: String) async throws -> T {
     let url = Bundle.module.url(forResource: name, withExtension: "json", subdirectory: "Fixtures")!
     let data = try Data(contentsOf: url)
-    let decoder = JSONDecoder()
-    decoder.keyDecodingStrategy = .convertFromSnakeCase
-    decoder.dateDecodingStrategy = .iso8601
-    return try decoder.decode(T.self, from: data)
+    return try await CodableSerializer.dtoSerializer.decode(T.self, from: data)
 }
 
 @Test("Usa fixture de materials")
-func testUsaFixture() throws {
-    let materials: [MaterialDTO] = try loadFixture("materials")
+func testUsaFixture() async throws {
+    let materials: [MaterialDTO] = try await loadFixture("materials")
     #expect(materials.count > 0)
 }
 ```

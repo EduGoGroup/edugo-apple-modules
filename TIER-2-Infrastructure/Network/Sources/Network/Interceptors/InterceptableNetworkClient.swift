@@ -1,4 +1,5 @@
 import Foundation
+import Utilities
 #if canImport(os)
 import os
 #endif
@@ -31,11 +32,8 @@ public actor InterceptableNetworkClient: NetworkClientProtocol {
     /// Sesión URL para realizar requests.
     private let urlSession: URLSession
 
-    /// Decoder JSON configurado.
-    private let jsonDecoder: JSONDecoder
-
-    /// Encoder JSON configurado.
-    private let jsonEncoder: JSONEncoder
+    /// Serializer thread-safe para encoding/decoding JSON (DTOs con CodingKeys explícitos).
+    private let serializer: CodableSerializer
 
     /// Headers globales aplicados a todas las requests.
     private var globalHeaders: [String: String] = [
@@ -64,15 +62,11 @@ public actor InterceptableNetworkClient: NetworkClientProtocol {
     ///   - defaultRetryPolicy: Política de retry por defecto (nil = sin retry automático)
     ///   - maxRetryTimeout: Timeout máximo total para reintentos (default: 120s)
     ///   - configuration: Configuración de URLSession (default: .default)
-    ///   - decoder: Decoder JSON (default: configurado para snake_case)
-    ///   - encoder: Encoder JSON (default: configurado para snake_case)
     public init(
         interceptors: [any RequestInterceptor] = [],
         defaultRetryPolicy: (any RetryPolicy)? = nil,
         maxRetryTimeout: TimeInterval = 120,
-        configuration: URLSessionConfiguration = .default,
-        decoder: JSONDecoder? = nil,
-        encoder: JSONEncoder? = nil
+        configuration: URLSessionConfiguration = .default
     ) {
         var configuredInterceptors = interceptors
         if let defaultRetryPolicy,
@@ -93,23 +87,7 @@ public actor InterceptableNetworkClient: NetworkClientProtocol {
         ]
         self.urlSession = URLSession(configuration: configuration)
 
-        // Configurar decoder
-        if let decoder {
-            self.jsonDecoder = decoder
-        } else {
-            self.jsonDecoder = JSONDecoder()
-            self.jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
-            self.jsonDecoder.dateDecodingStrategy = .iso8601
-        }
-
-        // Configurar encoder
-        if let encoder {
-            self.jsonEncoder = encoder
-        } else {
-            self.jsonEncoder = JSONEncoder()
-            self.jsonEncoder.keyEncodingStrategy = .convertToSnakeCase
-            self.jsonEncoder.dateEncodingStrategy = .iso8601
-        }
+        self.serializer = CodableSerializer.dtoSerializer
     }
 
     /// Inicializa con configuración estándar incluyendo logging y retry.
@@ -168,11 +146,11 @@ public actor InterceptableNetworkClient: NetworkClientProtocol {
         }
 
         do {
-            return try jsonDecoder.decode(T.self, from: data)
-        } catch let error as DecodingError {
+            return try await serializer.decode(T.self, from: data)
+        } catch let serializationError as SerializationError {
             throw NetworkError.decodingError(
                 type: String(describing: T.self),
-                underlyingError: describeDecodingError(error)
+                underlyingError: serializationError.localizedDescription
             )
         } catch {
             throw NetworkError.decodingError(
@@ -212,11 +190,11 @@ public actor InterceptableNetworkClient: NetworkClientProtocol {
         )
 
         do {
-            return try jsonDecoder.decode(T.self, from: responseData)
-        } catch let decodingError as DecodingError {
+            return try await serializer.decode(T.self, from: responseData)
+        } catch let serializationError as SerializationError {
             throw NetworkError.decodingError(
                 type: String(describing: T.self),
-                underlyingError: describeDecodingError(decodingError)
+                underlyingError: serializationError.localizedDescription
             )
         } catch {
             throw NetworkError.decodingError(
@@ -239,11 +217,11 @@ public actor InterceptableNetworkClient: NetworkClientProtocol {
         )
 
         do {
-            return try jsonDecoder.decode(T.self, from: responseData)
-        } catch let decodingError as DecodingError {
+            return try await serializer.decode(T.self, from: responseData)
+        } catch let serializationError as SerializationError {
             throw NetworkError.decodingError(
                 type: String(describing: T.self),
-                underlyingError: describeDecodingError(decodingError)
+                underlyingError: serializationError.localizedDescription
             )
         } catch {
             throw NetworkError.decodingError(
@@ -409,27 +387,15 @@ public actor InterceptableNetworkClient: NetworkClientProtocol {
             let error: String?
         }
 
-        guard let errorResponse = try? jsonDecoder.decode(ErrorResponse.self, from: data) else {
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        guard let errorResponse = try? decoder.decode(ErrorResponse.self, from: data) else {
             return nil
         }
 
         return errorResponse.message ?? errorResponse.error
     }
 
-    private func describeDecodingError(_ error: DecodingError) -> String {
-        switch error {
-        case .typeMismatch(let type, let context):
-            return "Type mismatch for \(type) at \(context.codingPath.map(\.stringValue).joined(separator: "."))"
-        case .valueNotFound(let type, let context):
-            return "Value not found for \(type) at \(context.codingPath.map(\.stringValue).joined(separator: "."))"
-        case .keyNotFound(let key, let context):
-            return "Key '\(key.stringValue)' not found at \(context.codingPath.map(\.stringValue).joined(separator: "."))"
-        case .dataCorrupted(let context):
-            return "Data corrupted at \(context.codingPath.map(\.stringValue).joined(separator: ".")): \(context.debugDescription)"
-        @unknown default:
-            return error.localizedDescription
-        }
-    }
 }
 
 // MARK: - Builder Pattern
@@ -440,8 +406,6 @@ public final class NetworkClientBuilder: @unchecked Sendable {
     private var retryPolicy: (any RetryPolicy)?
     private var maxRetryTimeout: TimeInterval = 120
     private var configuration: URLSessionConfiguration = .default
-    private var decoder: JSONDecoder?
-    private var encoder: JSONEncoder?
 
     public init() {}
 
@@ -488,29 +452,13 @@ public final class NetworkClientBuilder: @unchecked Sendable {
         return self
     }
 
-    /// Establece el decoder JSON.
-    @discardableResult
-    public func decoder(_ decoder: JSONDecoder) -> Self {
-        self.decoder = decoder
-        return self
-    }
-
-    /// Establece el encoder JSON.
-    @discardableResult
-    public func encoder(_ encoder: JSONEncoder) -> Self {
-        self.encoder = encoder
-        return self
-    }
-
     /// Construye el cliente.
     public func build() -> InterceptableNetworkClient {
         InterceptableNetworkClient(
             interceptors: interceptors,
             defaultRetryPolicy: retryPolicy,
             maxRetryTimeout: maxRetryTimeout,
-            configuration: configuration,
-            decoder: decoder,
-            encoder: encoder
+            configuration: configuration
         )
     }
 }

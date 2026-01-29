@@ -46,6 +46,14 @@ public struct PermissionDTO: Codable, Sendable, Equatable {
     /// Action allowed on the resource (e.g., "create", "read", "delete").
     public let action: String
 
+    /// Maps JSON keys to Swift properties.
+    enum CodingKeys: String, CodingKey {
+        case id
+        case code
+        case resource
+        case action
+    }
+
     /// Creates a new PermissionDTO instance.
     ///
     /// - Parameters:

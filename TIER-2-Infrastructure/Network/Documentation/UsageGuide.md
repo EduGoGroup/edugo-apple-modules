@@ -118,8 +118,9 @@ let created: User = try await client.post(
 )
 
 // Usando HTTPRequest builder
-let request = try HTTPRequest.post("https://api.edugo.com/v1/users")
-    .body(newUser)
+let jsonData = try await CodableSerializer.dtoSerializer.encode(newUser)
+let request = HTTPRequest.post("https://api.edugo.com/v1/users")
+    .jsonBody(jsonData)
     .header("X-Request-ID", UUID().uuidString)
 
 let created: User = try await client.request(request)

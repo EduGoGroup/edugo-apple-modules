@@ -23,13 +23,13 @@ struct NetworkClientTests {
 
     @Test("HTTPRequest with JSON body sets content type")
     func testHTTPRequestWithJSONBody() throws {
-        struct TestBody: Encodable {
-            let name: String
-            let value: Int
-        }
+        let data = try JSONSerialization.data(withJSONObject: [
+            "name": "test",
+            "value": 42
+        ])
 
-        let request = try HTTPRequest.post("https://api.test.com/data")
-            .body(TestBody(name: "test", value: 42))
+        let request = HTTPRequest.post("https://api.test.com/data")
+            .jsonBody(data)
 
         let urlRequest = try request.build()
 

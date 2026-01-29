@@ -1,4 +1,5 @@
 import Foundation
+import Utilities
 
 /// Protocolo que define la interfaz de un cliente de red asíncrono.
 ///
@@ -113,36 +114,38 @@ extension NetworkClientProtocol {
     /// Ejecuta una request POST con body JSON y decodifica la respuesta.
     /// - Parameters:
     ///   - url: URL de la request
-    ///   - body: Objeto a enviar como JSON
+    ///   - body: DTO a enviar como JSON (debe tener CodingKeys explícitos)
     ///   - headers: Headers adicionales opcionales
     /// - Returns: Respuesta decodificada
     /// - Throws: `NetworkError` si la request falla
-    public func post<T: Decodable & Sendable, B: Encodable>(
+    public func post<T: Decodable & Sendable, B: Encodable & Sendable>(
         _ url: String,
         body: B,
         headers: [String: String] = [:]
     ) async throws -> T {
-        let httpRequest = try HTTPRequest.post(url)
+        let bodyData = try await CodableSerializer.dtoSerializer.encode(body)
+        let httpRequest = HTTPRequest.post(url)
             .headers(headers)
-            .body(body)
+            .jsonBody(bodyData)
         return try await request(httpRequest)
     }
 
     /// Ejecuta una request PUT con body JSON y decodifica la respuesta.
     /// - Parameters:
     ///   - url: URL de la request
-    ///   - body: Objeto a enviar como JSON
+    ///   - body: DTO a enviar como JSON (debe tener CodingKeys explícitos)
     ///   - headers: Headers adicionales opcionales
     /// - Returns: Respuesta decodificada
     /// - Throws: `NetworkError` si la request falla
-    public func put<T: Decodable & Sendable, B: Encodable>(
+    public func put<T: Decodable & Sendable, B: Encodable & Sendable>(
         _ url: String,
         body: B,
         headers: [String: String] = [:]
     ) async throws -> T {
-        let httpRequest = try HTTPRequest.put(url)
+        let bodyData = try await CodableSerializer.dtoSerializer.encode(body)
+        let httpRequest = HTTPRequest.put(url)
             .headers(headers)
-            .body(body)
+            .jsonBody(bodyData)
         return try await request(httpRequest)
     }
 
@@ -163,18 +166,19 @@ extension NetworkClientProtocol {
     /// Ejecuta una request PATCH con body JSON y decodifica la respuesta.
     /// - Parameters:
     ///   - url: URL de la request
-    ///   - body: Objeto a enviar como JSON
+    ///   - body: DTO a enviar como JSON (debe tener CodingKeys explícitos)
     ///   - headers: Headers adicionales opcionales
     /// - Returns: Respuesta decodificada
     /// - Throws: `NetworkError` si la request falla
-    public func patch<T: Decodable & Sendable, B: Encodable>(
+    public func patch<T: Decodable & Sendable, B: Encodable & Sendable>(
         _ url: String,
         body: B,
         headers: [String: String] = [:]
     ) async throws -> T {
-        let httpRequest = try HTTPRequest.patch(url)
+        let bodyData = try await CodableSerializer.dtoSerializer.encode(body)
+        let httpRequest = HTTPRequest.patch(url)
             .headers(headers)
-            .body(body)
+            .jsonBody(bodyData)
         return try await request(httpRequest)
     }
 }

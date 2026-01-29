@@ -17,10 +17,11 @@ public enum HTTPMethod: String, Sendable, CaseIterable {
 ///
 /// ## Uso básico
 /// ```swift
+/// let jsonData = ... // Data previamente serializado (DTO)
 /// let request = HTTPRequest(url: "https://api.example.com/users")
 ///     .method(.post)
 ///     .header("Authorization", "Bearer token123")
-///     .body(userData)
+///     .jsonBody(jsonData)
 ///     .timeout(30)
 ///     .build()
 /// ```
@@ -132,13 +133,12 @@ public struct HTTPRequest: Sendable {
         return copy
     }
 
-    /// Establece el body de la request codificando un objeto Encodable como JSON.
-    /// - Parameter encodable: Objeto a codificar
+    /// Establece el body de la request como JSON ya serializado.
+    /// - Parameter data: Datos JSON ya serializados
     /// - Returns: Nueva instancia con el body establecido
-    /// - Throws: Error de codificación si falla
-    public func body<T: Encodable>(_ encodable: T) throws -> HTTPRequest {
+    public func jsonBody(_ data: Data) -> HTTPRequest {
         var copy = self
-        copy.body = try JSONEncoder().encode(encodable)
+        copy.body = data
         if copy.headers["Content-Type"] == nil {
             copy.headers["Content-Type"] = "application/json"
         }
@@ -150,12 +150,9 @@ public struct HTTPRequest: Sendable {
     /// - Returns: Nueva instancia con el body establecido
     /// - Throws: Error de serialización si falla
     public func jsonBody(_ json: [String: Any]) throws -> HTTPRequest {
-        var copy = self
-        copy.body = try JSONSerialization.data(withJSONObject: json)
-        if copy.headers["Content-Type"] == nil {
-            copy.headers["Content-Type"] = "application/json"
-        }
-        return copy
+        let copy = self
+        let data = try JSONSerialization.data(withJSONObject: json)
+        return copy.jsonBody(data)
     }
 
     /// Establece el timeout de la request.

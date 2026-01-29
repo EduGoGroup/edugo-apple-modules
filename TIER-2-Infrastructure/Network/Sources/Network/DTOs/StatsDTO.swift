@@ -45,18 +45,18 @@ public struct GlobalStatsDTO: Decodable, Sendable, Equatable {
         let container = try decoder.container(keyedBy: DynamicCodingKey.self)
 
         // Decodificar campos conocidos
-        totalUsers = try container.decodeIfPresent(Int.self, forKey: DynamicCodingKey(stringValue: "totalUsers")!)
-        totalMaterials = try container.decodeIfPresent(Int.self, forKey: DynamicCodingKey(stringValue: "totalMaterials")!)
-        totalSchools = try container.decodeIfPresent(Int.self, forKey: DynamicCodingKey(stringValue: "totalSchools")!)
-        totalTeachers = try container.decodeIfPresent(Int.self, forKey: DynamicCodingKey(stringValue: "totalTeachers")!)
-        totalStudents = try container.decodeIfPresent(Int.self, forKey: DynamicCodingKey(stringValue: "totalStudents")!)
-        totalAssessments = try container.decodeIfPresent(Int.self, forKey: DynamicCodingKey(stringValue: "totalAssessments")!)
-        averageProgress = try container.decodeIfPresent(Double.self, forKey: DynamicCodingKey(stringValue: "averageProgress")!)
+        totalUsers = try container.decodeIfPresent(Int.self, forKey: DynamicCodingKey(stringValue: "total_users")!)
+        totalMaterials = try container.decodeIfPresent(Int.self, forKey: DynamicCodingKey(stringValue: "total_materials")!)
+        totalSchools = try container.decodeIfPresent(Int.self, forKey: DynamicCodingKey(stringValue: "total_schools")!)
+        totalTeachers = try container.decodeIfPresent(Int.self, forKey: DynamicCodingKey(stringValue: "total_teachers")!)
+        totalStudents = try container.decodeIfPresent(Int.self, forKey: DynamicCodingKey(stringValue: "total_students")!)
+        totalAssessments = try container.decodeIfPresent(Int.self, forKey: DynamicCodingKey(stringValue: "total_assessments")!)
+        averageProgress = try container.decodeIfPresent(Double.self, forKey: DynamicCodingKey(stringValue: "average_progress")!)
 
         // Decodificar campos adicionales dinámicos
         let knownKeys: Set<String> = [
-            "totalUsers", "totalMaterials", "totalSchools",
-            "totalTeachers", "totalStudents", "totalAssessments", "averageProgress"
+            "total_users", "total_materials", "total_schools",
+            "total_teachers", "total_students", "total_assessments", "average_progress"
         ]
 
         var additional: [String: JSONValue] = [:]

@@ -25,6 +25,13 @@ public struct UpsertProgressRequest: Encodable, Sendable, Equatable {
         self.userId = userId
         self.percentage = percentage
     }
+
+    /// Maps JSON snake_case keys to Swift camelCase properties.
+    enum CodingKeys: String, CodingKey {
+        case materialId = "material_id"
+        case userId = "user_id"
+        case percentage
+    }
 }
 
 // MARK: - Progress Response DTO
@@ -44,4 +51,12 @@ public struct ProgressDTO: Decodable, Sendable, Equatable {
 
     /// Fecha de última actualización.
     public let lastUpdated: Date
+
+    /// Maps JSON snake_case keys to Swift camelCase properties.
+    enum CodingKeys: String, CodingKey {
+        case userId = "user_id"
+        case materialId = "material_id"
+        case percentage
+        case lastUpdated = "last_updated"
+    }
 }

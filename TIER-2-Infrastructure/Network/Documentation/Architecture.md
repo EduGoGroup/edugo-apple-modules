@@ -63,8 +63,8 @@
 ┌───────────▼──────────────────────────────────────────────────────────────┐
 │                           Foundation                                     │
 │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐          │
-│  │  URLSession     │  │  JSONEncoder    │  │  JSONDecoder    │          │
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘          │
+│  │  URLSession     │  │  CodableSerializer (DTO)                   │     │
+│  └─────────────────┘  └────────────────────────────────────────────┘     │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -165,7 +165,7 @@ let request = HTTPRequest(url: "https://api.edugo.com/v1/users")
     .method(.post)
     .header("X-Custom", "value")
     .queryParam("page", "1")
-    .body(userData)
+    .jsonBody(userData) // Data JSON ya serializado (DTO)
     .timeout(30)
     .bearerToken(token)
     .build()

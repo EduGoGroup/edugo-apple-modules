@@ -23,9 +23,9 @@ import os
 /// )
 ///
 /// // Request POST con body
-/// let newUser: User = try await client.request(
-///     try HTTPRequest.post("https://api.example.com/users")
-///         .body(CreateUserRequest(name: "John"))
+/// let newUser: UserDTO = try await client.post(
+///     "https://api.example.com/users",
+///     body: CreateUserRequest(name: "John")
 /// )
 /// ```
 ///
@@ -47,7 +47,7 @@ public actor NetworkClient: NetworkClientProtocol {
     /// Sesión URL para realizar requests.
     private let urlSession: URLSession
 
-    /// Serializer thread-safe para encoding/decoding JSON.
+    /// Serializer thread-safe para encoding/decoding JSON (DTOs con CodingKeys explícitos).
     private let serializer: CodableSerializer
 
     /// Headers globales aplicados a todas las requests.
@@ -87,7 +87,7 @@ public actor NetworkClient: NetworkClientProtocol {
         ]
 
         self.urlSession = URLSession(configuration: configuration)
-        self.serializer = CodableSerializer.shared
+        self.serializer = CodableSerializer.dtoSerializer
         self.interceptorChain = InterceptorChain([])
         self.maxRetryTimeout = 120
     }
@@ -115,7 +115,7 @@ public actor NetworkClient: NetworkClientProtocol {
         self.interceptorChain = InterceptorChain(configuredInterceptors)
         self.maxRetryTimeout = maxRetryTimeout
         self.urlSession = URLSession(configuration: configuration)
-        self.serializer = CodableSerializer.shared
+        self.serializer = CodableSerializer.dtoSerializer
     }
 
     /// Inicializa el cliente con una configuración personalizada.
@@ -141,7 +141,7 @@ public actor NetworkClient: NetworkClientProtocol {
         self.interceptorChain = InterceptorChain(configuredInterceptors)
         self.maxRetryTimeout = maxRetryTimeout
         self.urlSession = URLSession(configuration: configuration)
-        self.serializer = serializer ?? CodableSerializer.shared
+        self.serializer = serializer ?? CodableSerializer.dtoSerializer
     }
 
     // MARK: - Header Management

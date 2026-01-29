@@ -361,7 +361,7 @@ final class URLSessionClient: NetworkClient {
             throw NetworkError.httpError(httpResponse.statusCode)
         }
 
-        return try JSONDecoder().decode(T.self, from: data)
+        return try await CodableSerializer.dtoSerializer.decode(T.self, from: data)
     }
 }
 ```
