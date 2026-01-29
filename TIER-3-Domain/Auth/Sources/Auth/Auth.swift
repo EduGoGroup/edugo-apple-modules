@@ -47,7 +47,7 @@ public actor AuthManager: Sendable, UserContextProtocol {
         // TODO: Replace with real authentication implementation
         // This is a DEVELOPMENT-ONLY placeholder
         #if DEBUG
-        let user = try User(id: UUID(), name: "Dev User", email: email)
+        let user = try User(id: UUID(), firstName: "Dev", lastName: "User", email: email)
         currentUser = user
         accessToken = "dev_token_\(UUID().uuidString)"
         #else
