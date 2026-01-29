@@ -394,6 +394,287 @@ private func withTaskGroupCollectingResultsWithTimeout<T: Sendable>(
     }
 }
 
+// MARK: - Enhanced Timeout Support
+
+/// Ejecuta operaciones batch con timeout y propagación de cancelación mejorada.
+///
+/// Esta función extiende `withTaskGroupCollectingResults` con:
+/// - Propagación activa de `Task.isCancelled` a child tasks
+/// - Cleanup de recursos parciales en caso de timeout
+/// - Métricas de cancelación
+///
+/// ## Ejemplo
+///
+/// ```swift
+/// let result = await withCancellableTaskGroup(
+///     timeout: .seconds(60),
+///     onCancellation: { completedResults in
+///         await cleanupPartialResults(completedResults)
+///     },
+///     operations: operations
+/// )
+/// ```
+///
+/// - Parameters:
+///   - timeout: Timeout máximo para todas las operaciones
+///   - cancelOnFirstError: Cancelar todo al primer error (default: false)
+///   - maxConcurrency: Límite de concurrencia opcional
+///   - onCancellation: Handler llamado con resultados parciales en cancelación
+///   - operations: Array de operaciones a ejecutar
+/// - Returns: BatchResult con éxitos, fallos y duración
+public func withCancellableTaskGroup<T: Sendable>(
+    timeout: Duration,
+    cancelOnFirstError: Bool = false,
+    maxConcurrency: Int? = nil,
+    onCancellation: (@Sendable ([(index: Int, value: T)]) async -> Void)? = nil,
+    operations: [@Sendable () async throws -> T]
+) async -> BatchResult<T> {
+    let startTime = ContinuousClock.now
+
+    guard !operations.isEmpty else {
+        return BatchResult(
+            successes: [],
+            failures: [],
+            duration: ContinuousClock.now - startTime
+        )
+    }
+
+    return await withTaskGroup(of: CancellableTaskResult<T>?.self) { group in
+        var successes: [(index: Int, value: T)] = []
+        var failures: [(index: Int, error: WrappedError)] = []
+        var completedCount = 0
+        var wasCancelled = false
+        var wasTimeout = false
+
+        // Task de timeout
+        group.addTask {
+            do {
+                try await Task.sleep(for: timeout)
+                return nil // Señal de timeout
+            } catch {
+                return nil // Cancelado
+            }
+        }
+
+        // Agregar operaciones con verificación de cancelación
+        var pendingOperations = Array(operations.enumerated())
+
+        func addNextOperationWithCancellationCheck() {
+            guard !pendingOperations.isEmpty else { return }
+            let (index, operation) = pendingOperations.removeFirst()
+            group.addTask {
+                // Verificar cancelación antes de ejecutar
+                if Task.isCancelled {
+                    return .cancelled(index: index)
+                }
+
+                do {
+                    let value = try await operation()
+
+                    // Verificar cancelación después de ejecutar
+                    if Task.isCancelled {
+                        return .cancelledAfterCompletion(index: index, value: value)
+                    }
+
+                    return .success(index: index, value: value)
+                } catch is CancellationError {
+                    return .cancelled(index: index)
+                } catch {
+                    return .failure(index: index, error: WrappedError(error, operationIndex: index))
+                }
+            }
+        }
+
+        // Agregar operaciones iniciales
+        let initialCount = maxConcurrency ?? operations.count
+        for _ in 0..<min(initialCount, operations.count) {
+            addNextOperationWithCancellationCheck()
+        }
+
+        // Recolectar resultados
+        while let result = await group.next() {
+            guard let taskResult = result else {
+                // Timeout alcanzado
+                wasTimeout = true
+                wasCancelled = true
+                group.cancelAll()
+                break
+            }
+
+            completedCount += 1
+
+            switch taskResult {
+            case .success(let index, let value):
+                successes.append((index, value))
+
+            case .cancelledAfterCompletion(let index, let value):
+                // La operación completó pero la task fue cancelada después
+                // Aún guardamos el resultado ya que fue exitoso
+                successes.append((index, value))
+                wasCancelled = true
+
+            case .failure(let index, let error):
+                failures.append((index, error))
+                if cancelOnFirstError {
+                    wasCancelled = true
+                    group.cancelAll()
+                    break
+                }
+
+            case .cancelled(let index):
+                failures.append((
+                    index,
+                    WrappedError(
+                        description: "Operation was cancelled",
+                        errorType: "CancellationError",
+                        operationIndex: index
+                    )
+                ))
+                wasCancelled = true
+            }
+
+            // Agregar siguiente operación si hay límite de concurrencia
+            if maxConcurrency != nil && !wasCancelled {
+                addNextOperationWithCancellationCheck()
+            }
+
+            if completedCount == operations.count {
+                break
+            }
+        }
+
+        // Manejar operaciones no completadas
+        if wasCancelled {
+            let completedIndices = Set(successes.map { $0.index } + failures.map { $0.index })
+
+            for (index, _) in operations.enumerated() where !completedIndices.contains(index) {
+                let errorDescription = wasTimeout ? "Operation timed out" : "Operation was cancelled"
+                let errorType = wasTimeout ? "TimeoutError" : "CancellationError"
+
+                failures.append((
+                    index,
+                    WrappedError(
+                        description: errorDescription,
+                        errorType: errorType,
+                        operationIndex: index
+                    )
+                ))
+            }
+
+            // Ejecutar cleanup handler con resultados parciales
+            if let onCancellation {
+                await onCancellation(successes)
+            }
+        }
+
+        return BatchResult(
+            successes: successes,
+            failures: failures,
+            duration: ContinuousClock.now - startTime
+        )
+    }
+}
+
+/// Resultado interno para operaciones cancellables.
+private enum CancellableTaskResult<T: Sendable>: Sendable {
+    case success(index: Int, value: T)
+    case failure(index: Int, error: WrappedError)
+    case cancelled(index: Int)
+    case cancelledAfterCompletion(index: Int, value: T)
+}
+
+// MARK: - Throwing Task Group with Cancellation Support
+
+/// Ejecuta operaciones con timeout lanzando excepción si hay cancelación.
+///
+/// Similar a `withThrowingTaskGroupWithTimeout` pero con mejor propagación
+/// de cancelación y cleanup.
+///
+/// - Parameters:
+///   - timeout: Timeout máximo
+///   - onCancellation: Handler de cleanup opcional
+///   - operations: Operaciones a ejecutar
+/// - Returns: Array de resultados en orden
+/// - Throws: `CancellationReason.timeout`, `CancellationReason.parentTaskCancelled`,
+///           o errores de las operaciones
+public func withThrowingCancellableTaskGroup<T: Sendable>(
+    timeout: Duration,
+    onCancellation: (@Sendable () async -> Void)? = nil,
+    operations: [@Sendable () async throws -> T]
+) async throws -> [T] {
+    guard !operations.isEmpty else {
+        return []
+    }
+
+    // Verificar cancelación antes de empezar
+    if Task.isCancelled {
+        await onCancellation?()
+        throw CancellationReason.parentTaskCancelled
+    }
+
+    return try await withThrowingTaskGroup(of: IndexedTimeoutResult<T>.self) { group in
+        // Task de timeout
+        group.addTask {
+            try await Task.sleep(for: timeout)
+            return .timeout
+        }
+
+        // Agregar operaciones
+        for (index, operation) in operations.enumerated() {
+            group.addTask {
+                // Verificar cancelación
+                if Task.isCancelled {
+                    throw CancellationError()
+                }
+
+                let value = try await operation()
+                return .result(index: index, value: value)
+            }
+        }
+
+        var results: [(Int, T)] = []
+        results.reserveCapacity(operations.count)
+
+        // Recolectar resultados
+        do {
+            while let signal = try await group.next() {
+                // Verificar cancelación durante recolección
+                if Task.isCancelled {
+                    group.cancelAll()
+                    await onCancellation?()
+                    throw CancellationReason.parentTaskCancelled
+                }
+
+                switch signal {
+                case .timeout:
+                    group.cancelAll()
+                    await onCancellation?()
+                    throw CancellationReason.timeout(duration: Double(timeout.components.seconds))
+
+                case .result(let index, let value):
+                    results.append((index, value))
+                    if results.count == operations.count {
+                        group.cancelAll()
+                        break
+                    }
+                }
+            }
+        } catch is CancellationError {
+            group.cancelAll()
+            await onCancellation?()
+            throw CancellationReason.parentTaskCancelled
+        }
+
+        return results.sorted { $0.0 < $1.0 }.map { $0.1 }
+    }
+}
+
+/// Resultado indexado para task group con timeout.
+private enum IndexedTimeoutResult<T: Sendable>: Sendable {
+    case timeout
+    case result(index: Int, value: T)
+}
+
 private func withTaskGroupCollectingResultsNoTimeout<T: Sendable>(
     cancelOnFirstError: Bool,
     maxConcurrency: Int?,

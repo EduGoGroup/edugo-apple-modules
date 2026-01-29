@@ -54,6 +54,9 @@ public actor LocalUserRepository: UserRepositoryProtocol {
     /// Maximum number of items allowed in a single batch operation.
     private static let maxBatchSize = 100
 
+    /// Default timeout for batch operations (30 seconds).
+    private static let defaultBatchTimeout: Duration = .seconds(30)
+
     // MARK: - Properties
 
     private let containerProvider: PersistenceContainerProvider
@@ -65,6 +68,9 @@ public actor LocalUserRepository: UserRepositoryProtocol {
     /// Coordinator for batch operations returning User.
     private let userCoordinator: TaskGroupCoordinator<User?>
 
+    /// Handler for timeout and cancellation management.
+    private let cancellationHandler: CancellationHandler
+
     // MARK: - Initialization
 
     /// Creates a new LocalUserRepository
@@ -74,6 +80,12 @@ public actor LocalUserRepository: UserRepositoryProtocol {
         self.containerProvider = containerProvider
         self.voidCoordinator = TaskGroupCoordinator<Void>()
         self.userCoordinator = TaskGroupCoordinator<User?>()
+        self.cancellationHandler = CancellationHandler(
+            configuration: .init(
+                defaultTimeout: Self.defaultBatchTimeout,
+                defaultBatchTimeout: Self.defaultBatchTimeout
+            )
+        )
     }
 
     // MARK: - Single-Item Operations
@@ -220,16 +232,25 @@ public actor LocalUserRepository: UserRepositoryProtocol {
     ///
     /// Operations are executed in parallel with a maximum concurrency of 10
     /// to prevent resource exhaustion. Partial errors do not stop the entire
-    /// batch operation.
+    /// batch operation. Includes configurable timeout support.
     ///
-    /// - Parameter users: Array of users to save.
+    /// - Parameters:
+    ///   - users: Array of users to save.
+    ///   - timeout: Optional timeout for the batch operation (default: 30s).
     /// - Returns: Result with successes and failures for each operation.
-    /// - Throws: `RepositoryError.saveFailed` if input validation fails.
+    /// - Throws: `RepositoryError.saveFailed` if input validation fails,
+    ///           `CancellationReason.timeout` if timeout is exceeded.
     ///
     /// ## Rate Limiting
     ///
     /// Uses `maxConcurrency` of 10 concurrent operations to balance
     /// throughput and resource usage.
+    ///
+    /// ## Timeout Behavior
+    ///
+    /// If the timeout is exceeded, the operation returns with partial results.
+    /// Successfully saved users are included in `successes`, while timed-out
+    /// operations appear in `failures` with a timeout error.
     ///
     /// ## Example
     ///
@@ -246,8 +267,14 @@ public actor LocalUserRepository: UserRepositoryProtocol {
     ///         print("User at index \(index) failed: \(error)")
     ///     }
     /// }
+    ///
+    /// // With custom timeout
+    /// let result = try await repository.saveUsers(users, timeout: .seconds(60))
     /// ```
-    public func saveUsers(_ users: [User]) async throws -> BatchOperationResult<User> {
+    public func saveUsers(
+        _ users: [User],
+        timeout: Duration? = nil
+    ) async throws -> BatchOperationResult<User> {
         // Input validation
         guard !users.isEmpty else {
             throw RepositoryError.saveFailed(reason: "Cannot save empty user list")
@@ -259,22 +286,37 @@ public actor LocalUserRepository: UserRepositoryProtocol {
             )
         }
 
+        // Check cancellation before starting
+        try await cancellationHandler.checkCancellation()
+
         await logBatchStart(operation: "saveUsers", count: users.count)
 
         // Create operations for each user
         let operations: [@Sendable () async throws -> Void] = users.map { user in
             { [weak self] in
                 guard let self else { throw RepositoryError.saveFailed(reason: "Repository deallocated") }
+                // Check cancellation before each operation
+                if Task.isCancelled {
+                    throw CancellationReason.parentTaskCancelled
+                }
                 try await self.save(user)
             }
         }
 
-        // Execute batch with rate limiting
-        let batchResult = await voidCoordinator.executeBatchCollecting(
-            operations,
-            options: TaskBatchOptions(
-                configuration: TaskGroupConfiguration(maxConcurrency: Self.maxConcurrency)
-            )
+        // Execute batch with rate limiting and timeout
+        let effectiveTimeout = timeout ?? Self.defaultBatchTimeout
+        let batchResult = await withCancellableTaskGroup(
+            timeout: effectiveTimeout,
+            maxConcurrency: Self.maxConcurrency,
+            onCancellation: { [weak self] partialSuccesses in
+                // Log partial completion on cancellation
+                await self?.logBatchCancellation(
+                    operation: "saveUsers",
+                    completed: partialSuccesses.count,
+                    total: users.count
+                )
+            },
+            operations: operations
         )
 
         // Convert to BatchOperationResult
@@ -305,13 +347,18 @@ public actor LocalUserRepository: UserRepositoryProtocol {
 
     /// Deletes multiple users concurrently using TaskGroupCoordinator.
     ///
-    /// Operations are executed in parallel with rate limiting.
+    /// Operations are executed in parallel with rate limiting and timeout.
     /// Partial errors do not stop the entire batch operation.
     ///
-    /// - Parameter ids: Array of UUIDs of users to delete.
+    /// - Parameters:
+    ///   - ids: Array of UUIDs of users to delete.
+    ///   - timeout: Optional timeout for the batch operation (default: 30s).
     /// - Returns: Result with successfully deleted IDs and failures.
     /// - Throws: `RepositoryError.deleteFailed` if input validation fails.
-    public func deleteUsers(ids: [UUID]) async throws -> BatchOperationResult<UUID> {
+    public func deleteUsers(
+        ids: [UUID],
+        timeout: Duration? = nil
+    ) async throws -> BatchOperationResult<UUID> {
         // Input validation
         guard !ids.isEmpty else {
             throw RepositoryError.deleteFailed(reason: "Cannot delete empty ID list")
@@ -323,22 +370,36 @@ public actor LocalUserRepository: UserRepositoryProtocol {
             )
         }
 
+        // Check cancellation before starting
+        try await cancellationHandler.checkCancellation()
+
         await logBatchStart(operation: "deleteUsers", count: ids.count)
 
         // Create operations for each ID
         let operations: [@Sendable () async throws -> Void] = ids.map { id in
             { [weak self] in
                 guard let self else { throw RepositoryError.deleteFailed(reason: "Repository deallocated") }
+                // Check cancellation before each operation
+                if Task.isCancelled {
+                    throw CancellationReason.parentTaskCancelled
+                }
                 try await self.delete(id: id)
             }
         }
 
-        // Execute batch with rate limiting
-        let batchResult = await voidCoordinator.executeBatchCollecting(
-            operations,
-            options: TaskBatchOptions(
-                configuration: TaskGroupConfiguration(maxConcurrency: Self.maxConcurrency)
-            )
+        // Execute batch with rate limiting and timeout
+        let effectiveTimeout = timeout ?? Self.defaultBatchTimeout
+        let batchResult = await withCancellableTaskGroup(
+            timeout: effectiveTimeout,
+            maxConcurrency: Self.maxConcurrency,
+            onCancellation: { [weak self] partialSuccesses in
+                await self?.logBatchCancellation(
+                    operation: "deleteUsers",
+                    completed: partialSuccesses.count,
+                    total: ids.count
+                )
+            },
+            operations: operations
         )
 
         // Convert to BatchOperationResult
@@ -364,13 +425,18 @@ public actor LocalUserRepository: UserRepositoryProtocol {
 
     /// Gets multiple users concurrently using TaskGroupCoordinator.
     ///
-    /// Operations are executed in parallel with rate limiting.
+    /// Operations are executed in parallel with rate limiting and timeout.
     /// Users not found are reported as failures.
     ///
-    /// - Parameter ids: Array of UUIDs of users to fetch.
+    /// - Parameters:
+    ///   - ids: Array of UUIDs of users to fetch.
+    ///   - timeout: Optional timeout for the batch operation (default: 30s).
     /// - Returns: Result with found users and failures.
     /// - Throws: `RepositoryError.fetchFailed` if input validation fails.
-    public func getUsers(ids: [UUID]) async throws -> BatchOperationResult<User> {
+    public func getUsers(
+        ids: [UUID],
+        timeout: Duration? = nil
+    ) async throws -> BatchOperationResult<User> {
         // Input validation
         guard !ids.isEmpty else {
             throw RepositoryError.fetchFailed(reason: "Cannot fetch empty ID list")
@@ -382,22 +448,36 @@ public actor LocalUserRepository: UserRepositoryProtocol {
             )
         }
 
+        // Check cancellation before starting
+        try await cancellationHandler.checkCancellation()
+
         await logBatchStart(operation: "getUsers", count: ids.count)
 
         // Create operations for each ID
         let operations: [@Sendable () async throws -> User?] = ids.map { id in
             { [weak self] in
                 guard let self else { throw RepositoryError.fetchFailed(reason: "Repository deallocated") }
+                // Check cancellation before each operation
+                if Task.isCancelled {
+                    throw CancellationReason.parentTaskCancelled
+                }
                 return try await self.get(id: id)
             }
         }
 
-        // Execute batch with rate limiting
-        let batchResult = await userCoordinator.executeBatchCollecting(
-            operations,
-            options: TaskBatchOptions(
-                configuration: TaskGroupConfiguration(maxConcurrency: Self.maxConcurrency)
-            )
+        // Execute batch with rate limiting and timeout
+        let effectiveTimeout = timeout ?? Self.defaultBatchTimeout
+        let batchResult = await withCancellableTaskGroup(
+            timeout: effectiveTimeout,
+            maxConcurrency: Self.maxConcurrency,
+            onCancellation: { [weak self] partialSuccesses in
+                await self?.logBatchCancellation(
+                    operation: "getUsers",
+                    completed: partialSuccesses.count,
+                    total: ids.count
+                )
+            },
+            operations: operations
         )
 
         // Convert to BatchOperationResult, treating nil as "not found"
@@ -445,5 +525,11 @@ public actor LocalUserRepository: UserRepositoryProtocol {
                 await Logger.shared.debug("[LocalUserRepository] \(operation) failed at index \(index): \(error)")
             }
         }
+    }
+
+    private func logBatchCancellation(operation: String, completed: Int, total: Int) async {
+        await Logger.shared.info(
+            "[LocalUserRepository] Batch \(operation) cancelled/timed out - Completed: \(completed)/\(total)"
+        )
     }
 }
