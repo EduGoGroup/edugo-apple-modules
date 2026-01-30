@@ -25,7 +25,7 @@ public struct StateStream<State: AsyncState>: AsyncSequence, Sendable {
     /// Creates a StateStream wrapping an AsyncStream.
     ///
     /// - Parameter sequence: The underlying AsyncStream to wrap.
-    internal init(sequence: AsyncStream<State>) {
+    public init(sequence: AsyncStream<State>) {
         self.sequence = sequence
     }
 
