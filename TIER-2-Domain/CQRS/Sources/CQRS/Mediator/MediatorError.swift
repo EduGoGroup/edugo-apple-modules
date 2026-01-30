@@ -23,15 +23,9 @@ extension MediatorError: CustomStringConvertible {
         case .handlerNotFound(let type):
             return "Handler not found for type: \(type)"
         case .validationError(let message, let error):
-            if let error = error {
-                return "Validation error: \(message). Underlying error: \(error)"
-            }
-            return "Validation error: \(message)"
+            return "Validation error: \(message)\(error.map { ". Underlying error: \($0)" } ?? "")"
         case .executionError(let message, let error):
-            if let error = error {
-                return "Execution error: \(message). Underlying error: \(error)"
-            }
-            return "Execution error: \(message)"
+            return "Execution error: \(message)\(error.map { ". Underlying error: \($0)" } ?? "")"
         case .registrationError(let message):
             return "Registration error: \(message)"
         }

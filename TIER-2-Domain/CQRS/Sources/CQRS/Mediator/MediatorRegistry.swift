@@ -67,7 +67,9 @@ public actor MediatorRegistry {
     /// Registra un QueryHandler para un tipo específico de Query
     ///
     /// - Parameter handler: El handler a registrar
-    /// - Throws: `MediatorError.registrationError` si ya existe un handler para ese tipo
+    /// - Throws:
+    ///   - `MediatorError.registrationError` si ya existe un handler registrado para este tipo de query
+    /// - Note: Para APIs de nivel enterprise, todos los casos de error deben estar explícitamente documentados
     public func registerQueryHandler<H: QueryHandler>(_ handler: H) throws {
         let key = ObjectIdentifier(H.QueryType.self)
 
@@ -169,11 +171,17 @@ public actor MediatorRegistry {
     }
 
     /// Retorna el número de query handlers registrados
+    ///
+    /// Esta propiedad es útil para debugging y monitoreo del estado del mediator.
+    /// En producción, úsala para verificar el registro de handlers durante la inicialización de la app.
     public var queryHandlerCount: Int {
         queryHandlers.count
     }
 
     /// Retorna el número de command handlers registrados
+    ///
+    /// Esta propiedad es útil para debugging y monitoreo del estado del mediator.
+    /// En producción, úsala para verificar el registro de handlers durante la inicialización de la app.
     public var commandHandlerCount: Int {
         commandHandlers.count
     }

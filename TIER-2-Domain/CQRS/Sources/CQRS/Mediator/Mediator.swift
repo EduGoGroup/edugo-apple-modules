@@ -73,7 +73,7 @@ public actor Mediator {
         let queryType = String(describing: type(of: query))
 
         if loggingEnabled {
-            logger.debug("Dispatching query: \(queryType)")
+            logger.debug("Dispatching query: \(queryType, privacy: .public)")
         }
 
         do {
@@ -99,12 +99,12 @@ public actor Mediator {
 
         } catch let error as MediatorError {
             if loggingEnabled {
-                logger.error("Query failed: \(queryType). Error: \(error.description)")
+                logger.error("Query failed: \(queryType, privacy: .public). Error: \(error.description, privacy: .public)")
             }
             throw error
         } catch {
             if loggingEnabled {
-                logger.error("Query failed: \(queryType). Error: \(error.localizedDescription)")
+                logger.error("Query failed: \(queryType, privacy: .public). Error: \(error.localizedDescription, privacy: .public)")
             }
             throw MediatorError.executionError(
                 message: "Failed to execute query: \(queryType)",
@@ -135,7 +135,7 @@ public actor Mediator {
         let commandType = String(describing: type(of: command))
 
         if loggingEnabled {
-            logger.debug("Executing command: \(commandType)")
+            logger.debug("Executing command: \(commandType, privacy: .public)")
         }
 
         // Validar el command antes de ejecutarlo
@@ -178,12 +178,12 @@ public actor Mediator {
 
         } catch let error as MediatorError {
             if loggingEnabled {
-                logger.error("Command failed: \(commandType). Error: \(error.description)")
+                logger.error("Command failed: \(commandType, privacy: .public). Error: \(error.description, privacy: .public)")
             }
             throw error
         } catch {
             if loggingEnabled {
-                logger.error("Command failed: \(commandType). Error: \(error.localizedDescription)")
+                logger.error("Command failed: \(commandType, privacy: .public). Error: \(error.localizedDescription, privacy: .public)")
             }
             throw MediatorError.executionError(
                 message: "Failed to execute command: \(commandType)",
@@ -274,6 +274,9 @@ public actor Mediator {
     }
 
     /// Retorna el número de query handlers registrados
+    ///
+    /// Esta propiedad asíncrona delega al registry interno para obtener el conteo.
+    /// Úsala para monitoreo y debugging del estado del mediator en producción.
     public var queryHandlerCount: Int {
         get async {
             await registry.queryHandlerCount
@@ -281,6 +284,9 @@ public actor Mediator {
     }
 
     /// Retorna el número de command handlers registrados
+    ///
+    /// Esta propiedad asíncrona delega al registry interno para obtener el conteo.
+    /// Úsala para monitoreo y debugging del estado del mediator en producción.
     public var commandHandlerCount: Int {
         get async {
             await registry.commandHandlerCount
