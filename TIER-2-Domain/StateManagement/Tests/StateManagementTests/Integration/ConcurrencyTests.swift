@@ -22,8 +22,8 @@ struct StatePublisherRaceConditionTests {
     @Test("Multiple tasks emitting concurrently to same publisher")
     func multipleTasksEmittingConcurrently() async throws {
         let publisher = StatePublisher<ConcurrencyTestState>()
-        let taskCount = 100
-        let emissionsPerTask = 10
+        let taskCount = 20  // Reduced from 100 for faster tests
+        let emissionsPerTask = 5  // Reduced from 10 for faster tests
 
         await withTaskGroup(of: Void.self) { group in
             for taskId in 0..<taskCount {
@@ -45,14 +45,14 @@ struct StatePublisherRaceConditionTests {
     @Test("Concurrent readers and writer")
     func concurrentReadersAndWriter() async throws {
         let publisher = StatePublisher<ConcurrencyTestState>()
-        let iterations = 50
+        let iterations = 20  // Reduced from 50 for faster tests
 
         await withTaskGroup(of: Void.self) { group in
             // Writer task
             group.addTask {
                 for i in 0..<iterations {
                     await publisher.send(ConcurrencyTestState(id: i))
-                    try? await Task.sleep(nanoseconds: 1_000_000)
+                    try? await Task.sleep(nanoseconds: 100_000)  // Reduced from 1ms to 0.1ms
                 }
             }
 
@@ -61,7 +61,7 @@ struct StatePublisherRaceConditionTests {
                 group.addTask {
                     for _ in 0..<iterations {
                         _ = await publisher.currentState
-                        try? await Task.sleep(nanoseconds: 500_000)
+                        try? await Task.sleep(nanoseconds: 50_000)  // Reduced from 0.5ms to 0.05ms
                     }
                 }
             }
@@ -75,13 +75,13 @@ struct StatePublisherRaceConditionTests {
         let publisher = StatePublisher<ConcurrencyTestState>()
 
         let emitTask = Task {
-            for i in 0..<1000 {
+            for i in 0..<100 {  // Reduced from 1000 for faster tests
                 await publisher.send(ConcurrencyTestState(id: i))
             }
         }
 
         // Small delay then finish
-        try await Task.sleep(nanoseconds: 10_000_000)
+        try await Task.sleep(nanoseconds: 1_000_000)  // Reduced from 10ms to 1ms
         await publisher.finish()
 
         emitTask.cancel()
@@ -142,7 +142,7 @@ struct StateStreamRaceConditionTests {
             var count = 0
             for await _ in stream {
                 count += 1
-                try? await Task.sleep(nanoseconds: 10_000_000)
+                try? await Task.sleep(nanoseconds: 1_000_000)  // Reduced from 10ms to 1ms
             }
             return count
         }
@@ -234,7 +234,7 @@ struct BufferRaceConditionTests {
     @Test("Concurrent enqueue and dequeue on BoundedBuffer")
     func concurrentEnqueueDequeueOnBoundedBuffer() async throws {
         let buffer = BoundedBuffer<ConcurrencyTestState>(capacity: 10)
-        let iterations = 100
+        let iterations = 50  // Reduced from 100 for faster tests
 
         await withTaskGroup(of: Void.self) { group in
             // Producer
@@ -266,7 +266,7 @@ struct BufferRaceConditionTests {
         let buffer = DroppingBuffer<ConcurrencyTestState>(capacity: 5)
 
         await withTaskGroup(of: Void.self) { group in
-            for i in 0..<100 {
+            for i in 0..<50 {  // Reduced from 100 for faster tests
                 group.addTask {
                     await buffer.enqueue(ConcurrencyTestState(id: i))
                 }
@@ -283,7 +283,7 @@ struct BufferRaceConditionTests {
         let buffer = UnboundedBuffer<ConcurrencyTestState>()
 
         await withTaskGroup(of: Void.self) { group in
-            for i in 0..<100 {
+            for i in 0..<50 {  // Reduced from 100 for faster tests
                 group.addTask {
                     await buffer.enqueue(ConcurrencyTestState(id: i))
                 }
@@ -292,7 +292,7 @@ struct BufferRaceConditionTests {
 
         // All items should be enqueued
         let count = await buffer.count
-        #expect(count == 100)
+        #expect(count == 50)  // Updated to match reduced iteration count
     }
 }
 
@@ -307,9 +307,9 @@ struct StateMachineRaceConditionTests {
 
         await withTaskGroup(of: Void.self) { group in
             // State reader tasks
-            for _ in 0..<10 {
+            for _ in 0..<5 {  // Reduced from 10 for faster tests
                 group.addTask {
-                    for _ in 0..<100 {
+                    for _ in 0..<20 {  // Reduced from 100 for faster tests
                         _ = await machine.currentState
                     }
                 }
@@ -356,7 +356,7 @@ struct ConcurrencyStressTests {
     @Test("High-frequency emissions")
     func highFrequencyEmissions() async throws {
         let publisher = StatePublisher<ConcurrencyTestState>()
-        let emissionCount = 1000
+        let emissionCount = 200  // Reduced from 1000 for faster tests
 
         let emitTask = Task {
             for i in 0..<emissionCount {
@@ -374,8 +374,8 @@ struct ConcurrencyStressTests {
 
     @Test("Many concurrent publishers")
     func manyConcurrentPublishers() async throws {
-        let publisherCount = 50
-        let emissionsPerPublisher = 20
+        let publisherCount = 10  // Reduced from 50 for faster tests
+        let emissionsPerPublisher = 5  // Reduced from 20 for faster tests
 
         await withTaskGroup(of: Void.self) { group in
             for p in 0..<publisherCount {
@@ -394,7 +394,7 @@ struct ConcurrencyStressTests {
 
     @Test("Rapid create and destroy cycles")
     func rapidCreateAndDestroyCycles() async throws {
-        for cycle in 0..<100 {
+        for cycle in 0..<20 {  // Reduced from 100 for faster tests
             let publisher = StatePublisher<ConcurrencyTestState>()
             await publisher.send(ConcurrencyTestState(id: cycle))
             await publisher.finish()

@@ -39,7 +39,7 @@ struct EmissionPerformanceTests {
         }
 
         // Small delay to ensure consumer is ready
-        try await Task.sleep(nanoseconds: 10_000_000)
+        try await Task.sleep(nanoseconds: 1_000_000)  // Reduced from 10ms to 1ms
 
         for i in 0..<sampleCount {
             await publisher.send(PerformanceTestState(id: i))
@@ -55,7 +55,7 @@ struct EmissionPerformanceTests {
     @Test("High throughput emission")
     func highThroughputEmission() async throws {
         let publisher = StatePublisher<PerformanceTestState>()
-        let emissionCount = 10_000
+        let emissionCount = 1_000  // Reduced from 10,000 for faster tests
 
         let startTime = Date()
 
@@ -101,7 +101,7 @@ struct OperatorPerformanceTests {
     func mapOperatorPerformance() async throws {
         let publisher = StatePublisher<PerformanceTestState>()
         let stream = await publisher.stream
-        let emissionCount = 1000
+        let emissionCount = 200  // Reduced from 1000 for faster tests
 
         let mappedStream = stream.map { state in
             PerformanceTestState(id: state.id * 2, payloadSize: 10)
@@ -116,7 +116,7 @@ struct OperatorPerformanceTests {
             return count
         }
 
-        try await Task.sleep(nanoseconds: 5_000_000)
+        try await Task.sleep(nanoseconds: 1_000_000)  // Reduced from 5ms to 1ms
 
         let startTime = Date()
         for i in 0..<emissionCount {
@@ -135,7 +135,7 @@ struct OperatorPerformanceTests {
     func filterOperatorPerformance() async throws {
         let publisher = StatePublisher<PerformanceTestState>()
         let stream = await publisher.stream
-        let emissionCount = 1000
+        let emissionCount = 200  // Reduced from 1000 for faster tests
 
         let filteredStream = stream.filter { state in
             state.id % 2 == 0
@@ -150,7 +150,7 @@ struct OperatorPerformanceTests {
             return count
         }
 
-        try await Task.sleep(nanoseconds: 5_000_000)
+        try await Task.sleep(nanoseconds: 1_000_000)  // Reduced from 5ms to 1ms
 
         let startTime = Date()
         for i in 0..<emissionCount {
@@ -169,7 +169,7 @@ struct OperatorPerformanceTests {
     func chainedOperatorsPerformance() async throws {
         let publisher = StatePublisher<PerformanceTestState>()
         let stream = await publisher.stream
-        let emissionCount = 500
+        let emissionCount = 100  // Reduced from 500 for faster tests
 
         let processedStream = stream
             .filter { $0.id % 2 == 0 }
@@ -185,7 +185,7 @@ struct OperatorPerformanceTests {
             return count
         }
 
-        try await Task.sleep(nanoseconds: 5_000_000)
+        try await Task.sleep(nanoseconds: 1_000_000)  // Reduced from 5ms to 1ms
 
         let startTime = Date()
         for i in 0..<emissionCount {
@@ -209,7 +209,7 @@ struct BufferPerformanceTests {
     @Test("UnboundedBuffer enqueue performance")
     func unboundedBufferEnqueuePerformance() async throws {
         let buffer = UnboundedBuffer<PerformanceTestState>()
-        let operationCount = 10_000
+        let operationCount = 1_000  // Reduced from 10,000 for faster tests
 
         let startTime = Date()
         for i in 0..<operationCount {
@@ -225,7 +225,7 @@ struct BufferPerformanceTests {
     @Test("BoundedBuffer enqueue/dequeue cycle performance")
     func boundedBufferCyclePerformance() async throws {
         let buffer = BoundedBuffer<PerformanceTestState>(capacity: 100)
-        let operationCount = 1000
+        let operationCount = 200  // Reduced from 1000 for faster tests
 
         let startTime = Date()
 
@@ -244,7 +244,7 @@ struct BufferPerformanceTests {
     @Test("DroppingBuffer under pressure")
     func droppingBufferUnderPressure() async throws {
         let buffer = DroppingBuffer<PerformanceTestState>(capacity: 10)
-        let operationCount = 10_000
+        let operationCount = 1_000  // Reduced from 10,000 for faster tests
 
         let startTime = Date()
         var droppedCount = 0

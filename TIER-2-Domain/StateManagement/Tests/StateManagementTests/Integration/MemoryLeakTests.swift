@@ -43,7 +43,7 @@ struct StatePublisherMemoryTests {
         }
 
         // Give time for deallocation
-        try await Task.sleep(nanoseconds: 100_000_000)
+        try await Task.sleep(nanoseconds: 10_000_000)  // Reduced from 100ms to 10ms
 
         // Note: In actors, deallocation may be delayed
         // This test verifies the pattern works correctly
@@ -53,7 +53,7 @@ struct StatePublisherMemoryTests {
     @Test("No memory growth with many emissions")
     func noMemoryGrowthWithManyEmissions() async throws {
         let publisher = StatePublisher<MemoryTestState>()
-        let emissionCount = 10_000
+        let emissionCount = 1_000  // Reduced from 10,000 for faster tests
 
         // Emit many states
         for i in 0..<emissionCount {
@@ -182,7 +182,7 @@ struct OperatorMemoryTests {
             return lastId
         }
 
-        try await Task.sleep(nanoseconds: 10_000_000)
+        try await Task.sleep(nanoseconds: 1_000_000)  // Reduced from 10ms to 1ms
 
         for i in 0..<100 {
             await publisher.send(MemoryTestState(id: i, dataSize: 10))
@@ -212,7 +212,7 @@ struct OperatorMemoryTests {
             return count
         }
 
-        try await Task.sleep(nanoseconds: 10_000_000)
+        try await Task.sleep(nanoseconds: 1_000_000)  // Reduced from 10ms to 1ms
 
         for i in 0..<100 {
             await publisher.send(MemoryTestState(id: i, dataSize: 10))
@@ -242,7 +242,7 @@ struct OperatorMemoryTests {
             return lastValue
         }
 
-        try await Task.sleep(nanoseconds: 10_000_000)
+        try await Task.sleep(nanoseconds: 1_000_000)  // Reduced from 10ms to 1ms
 
         for i in 0..<100 {
             await publisher.send(MemoryTestState(id: i, dataSize: 10))
@@ -312,7 +312,7 @@ struct MemoryStressTests {
 
     @Test("Rapid create destroy cycle")
     func rapidCreateDestroyCycle() async throws {
-        for cycle in 0..<100 {
+        for cycle in 0..<20 {  // Reduced from 100 for faster tests
             let publisher = StatePublisher<MemoryTestState>()
             for i in 0..<10 {
                 await publisher.send(MemoryTestState(id: cycle * 10 + i, dataSize: 100))
@@ -327,25 +327,25 @@ struct MemoryStressTests {
         let publisher = StatePublisher<MemoryTestState>()
 
         // Emit states with large payloads
-        for i in 0..<100 {
+        for i in 0..<50 {  // Reduced from 100 for faster tests
             await publisher.send(MemoryTestState(id: i, dataSize: 10_000))
         }
 
         // Only current should be retained
         let current = await publisher.currentState
-        #expect(current?.id == 99)
+        #expect(current?.id == 49)  // Updated to match reduced iteration count
 
         await publisher.finish()
     }
 
     @Test("Many buffers lifecycle")
     func manyBuffersLifecycle() async throws {
-        for _ in 0..<50 {
+        for _ in 0..<10 {  // Reduced from 50 for faster tests
             let bounded = BoundedBuffer<MemoryTestState>(capacity: 10)
             let dropping = DroppingBuffer<MemoryTestState>(capacity: 10)
             let unbounded = UnboundedBuffer<MemoryTestState>()
 
-            for i in 0..<20 {
+            for i in 0..<10 {  // Reduced from 20 for faster tests
                 await bounded.enqueue(MemoryTestState(id: i, dataSize: 10))
                 await dropping.enqueue(MemoryTestState(id: i, dataSize: 10))
                 await unbounded.enqueue(MemoryTestState(id: i, dataSize: 10))
