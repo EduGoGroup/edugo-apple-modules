@@ -36,21 +36,33 @@ public actor Mediator {
     /// Indica si el logging está habilitado
     private let loggingEnabled: Bool
 
+    /// Indica si las métricas están habilitadas
+    private let metricsEnabled: Bool
+
+    /// Instancia de métricas (inyectable para testing)
+    private let metrics: CQRSMetrics
+
     // MARK: - Inicialización
 
     /// Crea una nueva instancia del Mediator
     ///
     /// - Parameters:
     ///   - loggingEnabled: Habilita o deshabilita el logging (default: true)
+    ///   - metricsEnabled: Habilita o deshabilita las métricas (default: true)
+    ///   - metrics: Instancia de CQRSMetrics a usar (default: shared)
     ///   - subsystem: Subsystem para el logger OSLog
     ///   - category: Categoría para el logger OSLog
     public init(
         loggingEnabled: Bool = true,
+        metricsEnabled: Bool = true,
+        metrics: CQRSMetrics = CQRSMetrics.shared,
         subsystem: String = "com.edugo.cqrs",
         category: String = "Mediator"
     ) {
         self.registry = MediatorRegistry()
         self.loggingEnabled = loggingEnabled
+        self.metricsEnabled = metricsEnabled
+        self.metrics = metrics
         self.logger = Logger(subsystem: subsystem, category: category)
     }
 
@@ -71,6 +83,7 @@ public actor Mediator {
     /// ```
     public func send<Q: Query>(_ query: Q) async throws -> Q.Result {
         let queryType = String(describing: type(of: query))
+        let startTime = ContinuousClock.now
 
         if loggingEnabled {
             logger.debug("Dispatching query: \(queryType, privacy: .public)")
@@ -91,6 +104,15 @@ public actor Mediator {
                 )
             }
 
+            // Registrar métricas de latencia
+            if metricsEnabled {
+                let duration = ContinuousClock.now - startTime
+                await metrics.recordQueryLatency(
+                    queryType: queryType,
+                    duration: duration
+                )
+            }
+
             if loggingEnabled {
                 logger.debug("Query executed successfully: \(queryType)")
             }
@@ -98,11 +120,21 @@ public actor Mediator {
             return typedResult
 
         } catch let error as MediatorError {
+            // Registrar error en métricas
+            if metricsEnabled {
+                await metrics.recordError(handlerType: queryType, error: error)
+            }
+
             if loggingEnabled {
                 logger.error("Query failed: \(queryType, privacy: .public). Error: \(error.description, privacy: .public)")
             }
             throw error
         } catch {
+            // Registrar error en métricas
+            if metricsEnabled {
+                await metrics.recordError(handlerType: queryType, error: error)
+            }
+
             if loggingEnabled {
                 logger.error("Query failed: \(queryType, privacy: .public). Error: \(error.localizedDescription, privacy: .public)")
             }
@@ -133,6 +165,7 @@ public actor Mediator {
     /// ```
     public func execute<C: Command>(_ command: C) async throws -> CommandResult<C.Result> {
         let commandType = String(describing: type(of: command))
+        let startTime = ContinuousClock.now
 
         if loggingEnabled {
             logger.debug("Executing command: \(commandType, privacy: .public)")
@@ -166,6 +199,20 @@ public actor Mediator {
                 )
             }
 
+            // Registrar métricas de latencia
+            if metricsEnabled {
+                let duration = ContinuousClock.now - startTime
+                await metrics.recordCommandLatency(
+                    commandType: commandType,
+                    duration: duration
+                )
+
+                // Registrar eventos publicados
+                for event in typedResult.events {
+                    await metrics.recordEventPublished(eventType: event)
+                }
+            }
+
             if loggingEnabled {
                 if typedResult.isSuccess {
                     logger.debug("Command executed successfully: \(commandType). Events: \(typedResult.events)")
@@ -177,11 +224,21 @@ public actor Mediator {
             return typedResult
 
         } catch let error as MediatorError {
+            // Registrar error en métricas
+            if metricsEnabled {
+                await metrics.recordError(handlerType: commandType, error: error)
+            }
+
             if loggingEnabled {
                 logger.error("Command failed: \(commandType, privacy: .public). Error: \(error.description, privacy: .public)")
             }
             throw error
         } catch {
+            // Registrar error en métricas
+            if metricsEnabled {
+                await metrics.recordError(handlerType: commandType, error: error)
+            }
+
             if loggingEnabled {
                 logger.error("Command failed: \(commandType, privacy: .public). Error: \(error.localizedDescription, privacy: .public)")
             }
