@@ -17,6 +17,7 @@ let package = Package(
     ],
     dependencies: [
         .package(path: "../../TIER-0-Foundation/EduGoCommon"),
+        .package(path: "../../TIER-1-Core/Models"),
         .package(path: "../UseCases")
     ],
     targets: [
@@ -24,6 +25,7 @@ let package = Package(
             name: "CQRS",
             dependencies: [
                 .product(name: "EduGoCommon", package: "EduGoCommon"),
+                .product(name: "Models", package: "Models"),
                 .product(name: "UseCases", package: "UseCases")
             ],
             swiftSettings: [
