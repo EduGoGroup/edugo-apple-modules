@@ -31,11 +31,10 @@ struct UploadMaterialFlowE2ETests {
         try await mediator.registerQueryHandler(listHandler)
 
         // Execute: Upload Material Command
+        let fileURL = URL(fileURLWithPath: "/tmp/test.pdf")
         let command = UploadMaterialCommand(
+            fileURL: fileURL,
             title: "Matemáticas Básicas",
-            fileData: Data("mock file content".utf8),
-            fileName: "matematicas.pdf",
-            mimeType: "application/pdf",
             subjectId: UUID(),
             unitId: UUID()
         )
@@ -49,7 +48,6 @@ struct UploadMaterialFlowE2ETests {
         // Verify: Material retornado
         if let material = result.getValue() {
             #expect(material.title == "Matemáticas Básicas")
-            #expect(material.fileName == "matematicas.pdf")
         }
 
         // Execute: List materials query
@@ -75,12 +73,11 @@ struct UploadMaterialFlowE2ETests {
 
         try await mediator.registerCommandHandler(uploadHandler)
 
-        // Execute: Upload con tipo MIME no soportado
+        // Execute: Upload con archivo .exe (no soportado)
+        let fileURL = URL(fileURLWithPath: "/tmp/test.exe")
         let command = UploadMaterialCommand(
+            fileURL: fileURL,
             title: "Test File",
-            fileData: Data("content".utf8),
-            fileName: "test.exe",
-            mimeType: "application/x-msdownload",
             subjectId: UUID(),
             unitId: UUID()
         )
@@ -102,11 +99,10 @@ struct UploadMaterialFlowE2ETests {
         try await mediator.registerCommandHandler(uploadHandler)
 
         // Execute: Upload
+        let fileURL = URL(fileURLWithPath: "/tmp/test.pdf")
         let command = UploadMaterialCommand(
+            fileURL: fileURL,
             title: "Test Material",
-            fileData: Data(repeating: 0, count: 1024 * 1024), // 1MB
-            fileName: "test.pdf",
-            mimeType: "application/pdf",
             subjectId: UUID(),
             unitId: UUID()
         )
@@ -115,9 +111,7 @@ struct UploadMaterialFlowE2ETests {
 
         // Verify: State machine fue usado (verificar metadata)
         #expect(result.isSuccess)
-        if let metadata = result.metadata {
-            #expect(metadata["finalState"] == "completed")
-        }
+        #expect(result.metadata["finalState"] == "completed")
     }
 }
 
@@ -134,20 +128,12 @@ actor MockUploadMaterialCommandHandler: CommandHandler {
     }
 
     func handle(_ command: UploadMaterialCommand) async throws -> CommandResult<Material> {
-        let material = Material(
-            id: UUID(),
+        let material = try Material(
             title: command.title,
-            description: nil,
-            fileName: command.fileName,
-            fileSize: Int64(command.fileData.count),
-            mimeType: command.mimeType,
-            url: URL(string: "https://example.com/\(command.fileName)")!,
-            subjectId: command.subjectId,
-            unitId: command.unitId,
-            uploadedBy: UUID(),
-            status: .ready,
-            createdAt: Date(),
-            updatedAt: Date()
+            description: command.description,
+            schoolID: UUID(),
+            academicUnitID: command.unitId,
+            uploadedByTeacherID: UUID()
         )
 
         // Invalidar cache de materials
@@ -166,33 +152,25 @@ actor MockUploadMaterialCommandHandlerWithValidation: CommandHandler {
     typealias CommandType = UploadMaterialCommand
 
     func handle(_ command: UploadMaterialCommand) async throws -> CommandResult<Material> {
-        // Validar tipo MIME
-        let supportedTypes = ["application/pdf", "video/mp4", "image/jpeg", "image/png"]
-        guard supportedTypes.contains(command.mimeType) else {
+        // Validar extensión del archivo
+        let fileExtension = command.fileURL.pathExtension.lowercased()
+        let supportedExtensions = ["pdf", "mp4", "jpg", "jpeg", "png"]
+
+        guard supportedExtensions.contains(fileExtension) else {
             return .failure(
-                ValidationError.unsupportedType(
-                    fieldName: "mimeType",
-                    type: command.mimeType,
-                    supported: supportedTypes
+                UseCaseError.preconditionFailed(
+                    description: "Unsupported file type: .\(fileExtension)"
                 ),
-                metadata: ["fileName": command.fileName]
+                metadata: ["fileExtension": fileExtension]
             )
         }
 
-        let material = Material(
-            id: UUID(),
+        let material = try Material(
             title: command.title,
-            description: nil,
-            fileName: command.fileName,
-            fileSize: Int64(command.fileData.count),
-            mimeType: command.mimeType,
-            url: URL(string: "https://example.com/\(command.fileName)")!,
-            subjectId: command.subjectId,
-            unitId: command.unitId,
-            uploadedBy: UUID(),
-            status: .ready,
-            createdAt: Date(),
-            updatedAt: Date()
+            description: command.description,
+            schoolID: UUID(),
+            academicUnitID: command.unitId,
+            uploadedByTeacherID: UUID()
         )
 
         return .success(
@@ -211,20 +189,12 @@ actor MockUploadMaterialCommandHandlerWithStateMachine: CommandHandler {
         // Simular transiciones de estado
         // idle -> uploading -> processing -> completed
 
-        let material = Material(
-            id: UUID(),
+        let material = try Material(
             title: command.title,
-            description: nil,
-            fileName: command.fileName,
-            fileSize: Int64(command.fileData.count),
-            mimeType: command.mimeType,
-            url: URL(string: "https://example.com/\(command.fileName)")!,
-            subjectId: command.subjectId,
-            unitId: command.unitId,
-            uploadedBy: UUID(),
-            status: .ready,
-            createdAt: Date(),
-            updatedAt: Date()
+            description: command.description,
+            schoolID: UUID(),
+            academicUnitID: command.unitId,
+            uploadedByTeacherID: UUID()
         )
 
         return .success(
@@ -247,20 +217,10 @@ actor MockListMaterialsQueryHandler: QueryHandler {
     private var cacheInvalidated = false
 
     func handle(_ query: ListMaterialsQuery) async throws -> MaterialsPage {
-        let material = Material(
-            id: UUID(),
+        let material = try Material(
             title: "Matemáticas Básicas",
-            description: nil,
-            fileName: "matematicas.pdf",
-            fileSize: 1024,
-            mimeType: "application/pdf",
-            url: URL(string: "https://example.com/matematicas.pdf")!,
-            subjectId: UUID(),
-            unitId: UUID(),
-            uploadedBy: UUID(),
-            status: .ready,
-            createdAt: Date(),
-            updatedAt: Date()
+            schoolID: UUID(),
+            uploadedByTeacherID: UUID()
         )
 
         return MaterialsPage(

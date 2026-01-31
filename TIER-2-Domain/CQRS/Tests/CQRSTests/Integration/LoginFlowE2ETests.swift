@@ -122,15 +122,10 @@ actor MockLoginCommandHandler: CommandHandler {
     typealias CommandType = LoginCommand
 
     func handle(_ command: LoginCommand) async throws -> CommandResult<LoginOutput> {
-        let user = Models.User(
-            id: UUID(),
-            email: command.email,
+        let user = try Models.User(
             firstName: "Test",
             lastName: "User",
-            role: .student,
-            status: .active,
-            createdAt: Date(),
-            updatedAt: Date()
+            email: command.email
         )
 
         let output = LoginOutput(
@@ -158,15 +153,10 @@ actor MockLoginCommandHandlerWithInvalidation: CommandHandler {
     }
 
     func handle(_ command: LoginCommand) async throws -> CommandResult<LoginOutput> {
-        let user = User(
-            id: UUID(),
-            email: command.email,
+        let user = try Models.User(
             firstName: "Test",
             lastName: "User",
-            role: .student,
-            status: .active,
-            createdAt: Date(),
-            updatedAt: Date()
+            email: command.email
         )
 
         // Invalidar cache de UserContext
@@ -192,7 +182,7 @@ actor MockLoginCommandHandlerFailure: CommandHandler {
 
     func handle(_ command: LoginCommand) async throws -> CommandResult<LoginOutput> {
         return .failure(
-            UseCaseError.authenticationFailed,
+            UseCaseError.unauthorized(action: "login with invalid credentials"),
             metadata: ["email": command.email]
         )
     }
@@ -207,22 +197,17 @@ actor MockGetUserContextQueryHandler: QueryHandler {
     private var cacheInvalidated = false
 
     func handle(_ query: GetUserContextQuery) async throws -> UserContext {
-        let user = User(
-            id: UUID(),
-            email: "test@edugo.com",
+        let user = try Models.User(
             firstName: "Test",
             lastName: "User",
-            role: .student,
-            status: .active,
-            createdAt: Date(),
-            updatedAt: Date()
+            email: "test@edugo.com"
         )
 
         return UserContext(
             user: user,
-            currentSchool: nil,
-            permissions: [],
-            preferences: [:]
+            memberships: [],
+            unitsMap: [:],
+            schoolsMap: [:]
         )
     }
 

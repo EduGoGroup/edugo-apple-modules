@@ -129,9 +129,7 @@ struct SubmitAssessmentFlowE2ETests {
 
         // Verify: State transitions correctas
         #expect(result.isSuccess)
-        if let metadata = result.metadata {
-            #expect(metadata["stateTransitions"] != nil)
-        }
+        #expect(result.metadata["stateTransitions"] != nil)
     }
 }
 
@@ -208,10 +206,13 @@ actor MockSubmitAssessmentCommandHandler: CommandHandler {
             score: 80,
             maxScore: 100,
             passed: true,
-            percentage: 80.0,
-            feedback: [],
+            correctAnswers: 8,
+            totalQuestions: 10,
             timeSpentSeconds: command.timeSpentSeconds,
-            submittedAt: Date()
+            feedback: [],
+            startedAt: Date().addingTimeInterval(-Double(command.timeSpentSeconds)),
+            completedAt: Date(),
+            canRetake: true
         )
 
         return .success(
@@ -247,10 +248,13 @@ actor MockSubmitAssessmentCommandHandlerWithStateMachine: CommandHandler {
             score: 90,
             maxScore: 100,
             passed: true,
-            percentage: 90.0,
-            feedback: [],
+            correctAnswers: 9,
+            totalQuestions: 10,
             timeSpentSeconds: command.timeSpentSeconds,
-            submittedAt: Date()
+            feedback: [],
+            startedAt: Date().addingTimeInterval(-Double(command.timeSpentSeconds)),
+            completedAt: Date(),
+            canRetake: false
         )
 
         return .success(

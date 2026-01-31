@@ -4,12 +4,12 @@ import Testing
 // MARK: - Test Implementations
 
 struct GetUserQuery: Query {
-    typealias Result = User
+    typealias Result = MockUser
     let userId: String
 }
 
 struct CreateUserCommand: Command {
-    typealias Result = User
+    typealias Result = MockUser
     let username: String
     let email: String
 
@@ -31,7 +31,7 @@ struct InvalidCommand: Command {
     }
 }
 
-struct User: Sendable, Equatable {
+struct MockUser: Sendable, Equatable {
     let id: String
     let username: String
     let email: String
@@ -48,8 +48,8 @@ enum ValidationError: Error {
 actor GetUserQueryHandler: QueryHandler {
     typealias QueryType = GetUserQuery
 
-    func handle(_ query: GetUserQuery) async throws -> User {
-        return User(
+    func handle(_ query: GetUserQuery) async throws -> MockUser {
+        return MockUser(
             id: query.userId,
             username: "John Doe",
             email: "john@example.com"
@@ -60,10 +60,10 @@ actor GetUserQueryHandler: QueryHandler {
 actor CreateUserCommandHandler: CommandHandler {
     typealias CommandType = CreateUserCommand
 
-    func handle(_ command: CreateUserCommand) async throws -> CommandResult<User> {
+    func handle(_ command: CreateUserCommand) async throws -> CommandResult<MockUser> {
         try command.validate()
 
-        let user = User(
+        let user = MockUser(
             id: "new-id",
             username: command.username,
             email: command.email

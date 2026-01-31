@@ -86,11 +86,10 @@ struct ErrorScenariosTests {
         try await mediator.registerCommandHandler(uploadHandler)
 
         // Execute: Upload que falla en ejecución
+        let fileURL = URL(fileURLWithPath: "/tmp/test.pdf")
         let command = UploadMaterialCommand(
+            fileURL: fileURL,
             title: "Test",
-            fileData: Data(),
-            fileName: "test.pdf",
-            mimeType: "application/pdf",
             subjectId: UUID(),
             unitId: UUID()
         )
@@ -156,11 +155,10 @@ struct ErrorScenariosTests {
         let initialCount = materials1.items.count
 
         // Execute: Upload que falla
+        let fileURL = URL(fileURLWithPath: "/tmp/fail.pdf")
         let command = UploadMaterialCommand(
+            fileURL: fileURL,
             title: "Failing Upload",
-            fileData: Data(),
-            fileName: "fail.pdf",
-            mimeType: "application/pdf",
             subjectId: UUID(),
             unitId: UUID()
         )
@@ -184,27 +182,24 @@ struct ErrorScenariosTests {
 
         try await mediator.registerCommandHandler(uploadHandler)
 
-        // Execute: Upload con tipo MIME no soportado
+        // Execute: Upload con extensión no soportada
+        let fileURL = URL(fileURLWithPath: "/tmp/test.exe")
         let command = UploadMaterialCommand(
+            fileURL: fileURL,
             title: "Test",
-            fileData: Data(),
-            fileName: "test.exe",
-            mimeType: "application/x-msdownload",
             subjectId: UUID(),
             unitId: UUID()
         )
 
-        // Verify: Error específico de tipo MIME
-        do {
-            let _ = try await mediator.execute(command)
-        } catch let error as ValidationError {
-            switch error {
-            case .unsupportedType(let fieldName, let type, let supported):
-                #expect(fieldName == "mimeType")
-                #expect(type == "application/x-msdownload")
-                #expect(supported.count > 0)
-            default:
-                Issue.record("Expected unsupported type error, got: \(error)")
+        // Verify: Error específico de extensión
+        let result = try await mediator.execute(command)
+        #expect(!result.isSuccess)
+
+        if let error = result.getError() as? UseCaseError {
+            if case .preconditionFailed(let description) = error {
+                #expect(description.contains("exe"))
+            } else {
+                Issue.record("Expected precondition failed error, got: \(error)")
             }
         }
     }
@@ -247,15 +242,10 @@ actor MockLoginCommandHandlerForValidation: CommandHandler {
     typealias CommandType = LoginCommand
 
     func handle(_ command: LoginCommand) async throws -> CommandResult<LoginOutput> {
-        let user = User(
-            id: UUID(),
-            email: command.email,
+        let user = try Models.User(
             firstName: "Test",
             lastName: "User",
-            role: .student,
-            status: .active,
-            createdAt: Date(),
-            updatedAt: Date()
+            email: command.email
         )
 
         let output = LoginOutput(
@@ -274,7 +264,7 @@ actor MockLoginCommandHandlerAuthFailure: CommandHandler {
 
     func handle(_ command: LoginCommand) async throws -> CommandResult<LoginOutput> {
         return .failure(
-            UseCaseError.authenticationFailed,
+            UseCaseError.unauthorized(action: "login with invalid credentials"),
             metadata: ["email": command.email]
         )
     }
@@ -297,30 +287,25 @@ actor MockUploadMaterialCommandHandlerWithMimeValidation: CommandHandler {
     typealias CommandType = UploadMaterialCommand
 
     func handle(_ command: UploadMaterialCommand) async throws -> CommandResult<Material> {
-        let supportedTypes = ["application/pdf", "video/mp4", "image/jpeg", "image/png"]
+        // Validar extensión del archivo
+        let fileExtension = command.fileURL.pathExtension.lowercased()
+        let supportedExtensions = ["pdf", "mp4", "jpg", "jpeg", "png"]
 
-        guard supportedTypes.contains(command.mimeType) else {
-            throw ValidationError.unsupportedType(
-                fieldName: "mimeType",
-                type: command.mimeType,
-                supported: supportedTypes
+        guard supportedExtensions.contains(fileExtension) else {
+            return .failure(
+                UseCaseError.preconditionFailed(
+                    description: "Unsupported file type: .\(fileExtension)"
+                ),
+                metadata: ["fileExtension": fileExtension]
             )
         }
 
-        let material = Material(
-            id: UUID(),
+        let material = try Material(
             title: command.title,
-            description: nil,
-            fileName: command.fileName,
-            fileSize: Int64(command.fileData.count),
-            mimeType: command.mimeType,
-            url: URL(string: "https://example.com/\(command.fileName)")!,
-            subjectId: command.subjectId,
-            unitId: command.unitId,
-            uploadedBy: UUID(),
-            status: .ready,
-            createdAt: Date(),
-            updatedAt: Date()
+            description: command.description,
+            schoolID: UUID(),
+            academicUnitID: command.unitId,
+            uploadedByTeacherID: UUID()
         )
 
         return .success(material, events: [], metadata: [:])
