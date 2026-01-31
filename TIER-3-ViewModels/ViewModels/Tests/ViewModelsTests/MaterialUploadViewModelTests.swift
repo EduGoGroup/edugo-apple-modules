@@ -27,14 +27,17 @@ struct MaterialUploadViewModelTests {
         let eventBus = EventBus()
         let viewModel = MaterialUploadViewModel(mediator: mediator, eventBus: eventBus)
 
-        // Crear archivos temporales con extensiones permitidas
-        let allowedExtensions = ["pdf", "docx", "pptx", "mp4"]
+        // Crear archivos temporales con extensiones permitidas usando FileTestHelper
+        let testFiles: [(ext: String, creator: () throws -> URL)] = [
+            ("pdf", { try FileTestHelper.createValidPDF() }),
+            ("docx", { try FileTestHelper.createValidDOCX() }),
+            ("pptx", { try FileTestHelper.createValidPPTX() }),
+            ("mp4", { try FileTestHelper.createValidMP4() })
+        ]
 
-        for ext in allowedExtensions {
-            let fileURL = FileManager.default.temporaryDirectory
-                .appendingPathComponent("test-\(UUID().uuidString).\(ext)")
-            try Data("Test content".utf8).write(to: fileURL)
-            defer { try? FileManager.default.removeItem(at: fileURL) }
+        for (ext, creator) in testFiles {
+            let fileURL = try creator()
+            defer { FileTestHelper.cleanup(fileURL) }
 
             // Execute
             let isValid = viewModel.validateFile(fileURL)
@@ -92,12 +95,9 @@ struct MaterialUploadViewModelTests {
         let eventBus = EventBus()
         let viewModel = MaterialUploadViewModel(mediator: mediator, eventBus: eventBus)
 
-        // Crear archivo PDF pequeño (< 50MB)
-        let fileURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("test-small-\(UUID().uuidString).pdf")
-        let smallContent = Data(repeating: 0x41, count: 1024) // 1KB
-        try smallContent.write(to: fileURL)
-        defer { try? FileManager.default.removeItem(at: fileURL) }
+        // Crear archivo PDF pequeño (< 50MB) usando FileTestHelper
+        let fileURL = try FileTestHelper.createValidPDF()
+        defer { FileTestHelper.cleanup(fileURL) }
 
         // Execute
         let isValid = viewModel.validateFile(fileURL)
@@ -118,21 +118,9 @@ struct MaterialUploadViewModelTests {
         let eventBus = EventBus()
         let viewModel = MaterialUploadViewModel(mediator: mediator, eventBus: eventBus)
 
-        // Crear archivo PDF grande (> 50MB)
-        // Nota: Creamos un archivo sparse para no ocupar 50MB reales
-        let fileURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("test-large-\(UUID().uuidString).pdf")
-
-        // Crear archivo de 51MB
-        let largeSize = 51 * 1024 * 1024
-
-        // Escribir datos pequeños y luego truncar para crear archivo sparse
-        try Data("PDF".utf8).write(to: fileURL)
-        let handle = try FileHandle(forWritingTo: fileURL)
-        try handle.truncate(atOffset: UInt64(largeSize))
-        try handle.close()
-
-        defer { try? FileManager.default.removeItem(at: fileURL) }
+        // Crear archivo PDF grande (> 50MB) usando FileTestHelper
+        let fileURL = try FileTestHelper.createFileWithSize(extension: "pdf", sizeInBytes: 51 * 1024 * 1024)
+        defer { FileTestHelper.cleanup(fileURL) }
 
         // Execute
         let isValid = viewModel.validateFile(fileURL)
@@ -158,11 +146,9 @@ struct MaterialUploadViewModelTests {
 
         let viewModel = MaterialUploadViewModel(mediator: mediator, eventBus: eventBus)
 
-        // Crear archivo PDF válido
-        let fileURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("test-upload-\(UUID().uuidString).pdf")
-        try Data("PDF content".utf8).write(to: fileURL)
-        defer { try? FileManager.default.removeItem(at: fileURL) }
+        // Crear archivo PDF válido usando FileTestHelper
+        let fileURL = try FileTestHelper.createValidPDF()
+        defer { FileTestHelper.cleanup(fileURL) }
 
         // Validar y seleccionar archivo
         let isValid = viewModel.validateFile(fileURL)
@@ -223,11 +209,9 @@ struct MaterialUploadViewModelTests {
 
         let viewModel = MaterialUploadViewModel(mediator: mediator, eventBus: eventBus)
 
-        // Crear archivo PDF válido
-        let fileURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("test-error-\(UUID().uuidString).pdf")
-        try Data("PDF content".utf8).write(to: fileURL)
-        defer { try? FileManager.default.removeItem(at: fileURL) }
+        // Crear archivo PDF válido usando FileTestHelper
+        let fileURL = try FileTestHelper.createValidPDF()
+        defer { FileTestHelper.cleanup(fileURL) }
 
         // Validar y seleccionar archivo
         let isValid = viewModel.validateFile(fileURL)
@@ -262,11 +246,9 @@ struct MaterialUploadViewModelTests {
 
         let viewModel = MaterialUploadViewModel(mediator: mediator, eventBus: eventBus)
 
-        // Crear archivo y subir
-        let fileURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("test-reset-\(UUID().uuidString).pdf")
-        try Data("PDF content".utf8).write(to: fileURL)
-        defer { try? FileManager.default.removeItem(at: fileURL) }
+        // Crear archivo y subir usando FileTestHelper
+        let fileURL = try FileTestHelper.createValidPDF()
+        defer { FileTestHelper.cleanup(fileURL) }
 
         _ = viewModel.validateFile(fileURL)
         await viewModel.uploadMaterial(
@@ -311,11 +293,9 @@ struct MaterialUploadViewModelTests {
         #expect(viewModel.selectedFileName == nil)
         #expect(viewModel.progressPercentage == "0%")
 
-        // Crear archivo y seleccionar
-        let fileURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("test-computed-\(UUID().uuidString).pdf")
-        try Data("PDF content".utf8).write(to: fileURL)
-        defer { try? FileManager.default.removeItem(at: fileURL) }
+        // Crear archivo y seleccionar usando FileTestHelper
+        let fileURL = try FileTestHelper.createValidPDF()
+        defer { FileTestHelper.cleanup(fileURL) }
 
         _ = viewModel.validateFile(fileURL)
 
@@ -368,17 +348,17 @@ struct MaterialUploadViewModelTests {
         let eventBus = EventBus()
         let viewModel = MaterialUploadViewModel(mediator: mediator, eventBus: eventBus)
 
-        // URL de archivo que no existe
-        let nonExistentURL = FileManager.default.temporaryDirectory
+        // Crear URL de archivo no existente
+        let nonExistentFile = FileManager.default.temporaryDirectory
             .appendingPathComponent("non-existent-\(UUID().uuidString).pdf")
 
-        // Execute
-        let isValid = viewModel.validateFile(nonExistentURL)
+        // Act
+        let isValid = viewModel.validateFile(nonExistentFile)
 
-        // Verify
-        #expect(!isValid)
-        #expect(viewModel.fileValidationError != nil)
-        #expect(viewModel.fileValidationError?.contains("no existe") == true)
+        // Assert
+        #expect(!isValid, "Archivo no existente debe ser rechazado")
+        #expect(viewModel.fileValidationError != nil, "Debe haber un error de validación")
+        #expect(viewModel.selectedFile == nil, "selectedFile debe ser nil")
     }
 }
 

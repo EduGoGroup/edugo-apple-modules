@@ -104,46 +104,93 @@ public final class MaterialUploadViewModel {
 
     /// Valida un archivo antes de la subida.
     ///
-    /// Verifica que el archivo tenga una extensión permitida y no exceda
-    /// el tamaño máximo de 50MB.
+    /// Implementa validación multi-capa contra extension spoofing:
+    /// 1. Validación de extensión
+    /// 2. Validación de MIME type
+    /// 3. Validación de file signatures (magic numbers)
+    /// 4. Validación de tamaño
     ///
     /// - Parameter fileURL: URL del archivo a validar
     /// - Returns: `true` si el archivo es válido, `false` en caso contrario
     public func validateFile(_ fileURL: URL) -> Bool {
-        // Limpiar estado previo
-        fileValidationError = nil
-
-        // Validar extensión
+        // 1. Validar extensión (primera capa)
         let ext = fileURL.pathExtension.lowercased()
         guard allowedExtensions.contains(ext) else {
-            fileValidationError = "Tipo de archivo no permitido. Use: \(allowedExtensions.sorted().joined(separator: ", "))"
+            fileValidationError = "Tipo de archivo no permitido. Use: \(allowedExtensions.joined(separator: ", "))"
             return false
         }
 
-        // Validar existencia del archivo
-        let fileManager = FileManager.default
-        guard fileManager.fileExists(atPath: fileURL.path) else {
-            fileValidationError = "El archivo no existe en la ruta especificada"
+        // 2. Validar MIME type (segunda capa)
+        guard let mimeType = getMimeType(for: fileURL) else {
+            fileValidationError = "No se pudo determinar el tipo de archivo"
+            return false
+        }
+
+        let allowedMimeTypes: Set<String> = [
+            "application/pdf",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            "video/mp4"
+        ]
+
+        guard allowedMimeTypes.contains(mimeType) else {
+            fileValidationError = "El tipo de archivo (\(mimeType)) no es válido"
+            return false
+        }
+
+        // 3. Validar file headers/magic numbers (tercera capa)
+        guard validateFileSignature(fileURL, expectedExtension: ext) else {
+            fileValidationError = "El contenido del archivo no coincide con su extensión"
             return false
         }
 
         // Validar tamaño
-        do {
-            let attributes = try fileManager.attributesOfItem(atPath: fileURL.path)
-            if let fileSize = attributes[.size] as? Int {
-                guard fileSize <= maxFileSize else {
-                    let maxSizeMB = maxFileSize / (1024 * 1024)
-                    fileValidationError = "El archivo excede el tamaño máximo de \(maxSizeMB)MB"
-                    return false
-                }
-            }
-        } catch {
-            fileValidationError = "No se pudo leer el archivo: \(error.localizedDescription)"
+        guard let fileSize = try? FileManager.default.attributesOfItem(atPath: fileURL.path)[.size] as? Int,
+              fileSize <= maxFileSize else {
+            fileValidationError = "El archivo excede el tamaño máximo de 50MB"
             return false
         }
 
         selectedFile = fileURL
+        fileValidationError = nil
         return true
+    }
+
+    // MARK: - File Validation Helpers
+
+    /// Obtiene el MIME type del archivo usando URLResourceValues
+    private func getMimeType(for url: URL) -> String? {
+        guard let resourceValues = try? url.resourceValues(forKeys: [.contentTypeKey]),
+              let utType = resourceValues.contentType else {
+            return nil
+        }
+        return utType.preferredMIMEType
+    }
+
+    /// Valida la firma del archivo (magic numbers) comparando con la extensión esperada
+    private func validateFileSignature(_ fileURL: URL, expectedExtension: String) -> Bool {
+        guard let fileHandle = try? FileHandle(forReadingFrom: fileURL),
+              let headerData = try? fileHandle.read(upToCount: 8) else {
+            return false
+        }
+
+        let bytes = [UInt8](headerData)
+
+        switch expectedExtension {
+        case "pdf":
+            // PDF magic number: %PDF (0x25 0x50 0x44 0x46)
+            return bytes.count >= 4 && bytes[0] == 0x25 && bytes[1] == 0x50 && bytes[2] == 0x44 && bytes[3] == 0x46
+        case "docx", "pptx":
+            // ZIP-based formats (docx, pptx) start with PK (0x50 0x4B)
+            return bytes.count >= 2 && bytes[0] == 0x50 && bytes[1] == 0x4B
+        case "mp4":
+            // MP4 has 'ftyp' at offset 4-8
+            return bytes.count >= 8 &&
+                   bytes[4] == 0x66 && bytes[5] == 0x74 &&
+                   bytes[6] == 0x79 && bytes[7] == 0x70
+        default:
+            return false
+        }
     }
 
     /// Sube un material educativo.
