@@ -20,7 +20,8 @@ let package = Package(
         .package(path: "../../TIER-1-Core/Models"),
         .package(path: "../../TIER-2-Domain/CQRS"),
         .package(path: "../../TIER-2-Domain/UseCases"),
-        .package(path: "../../TIER-3-Domain/Roles")
+        .package(path: "../../TIER-3-Domain/Roles"),
+        .package(path: "../../TIER-2-Infrastructure/LocalPersistence")
     ],
     targets: [
         .target(
@@ -30,7 +31,8 @@ let package = Package(
                 .product(name: "Models", package: "Models"),
                 .product(name: "CQRS", package: "CQRS"),
                 .product(name: "UseCases", package: "UseCases"),
-                .product(name: "Roles", package: "Roles")
+                .product(name: "Roles", package: "Roles"),
+                .product(name: "LocalPersistence", package: "LocalPersistence")
             ],
             swiftSettings: [
                 .swiftLanguageMode(.v6),
