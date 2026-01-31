@@ -140,7 +140,7 @@ public actor SwitchContextCommandHandler: CommandHandler {
 
     // MARK: - Dependencies
 
-    private let useCase: SwitchSchoolContextUseCase
+    private let useCase: any SwitchSchoolContextUseCaseProtocol
 
     /// EventBus para publicar eventos
     private let eventBus: EventBus?
@@ -157,7 +157,7 @@ public actor SwitchContextCommandHandler: CommandHandler {
     ///   - eventBus: Bus de eventos para publicar (opcional)
     ///   - dashboardHandler: Handler para invalidar cache (opcional)
     public init(
-        useCase: SwitchSchoolContextUseCase,
+        useCase: any SwitchSchoolContextUseCaseProtocol,
         eventBus: EventBus? = nil,
         dashboardHandler: GetStudentDashboardQueryHandler? = nil
     ) {

@@ -162,14 +162,14 @@ public actor GetAssessmentQueryHandler: QueryHandler {
 
     // MARK: - Dependencies
 
-    private let useCase: LoadAssessmentUseCase
+    private let useCase: any LoadAssessmentUseCaseProtocol
 
     // MARK: - Initialization
 
     /// Crea un nuevo handler para GetAssessmentQuery.
     ///
     /// - Parameter useCase: Use case que coordina la carga de evaluaciones
-    public init(useCase: LoadAssessmentUseCase) {
+    public init(useCase: any LoadAssessmentUseCaseProtocol) {
         self.useCase = useCase
     }
 

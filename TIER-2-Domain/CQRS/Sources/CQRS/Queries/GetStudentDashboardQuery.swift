@@ -81,7 +81,7 @@ public actor GetStudentDashboardQueryHandler: QueryHandler {
 
     // MARK: - Dependencies
 
-    private let useCase: LoadStudentDashboardUseCase
+    private let useCase: any LoadStudentDashboardUseCaseProtocol
 
     // MARK: - Cache
 
@@ -98,7 +98,7 @@ public actor GetStudentDashboardQueryHandler: QueryHandler {
     ///   - freshTTL: TTL para considerar cache fresh en segundos (default: 300)
     ///   - staleTTL: TTL para considerar cache usable en segundos (default: 600)
     public init(
-        useCase: LoadStudentDashboardUseCase,
+        useCase: any LoadStudentDashboardUseCaseProtocol,
         freshTTL: TimeInterval = 300,
         staleTTL: TimeInterval = 600
     ) {

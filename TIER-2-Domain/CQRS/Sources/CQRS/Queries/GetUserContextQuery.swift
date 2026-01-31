@@ -70,7 +70,7 @@ public actor GetUserContextQueryHandler: QueryHandler {
 
     // MARK: - Dependencies
 
-    private let useCase: LoadUserContextUseCase
+    private let useCase: any LoadUserContextUseCaseProtocol
 
     // MARK: - Cache
 
@@ -86,7 +86,7 @@ public actor GetUserContextQueryHandler: QueryHandler {
     ///   - useCase: Use case que coordina la carga del contexto
     ///   - sessionTTL: TTL de sesión en segundos (default: 1800 = 30 min)
     public init(
-        useCase: LoadUserContextUseCase,
+        useCase: any LoadUserContextUseCaseProtocol,
         sessionTTL: TimeInterval = 1800
     ) {
         self.useCase = useCase
@@ -114,7 +114,7 @@ public actor GetUserContextQueryHandler: QueryHandler {
             }
         }
 
-        // Ejecutar use case
+        // Ejecutar use case (no recibe input)
         let context = try await useCase.execute()
 
         // Cachear resultado con timestamp de sesión

@@ -138,7 +138,7 @@ public actor LoginCommandHandler: CommandHandler {
 
     // MARK: - Dependencies
 
-    private let useCase: LoginUseCase
+    private let useCase: any LoginUseCaseProtocol
 
     /// Handler de GetUserContextQuery para invalidar cache
     private weak var userContextHandler: GetUserContextQueryHandler?
@@ -148,10 +148,10 @@ public actor LoginCommandHandler: CommandHandler {
     /// Crea un nuevo handler para LoginCommand.
     ///
     /// - Parameters:
-    ///   - useCase: Use case que ejecuta el login
+    ///   - useCase: Use case que ejecuta el login (inyectado via protocolo para DI)
     ///   - userContextHandler: Handler para invalidar cache de UserContext (opcional)
     public init(
-        useCase: LoginUseCase,
+        useCase: any LoginUseCaseProtocol,
         userContextHandler: GetUserContextQueryHandler? = nil
     ) {
         self.useCase = useCase

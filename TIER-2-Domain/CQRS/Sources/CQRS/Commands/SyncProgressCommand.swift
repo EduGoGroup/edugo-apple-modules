@@ -111,7 +111,7 @@ public actor SyncProgressCommandHandler: CommandHandler {
 
     // MARK: - Dependencies
 
-    private let useCase: SyncProgressUseCase
+    private let useCase: any SyncProgressUseCaseProtocol
 
     /// EventBus para publicar eventos
     private let eventBus: EventBus?
@@ -124,7 +124,7 @@ public actor SyncProgressCommandHandler: CommandHandler {
     ///   - useCase: Use case que ejecuta la sincronización
     ///   - eventBus: Bus de eventos para publicar (opcional)
     public init(
-        useCase: SyncProgressUseCase,
+        useCase: any SyncProgressUseCaseProtocol,
         eventBus: EventBus? = nil
     ) {
         self.useCase = useCase

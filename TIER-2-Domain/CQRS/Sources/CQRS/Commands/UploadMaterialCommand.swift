@@ -187,7 +187,7 @@ public actor UploadMaterialCommandHandler: CommandHandler {
 
     // MARK: - Dependencies
 
-    private let useCase: UploadMaterialUseCase
+    private let useCase: any UploadMaterialUseCaseProtocol
 
     /// Handler de ListMaterialsQuery para invalidar cache
     private weak var materialListHandler: ListMaterialsQueryHandler?
@@ -197,10 +197,10 @@ public actor UploadMaterialCommandHandler: CommandHandler {
     /// Crea un nuevo handler para UploadMaterialCommand.
     ///
     /// - Parameters:
-    ///   - useCase: Use case que ejecuta la subida
+    ///   - useCase: Use case que ejecuta la subida (inyectado via protocolo para DI)
     ///   - materialListHandler: Handler para invalidar cache de lista (opcional)
     public init(
-        useCase: UploadMaterialUseCase,
+        useCase: any UploadMaterialUseCaseProtocol,
         materialListHandler: ListMaterialsQueryHandler? = nil
     ) {
         self.useCase = useCase

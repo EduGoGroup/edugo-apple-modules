@@ -157,7 +157,7 @@ public actor SubmitAssessmentCommandHandler: CommandHandler {
 
     // MARK: - Dependencies
 
-    private let useCase: TakeAssessmentUseCase
+    private let useCase: any TakeAssessmentUseCaseProtocol
 
     /// Handler de GetStudentDashboardQuery para invalidar cache
     private weak var dashboardHandler: GetStudentDashboardQueryHandler?
@@ -174,7 +174,7 @@ public actor SubmitAssessmentCommandHandler: CommandHandler {
     ///   - dashboardHandler: Handler para invalidar cache de dashboard (opcional)
     ///   - assessmentHandler: Handler para invalidar cache de assessment (opcional)
     public init(
-        useCase: TakeAssessmentUseCase,
+        useCase: any TakeAssessmentUseCaseProtocol,
         dashboardHandler: GetStudentDashboardQueryHandler? = nil,
         assessmentHandler: GetAssessmentQueryHandler? = nil
     ) {

@@ -137,14 +137,14 @@ public actor ListMaterialsQueryHandler: QueryHandler {
 
     // MARK: - Dependencies
 
-    private let useCase: ListMaterialsUseCase
+    private let useCase: any ListMaterialsUseCaseProtocol
 
     // MARK: - Initialization
 
     /// Crea un nuevo handler para ListMaterialsQuery.
     ///
     /// - Parameter useCase: Use case que coordina el listado de materiales
-    public init(useCase: ListMaterialsUseCase) {
+    public init(useCase: any ListMaterialsUseCaseProtocol) {
         self.useCase = useCase
     }
 
@@ -176,14 +176,22 @@ public actor ListMaterialsQueryHandler: QueryHandler {
     ///
     /// Útil cuando se crea/actualiza/elimina un material y se necesita
     /// refrescar todas las listas.
+    ///
+    /// NOTA: Para usar esto con protocolos, el UseCase concreto debe
+    /// exponerse o usar un protocolo extendido con invalidación.
     public func invalidateCache() async {
-        await useCase.invalidateCache()
+        // Si el useCase es el concreto, podemos usar type-casting
+        if let concreteUseCase = useCase as? ListMaterialsUseCase {
+            await concreteUseCase.invalidateCache()
+        }
     }
 
     /// Invalida cache que contenga un material específico.
     ///
     /// - Parameter materialId: ID del material modificado
     public func invalidateCache(for materialId: UUID) async {
-        await useCase.invalidateCache(for: materialId)
+        if let concreteUseCase = useCase as? ListMaterialsUseCase {
+            await concreteUseCase.invalidateCache(for: materialId)
+        }
     }
 }

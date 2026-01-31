@@ -143,7 +143,7 @@ public actor AssignMaterialCommandHandler: CommandHandler {
 
     // MARK: - Dependencies
 
-    private let useCase: AssignMaterialToUnitUseCase
+    private let useCase: any AssignMaterialUseCaseProtocol
 
     /// EventBus para publicar eventos
     private let eventBus: EventBus?
@@ -160,7 +160,7 @@ public actor AssignMaterialCommandHandler: CommandHandler {
     ///   - eventBus: Bus de eventos para publicar (opcional)
     ///   - materialListHandler: Handler para invalidar cache (opcional)
     public init(
-        useCase: AssignMaterialToUnitUseCase,
+        useCase: any AssignMaterialUseCaseProtocol,
         eventBus: EventBus? = nil,
         materialListHandler: ListMaterialsQueryHandler? = nil
     ) {
