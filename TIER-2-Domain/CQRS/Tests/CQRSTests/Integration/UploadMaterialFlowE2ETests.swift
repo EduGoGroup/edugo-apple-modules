@@ -31,7 +31,11 @@ struct UploadMaterialFlowE2ETests {
         try await mediator.registerQueryHandler(listHandler)
 
         // Execute: Upload Material Command
-        let fileURL = URL(fileURLWithPath: "/tmp/test.pdf")
+        // Crear archivo temporal para el test
+        let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent("test-\(UUID().uuidString).pdf")
+        try Data("PDF content".utf8).write(to: fileURL)
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
         let command = UploadMaterialCommand(
             fileURL: fileURL,
             title: "Matemáticas Básicas",
@@ -74,7 +78,11 @@ struct UploadMaterialFlowE2ETests {
         try await mediator.registerCommandHandler(uploadHandler)
 
         // Execute: Upload con archivo .exe (no soportado)
-        let fileURL = URL(fileURLWithPath: "/tmp/test.exe")
+        // Crear archivo temporal con extensión no permitida
+        let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent("test-\(UUID().uuidString).exe")
+        try Data("EXE content".utf8).write(to: fileURL)
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
         let command = UploadMaterialCommand(
             fileURL: fileURL,
             title: "Test File",
@@ -82,10 +90,15 @@ struct UploadMaterialFlowE2ETests {
             unitId: UUID()
         )
 
-        // Verify: Validación falla
-        let result = try await mediator.execute(command)
-        #expect(!result.isSuccess)
-        #expect(result.getError() != nil)
+        // Verify: Validación falla con excepción
+        do {
+            let _ = try await mediator.execute(command)
+            Issue.record("Expected validation error for .exe file but command succeeded")
+        } catch {
+            // Éxito: La validación rechazó el archivo .exe como esperado
+            // El error puede ser MediatorError que envuelve ValidationError
+            #expect(error is MediatorError || error is ValidationError)
+        }
     }
 
     // MARK: - Test: Upload state machine transitions
@@ -99,7 +112,11 @@ struct UploadMaterialFlowE2ETests {
         try await mediator.registerCommandHandler(uploadHandler)
 
         // Execute: Upload
-        let fileURL = URL(fileURLWithPath: "/tmp/test.pdf")
+        // Crear archivo temporal para el test
+        let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent("test-\(UUID().uuidString).pdf")
+        try Data("PDF content".utf8).write(to: fileURL)
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
         let command = UploadMaterialCommand(
             fileURL: fileURL,
             title: "Test Material",

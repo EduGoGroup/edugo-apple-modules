@@ -24,7 +24,7 @@ struct LoginFlowE2ETests {
         let mediator = Mediator(loggingEnabled: false, metricsEnabled: false)
 
         // Registrar mock handlers directamente
-        let loginHandler = MockLoginCommandHandler()
+        let loginHandler = LoginFlowMockLoginCommandHandler()
         let userContextHandler = MockGetUserContextQueryHandler()
 
         try await mediator.registerCommandHandler(loginHandler)
@@ -118,7 +118,7 @@ struct LoginFlowE2ETests {
 // MARK: - Mock Command Handlers
 
 /// Mock CommandHandler para LoginCommand (éxito)
-actor MockLoginCommandHandler: CommandHandler {
+actor LoginFlowMockLoginCommandHandler: CommandHandler {
     typealias CommandType = LoginCommand
 
     func handle(_ command: LoginCommand) async throws -> CommandResult<LoginOutput> {
