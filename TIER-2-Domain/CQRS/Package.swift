@@ -18,7 +18,8 @@ let package = Package(
     dependencies: [
         .package(path: "../../TIER-0-Foundation/EduGoCommon"),
         .package(path: "../../TIER-1-Core/Models"),
-        .package(path: "../UseCases")
+        .package(path: "../UseCases"),
+        .package(path: "../StateManagement")
     ],
     targets: [
         .target(
@@ -35,7 +36,10 @@ let package = Package(
         ),
         .testTarget(
             name: "CQRSTests",
-            dependencies: ["CQRS"],
+            dependencies: [
+                "CQRS",
+                .product(name: "StateManagement", package: "StateManagement")
+            ],
             swiftSettings: [
                 .swiftLanguageMode(.v6),
                 .enableExperimentalFeature("StrictConcurrency=complete")
