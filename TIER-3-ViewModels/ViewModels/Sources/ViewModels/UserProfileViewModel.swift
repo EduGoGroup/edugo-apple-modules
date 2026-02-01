@@ -200,10 +200,10 @@ public final class UserProfileViewModel {
     public func saveChanges() async {
         guard let currentUser = user else { return }
 
-        // Validar campos
-        let trimmedFirstName = editedFirstName.trimmingCharacters(in: .whitespaces)
-        let trimmedLastName = editedLastName.trimmingCharacters(in: .whitespaces)
-        let trimmedEmail = editedEmail.trimmingCharacters(in: .whitespaces)
+        // Validar campos con trim completo (espacios, tabs, newlines, etc.)
+        let trimmedFirstName = editedFirstName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedLastName = editedLastName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedEmail = editedEmail.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard !trimmedFirstName.isEmpty else {
             error = ValidationError.emptyField(fieldName: "firstName")

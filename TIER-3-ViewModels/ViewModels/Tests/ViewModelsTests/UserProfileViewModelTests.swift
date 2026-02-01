@@ -380,6 +380,142 @@ struct UserProfileViewModelTests {
         let expectedInitials = "\(viewModel.user!.firstName.prefix(1).uppercased())\(viewModel.user!.lastName.prefix(1).uppercased())"
         #expect(viewModel.initials == expectedInitials)
     }
+
+    // MARK: - Test: Trim newlines from fields
+
+    @Test("Trims newlines from firstName")
+    @MainActor
+    func testTrimsNewlinesFromFirstName() async throws {
+        // Setup
+        let mediator = Mediator(loggingEnabled: false, metricsEnabled: false)
+        let eventBus = EventBus()
+        let localRepository = MockUserRepository()
+        let mockHandler = MockGetUserContextQueryHandler()
+
+        try await mediator.registerQueryHandler(mockHandler)
+
+        let viewModel = UserProfileViewModel(
+            mediator: mediator,
+            eventBus: eventBus,
+            localRepository: localRepository
+        )
+
+        // Esperar carga y entrar a modo edición
+        try await Task.sleep(nanoseconds: 100_000_000)
+        viewModel.enterEditMode()
+
+        // Execute: Guardar con firstName que contiene newlines
+        viewModel.editedFirstName = "John\n"
+        viewModel.editedLastName = "Doe"
+        viewModel.editedEmail = "john@example.com"
+
+        await viewModel.saveChanges()
+
+        // Verify: Se guardó sin newlines
+        #expect(viewModel.user?.firstName == "John")
+        #expect(viewModel.error == nil)
+    }
+
+    @Test("Trims newlines and carriage returns from lastName")
+    @MainActor
+    func testTrimsNewlinesFromLastName() async throws {
+        // Setup
+        let mediator = Mediator(loggingEnabled: false, metricsEnabled: false)
+        let eventBus = EventBus()
+        let localRepository = MockUserRepository()
+        let mockHandler = MockGetUserContextQueryHandler()
+
+        try await mediator.registerQueryHandler(mockHandler)
+
+        let viewModel = UserProfileViewModel(
+            mediator: mediator,
+            eventBus: eventBus,
+            localRepository: localRepository
+        )
+
+        // Esperar carga y entrar a modo edición
+        try await Task.sleep(nanoseconds: 100_000_000)
+        viewModel.enterEditMode()
+
+        // Execute: Guardar con lastName que contiene \r\n
+        viewModel.editedFirstName = "Jane"
+        viewModel.editedLastName = "Smith\r\n"
+        viewModel.editedEmail = "jane@example.com"
+
+        await viewModel.saveChanges()
+
+        // Verify: Se guardó sin \r\n
+        #expect(viewModel.user?.lastName == "Smith")
+        #expect(viewModel.error == nil)
+    }
+
+    @Test("Trims tabs and newlines from email")
+    @MainActor
+    func testTrimsTabsAndNewlinesFromEmail() async throws {
+        // Setup
+        let mediator = Mediator(loggingEnabled: false, metricsEnabled: false)
+        let eventBus = EventBus()
+        let localRepository = MockUserRepository()
+        let mockHandler = MockGetUserContextQueryHandler()
+
+        try await mediator.registerQueryHandler(mockHandler)
+
+        let viewModel = UserProfileViewModel(
+            mediator: mediator,
+            eventBus: eventBus,
+            localRepository: localRepository
+        )
+
+        // Esperar carga y entrar a modo edición
+        try await Task.sleep(nanoseconds: 100_000_000)
+        viewModel.enterEditMode()
+
+        // Execute: Guardar con email que contiene tabs y newlines
+        viewModel.editedFirstName = "Bob"
+        viewModel.editedLastName = "Johnson"
+        viewModel.editedEmail = "\t\nbob@example.com\n\t"
+
+        await viewModel.saveChanges()
+
+        // Verify: Se guardó sin tabs ni newlines
+        #expect(viewModel.user?.email == "bob@example.com")
+        #expect(viewModel.error == nil)
+    }
+
+    @Test("Rejects firstName with only newlines")
+    @MainActor
+    func testRejectsFirstNameWithOnlyNewlines() async throws {
+        // Setup
+        let mediator = Mediator(loggingEnabled: false, metricsEnabled: false)
+        let eventBus = EventBus()
+        let localRepository = MockUserRepository()
+        let mockHandler = MockGetUserContextQueryHandler()
+
+        try await mediator.registerQueryHandler(mockHandler)
+
+        let viewModel = UserProfileViewModel(
+            mediator: mediator,
+            eventBus: eventBus,
+            localRepository: localRepository
+        )
+
+        // Esperar carga y entrar a modo edición
+        try await Task.sleep(nanoseconds: 100_000_000)
+        let originalUser = viewModel.user
+        viewModel.enterEditMode()
+
+        // Execute: Intentar guardar con firstName de solo newlines
+        viewModel.editedFirstName = "\n\n\n"
+        viewModel.editedLastName = "Doe"
+        viewModel.editedEmail = "test@example.com"
+
+        await viewModel.saveChanges()
+
+        // Verify: Se rechazó con error y se mantiene en modo edición
+        #expect(viewModel.error != nil)
+        #expect(viewModel.editMode == true) // Se mantiene en modo edición
+        #expect(viewModel.user == originalUser) // Usuario no cambió
+    }
 }
 
 // MARK: - Mock Handlers

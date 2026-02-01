@@ -444,6 +444,112 @@ struct MaterialAssignmentViewModelTests {
         #expect(viewModel.isVisible == false)
         #expect(viewModel.notifyStudents == false)
     }
+
+    // MARK: - Test: Mensajes de error no exponen UUIDs
+
+    @Test("Error messages do not expose UUIDs")
+    @MainActor
+    func testErrorMessagesDoNotExposeUUIDs() async throws {
+        // Setup
+        let mediator = Mediator(loggingEnabled: false, metricsEnabled: false)
+        let roleManager = RoleManager()
+        await roleManager.setRole(.teacher)
+
+        // Registrar handler que simula falla en algunas unidades
+        let mockHandler = MockAssignMaterialCommandHandlerWithPartialFailure()
+        try await mediator.registerCommandHandler(mockHandler)
+
+        let viewModel = MaterialAssignmentViewModel(
+            mediator: mediator,
+            roleManager: roleManager,
+            materialId: UUID(),
+            assignedBy: UUID()
+        )
+
+        await viewModel.loadPermissions()
+
+        // Seleccionar 5 unidades (handler fallará 3)
+        let unit1 = UUID()
+        let unit2 = UUID()
+        let unit3 = UUID()
+        let unit4 = UUID()
+        let unit5 = UUID()
+
+        viewModel.toggleUnit(unit1)
+        viewModel.toggleUnit(unit2)
+        viewModel.toggleUnit(unit3)
+        viewModel.toggleUnit(unit4)
+        viewModel.toggleUnit(unit5)
+
+        // Execute: Asignar material (fallará parcialmente)
+        await viewModel.assignMaterial()
+
+        // Verify: El mensaje de error no debe contener UUIDs
+        #expect(viewModel.error != nil)
+
+        if let error = viewModel.error {
+            let errorMessage = error.localizedDescription
+
+            // Verificar que NO contiene formato de UUID (8-4-4-4-12 caracteres hexadecimales)
+            let uuidPattern = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
+            let uuidRegex = try! NSRegularExpression(pattern: uuidPattern)
+            let matches = uuidRegex.matches(in: errorMessage, range: NSRange(errorMessage.startIndex..., in: errorMessage))
+
+            #expect(matches.isEmpty, "El mensaje de error no debe contener UUIDs: \(errorMessage)")
+
+            // Verificar que contiene información útil
+            #expect(errorMessage.contains("asignaciones") || errorMessage.contains("asignación"), "El mensaje debe mencionar asignaciones")
+            #expect(errorMessage.contains("completadas") || errorMessage.contains("fallaron") || errorMessage.contains("falló"), "El mensaje debe indicar resultado")
+        }
+    }
+
+    @Test("All failed error message does not expose UUIDs")
+    @MainActor
+    func testAllFailedErrorDoesNotExposeUUIDs() async throws {
+        // Setup
+        let mediator = Mediator(loggingEnabled: false, metricsEnabled: false)
+        let roleManager = RoleManager()
+        await roleManager.setRole(.teacher)
+
+        // Registrar handler que simula falla total
+        let mockHandler = MockAssignMaterialCommandHandlerWithAllFailures()
+        try await mediator.registerCommandHandler(mockHandler)
+
+        let viewModel = MaterialAssignmentViewModel(
+            mediator: mediator,
+            roleManager: roleManager,
+            materialId: UUID(),
+            assignedBy: UUID()
+        )
+
+        await viewModel.loadPermissions()
+
+        // Seleccionar 3 unidades (todas fallarán)
+        viewModel.toggleUnit(UUID())
+        viewModel.toggleUnit(UUID())
+        viewModel.toggleUnit(UUID())
+
+        // Execute: Asignar material (todas fallarán)
+        await viewModel.assignMaterial()
+
+        // Verify: El mensaje de error no debe contener UUIDs ni detalles técnicos
+        #expect(viewModel.error != nil)
+
+        if let error = viewModel.error {
+            let errorMessage = error.localizedDescription
+
+            // Verificar que NO contiene formato de UUID
+            let uuidPattern = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
+            let uuidRegex = try! NSRegularExpression(pattern: uuidPattern)
+            let matches = uuidRegex.matches(in: errorMessage, range: NSRange(errorMessage.startIndex..., in: errorMessage))
+
+            #expect(matches.isEmpty, "El mensaje de error no debe contener UUIDs: \(errorMessage)")
+
+            // Verificar mensaje amigable
+            #expect(errorMessage.contains("No se pudo completar"))
+            #expect(errorMessage.contains("unidad") || errorMessage.contains("unidades"))
+        }
+    }
 }
 
 // MARK: - Mock Handlers
@@ -500,6 +606,75 @@ actor MockAssignMaterialCommandHandlerWithError: CommandHandler {
         return .failure(
             UseCaseError.executionFailed(reason: "Assignment failed"),
             metadata: ["reason": "test_error"]
+        )
+    }
+}
+
+/// Mock CommandHandler que simula fallo parcial (falla cada 3 de 5 llamadas)
+actor MockAssignMaterialCommandHandlerWithPartialFailure: CommandHandler {
+    typealias CommandType = AssignMaterialCommand
+
+    private var callCount = 0
+
+    func handle(_ command: AssignMaterialCommand) async throws -> CommandResult<MaterialAssignment> {
+        callCount += 1
+
+        // Fallar en las llamadas 2, 3, y 5 (3 de 5)
+        if callCount == 2 || callCount == 3 || callCount == 5 {
+            return .failure(
+                UseCaseError.executionFailed(reason: "Simulated partial failure"),
+                metadata: ["callNumber": "\(callCount)"]
+            )
+        }
+
+        // Éxito en las demás
+        let material = try Material(
+            title: "Test Material",
+            description: "A test material",
+            schoolID: UUID(),
+            academicUnitID: command.unitId,
+            uploadedByTeacherID: command.assignedBy
+        )
+
+        let unit = UnitInfo(
+            id: command.unitId,
+            name: "Test Unit \(callCount)",
+            schoolId: UUID()
+        )
+
+        let assigner = AssignerInfo(
+            id: command.assignedBy,
+            fullName: "Test Teacher",
+            email: "teacher@test.com"
+        )
+
+        let assignment = MaterialAssignment(
+            id: UUID(),
+            material: material,
+            unit: unit,
+            assignedAt: Date(),
+            dueDate: command.dueDate,
+            assignedBy: assigner,
+            isVisible: command.visible,
+            wasAlreadyAssigned: false
+        )
+
+        return .success(
+            assignment,
+            events: ["MaterialAssignedEvent"],
+            metadata: ["assignmentId": assignment.id.uuidString]
+        )
+    }
+}
+
+/// Mock CommandHandler que simula fallo total (todas las llamadas fallan)
+actor MockAssignMaterialCommandHandlerWithAllFailures: CommandHandler {
+    typealias CommandType = AssignMaterialCommand
+
+    func handle(_ command: AssignMaterialCommand) async throws -> CommandResult<MaterialAssignment> {
+        return .failure(
+            UseCaseError.executionFailed(reason: "Simulated total failure"),
+            metadata: ["reason": "all_failed"]
         )
     }
 }

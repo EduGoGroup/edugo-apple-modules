@@ -317,21 +317,32 @@ public final class MaterialAssignmentViewModel {
         totalCount: Int,
         failures: [UUID: Error]
     ) -> Error {
-        let failedUnits = failures.keys.map { $0.uuidString }.joined(separator: ", ")
+        let failureCount = totalCount - successCount
+
+        // SEGURIDAD: No exponer UUIDs internos al usuario
+        // Los UUIDs completos se registran en logs del sistema para debugging
+        logger.error("Asignaciones fallidas - UUIDs: \(failures.keys.map { $0.uuidString }.joined(separator: ", "))")
+
+        // Mensaje amigable sin UUIDs
         return MediatorError.executionError(
-            message: "\(successCount) de \(totalCount) asignaciones exitosas. Unidades fallidas: \(failedUnits)",
+            message: "\(successCount) de \(totalCount) asignaciones completadas. \(failureCount) \(failureCount == 1 ? "asignación falló" : "asignaciones fallaron"). Por favor, verifique los permisos e intente nuevamente.",
             underlyingError: nil
         )
     }
 
     /// Crea un error descriptivo cuando todas las asignaciones fallan
     private func createAllFailedError(failures: [UUID: Error]) -> Error {
-        let failureMessages = failures.map { unitId, error in
-            "\(unitId.uuidString): \(error.localizedDescription)"
-        }.joined(separator: "; ")
+        let failureCount = failures.count
 
+        // SEGURIDAD: No exponer UUIDs internos ni detalles técnicos al usuario
+        // Los errores completos se registran en logs del sistema para debugging
+        for (unitId, error) in failures {
+            logger.error("Asignación fallida - Unidad: \(unitId.uuidString), Error: \(error.localizedDescription)")
+        }
+
+        // Mensaje genérico sin información técnica sensible
         return MediatorError.executionError(
-            message: "Todas las asignaciones fallaron. Detalles: \(failureMessages)",
+            message: "No se pudo completar la asignación en \(failureCount) \(failureCount == 1 ? "unidad" : "unidades"). Por favor, verifique los permisos e intente nuevamente.",
             underlyingError: nil
         )
     }
