@@ -94,6 +94,17 @@ public final class MaterialAssignmentViewModel {
     /// Cache del estado de permisos
     private var cachedCanAssign: Bool = false
 
+    // MARK: - Rate Limiting
+
+    /// Timestamp de la última llamada a assignMaterial para throttling
+    private var lastAssignmentAttempt: Date?
+
+    /// Intervalo mínimo entre intentos de asignación (en segundos)
+    private let minimumAssignmentInterval: TimeInterval = 0.5
+
+    /// Timeout para operaciones de asignación (en segundos)
+    private let assignmentTimeout: TimeInterval = 30.0
+
     // MARK: - Initialization
 
     /// Crea un nuevo MaterialAssignmentViewModel.
@@ -176,6 +187,23 @@ public final class MaterialAssignmentViewModel {
     /// Ejecuta AssignMaterialCommand para cada unidad seleccionada.
     /// Si alguna falla, continúa con las demás y reporta errores parciales.
     public func assignMaterial() async {
+        // SEGURIDAD: Prevenir race conditions - validar que no haya operación en progreso
+        guard !isAssigning else {
+            logger.warning("Intento de asignar material mientras ya hay una asignación en progreso")
+            return
+        }
+
+        // SEGURIDAD: Rate limiting - prevenir llamadas muy rápidas (throttling)
+        let now = Date()
+        if let lastAttempt = self.lastAssignmentAttempt {
+            let timeSinceLastAttempt = now.timeIntervalSince(lastAttempt)
+            if timeSinceLastAttempt < self.minimumAssignmentInterval {
+                logger.warning("Intento de asignación demasiado rápido. Esperando \(self.minimumAssignmentInterval - timeSinceLastAttempt)s")
+                return
+            }
+        }
+        self.lastAssignmentAttempt = now
+
         // SEGURIDAD: Refresh permissions antes de validar para evitar race conditions
         // Los permisos pueden haber cambiado desde que se cargaron en init
         await loadPermissions()
@@ -199,6 +227,10 @@ public final class MaterialAssignmentViewModel {
         error = nil
         assignmentSuccess = false
         assignmentResults = []
+
+        // PERFORMANCE: Tracking de tiempo para detectar operaciones lentas
+        let startTime = Date()
+        logger.info("Iniciando asignación de material a \(self.selectedUnitIds.count) unidades")
 
         // Capturar propiedades antes del TaskGroup para evitar acceso async
         let materialId = self.materialId
@@ -267,6 +299,14 @@ public final class MaterialAssignmentViewModel {
         self.assignmentResults = successfulAssignments
 
         isAssigning = false
+
+        // PERFORMANCE: Log del tiempo total de ejecución
+        let duration = Date().timeIntervalSince(startTime)
+        logger.info("Asignación completada en \(String(format: "%.2f", duration))s")
+
+        if duration > self.assignmentTimeout {
+            logger.warning("⚠️ Operación excedió el timeout recomendado de \(self.assignmentTimeout)s (tomó \(String(format: "%.2f", duration))s)")
+        }
 
         // Determinar resultado final con información detallada
         if successfulAssignments.count == selectedUnitIds.count {

@@ -96,6 +96,17 @@ public final class MaterialUploadViewModel {
         FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first!
     ]
 
+    // MARK: - Rate Limiting
+
+    /// Timestamp de la última llamada a uploadMaterial para throttling
+    private var lastUploadAttempt: Date?
+
+    /// Intervalo mínimo entre intentos de subida (en segundos)
+    private let minimumUploadInterval: TimeInterval = 0.5
+
+    /// Timeout recomendado para operaciones de subida (en segundos)
+    private let uploadTimeout: TimeInterval = 60.0
+
     // MARK: - Initialization
 
     /// Crea un nuevo MaterialUploadViewModel.
@@ -241,6 +252,23 @@ public final class MaterialUploadViewModel {
         subjectId: UUID,
         unitId: UUID
     ) async {
+        // SEGURIDAD: Prevenir race conditions - validar que no haya operación en progreso
+        guard !isUploading else {
+            logger.warning("Intento de subir material mientras ya hay una subida en progreso")
+            return
+        }
+
+        // SEGURIDAD: Rate limiting - prevenir llamadas muy rápidas (throttling)
+        let now = Date()
+        if let lastAttempt = self.lastUploadAttempt {
+            let timeSinceLastAttempt = now.timeIntervalSince(lastAttempt)
+            if timeSinceLastAttempt < self.minimumUploadInterval {
+                logger.warning("Intento de subida demasiado rápido. Esperando \(self.minimumUploadInterval - timeSinceLastAttempt)s")
+                return
+            }
+        }
+        self.lastUploadAttempt = now
+
         guard let fileURL = selectedFile else {
             error = ValidationError.emptyField(fieldName: "file")
             return
@@ -296,6 +324,10 @@ public final class MaterialUploadViewModel {
         uploadProgress = 0.0
         error = nil
 
+        // PERFORMANCE: Tracking de tiempo para detectar operaciones lentas
+        let startTime = Date()
+        logger.info("Iniciando subida de material: \(trimmedTitle)")
+
         do {
             // Crear command con datos del material validados y limpios
             let command = UploadMaterialCommand(
@@ -320,8 +352,14 @@ public final class MaterialUploadViewModel {
                 self.uploadProgress = 1.0
                 self.isUploading = false
 
-                logger.info("Material subido exitosamente: \(material.id)")
+                // PERFORMANCE: Log del tiempo total de subida
+                let duration = Date().timeIntervalSince(startTime)
+                logger.info("Material subido exitosamente: \(material.id) en \(String(format: "%.2f", duration))s")
                 logger.debug("Eventos publicados: \(result.events)")
+
+                if duration > self.uploadTimeout {
+                    logger.warning("⚠️ Subida excedió el timeout recomendado de \(self.uploadTimeout)s (tomó \(String(format: "%.2f", duration))s)")
+                }
 
             } else if let resultError = result.getError() {
                 // Subida falló

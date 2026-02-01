@@ -198,6 +198,12 @@ public final class UserProfileViewModel {
     /// - Note: Esta implementación actualiza el usuario localmente.
     ///   Para persistir en el servidor, se requiere implementar `UpdateUserProfileCommand`.
     public func saveChanges() async {
+        // SEGURIDAD: Prevenir race conditions - validar que no haya operación en progreso
+        guard !isSaving else {
+            logger.warning("Intento de guardar cambios mientras ya hay un guardado en progreso")
+            return
+        }
+
         guard let currentUser = user else { return }
 
         // Validar campos con trim completo (espacios, tabs, newlines, etc.)
