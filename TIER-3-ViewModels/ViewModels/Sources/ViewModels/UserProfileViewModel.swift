@@ -216,6 +216,15 @@ public final class UserProfileViewModel {
             return
         }
 
+        // SEGURIDAD: Validar formato de email
+        guard isValidEmail(trimmedEmail) else {
+            error = ValidationError.invalidFormat(
+                fieldName: "email",
+                reason: "Formato de email inválido. Use: usuario@dominio.com"
+            )
+            return
+        }
+
         isSaving = true
         error = nil
 
@@ -277,6 +286,17 @@ public final class UserProfileViewModel {
             print("⚠️ Cache no disponible: \(error.localizedDescription)")
             return nil
         }
+    }
+
+    // MARK: - Email Validation
+
+    /// Valida el formato de un email usando expresión regular estándar RFC 5322
+    /// - Parameter email: Email a validar
+    /// - Returns: true si el formato es válido
+    private func isValidEmail(_ email: String) -> Bool {
+        let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
+        let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)
+        return emailPredicate.evaluate(with: email)
     }
 
     // MARK: - Event Subscriptions

@@ -172,6 +172,10 @@ public final class MaterialAssignmentViewModel {
     /// Ejecuta AssignMaterialCommand para cada unidad seleccionada.
     /// Si alguna falla, continúa con las demás y reporta errores parciales.
     public func assignMaterial() async {
+        // SEGURIDAD: Refresh permissions antes de validar para evitar race conditions
+        // Los permisos pueden haber cambiado desde que se cargaron en init
+        await loadPermissions()
+
         // Verificar permisos
         guard canAssignMaterials else {
             error = MediatorError.validationError(

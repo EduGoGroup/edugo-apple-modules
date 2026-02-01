@@ -85,6 +85,13 @@ public final class MaterialUploadViewModel {
     /// Extensiones de archivo permitidas
     private let allowedExtensions: Set<String> = ["pdf", "docx", "pptx", "mp4"]
 
+    /// Directorios base permitidos para archivos de usuario
+    private let allowedBaseDirectories: [URL] = [
+        FileManager.default.temporaryDirectory,
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!,
+        FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first!
+    ]
+
     // MARK: - Initialization
 
     /// Crea un nuevo MaterialUploadViewModel.
@@ -113,6 +120,12 @@ public final class MaterialUploadViewModel {
     /// - Parameter fileURL: URL del archivo a validar
     /// - Returns: `true` si el archivo es válido, `false` en caso contrario
     public func validateFile(_ fileURL: URL) -> Bool {
+        // SEGURIDAD: Verificar que el archivo esté en directorio permitido (previene path traversal)
+        guard isFileInAllowedDirectory(fileURL) else {
+            fileValidationError = "El archivo no está en un directorio permitido"
+            return false
+        }
+
         // 1. Validar extensión (primera capa)
         let ext = fileURL.pathExtension.lowercased()
         guard allowedExtensions.contains(ext) else {
@@ -190,6 +203,21 @@ public final class MaterialUploadViewModel {
                    bytes[6] == 0x79 && bytes[7] == 0x70
         default:
             return false
+        }
+    }
+
+    /// Valida que el archivo esté en un directorio permitido
+    /// - Parameter fileURL: URL del archivo a validar
+    /// - Returns: true si el archivo está en un directorio permitido
+    /// - Note: Previene path traversal attacks usando canonicalización de paths
+    private func isFileInAllowedDirectory(_ fileURL: URL) -> Bool {
+        // Canonicalizar el path (resuelve symlinks, ., ..)
+        let canonicalURL = fileURL.standardizedFileURL.resolvingSymlinksInPath()
+
+        // Verificar que esté dentro de algún directorio permitido
+        return allowedBaseDirectories.contains { allowedBase in
+            let canonicalBase = allowedBase.standardizedFileURL.resolvingSymlinksInPath()
+            return canonicalURL.path.hasPrefix(canonicalBase.path)
         }
     }
 
