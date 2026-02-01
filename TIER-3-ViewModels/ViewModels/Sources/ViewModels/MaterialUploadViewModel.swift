@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 import SwiftUI
 import CQRS
 import Models
@@ -76,6 +77,9 @@ public final class MaterialUploadViewModel {
 
     /// IDs de suscripciones a eventos (para cleanup)
     private var subscriptionIds: [UUID] = []
+
+    /// Logger para debugging y monitoreo
+    private let logger = Logger(subsystem: "com.edugo.viewmodels", category: "MaterialUpload")
 
     // MARK: - Constants
 
@@ -270,15 +274,15 @@ public final class MaterialUploadViewModel {
                 self.uploadProgress = 1.0
                 self.isUploading = false
 
-                print("✅ Material subido exitosamente: \(material.id)")
-                print("📢 Eventos publicados: \(result.events)")
+                logger.info("Material subido exitosamente: \(material.id)")
+                logger.debug("Eventos publicados: \(result.events)")
 
             } else if let resultError = result.getError() {
                 // Subida falló
                 self.error = resultError
                 self.isUploading = false
 
-                print("❌ Error al subir material: \(resultError.localizedDescription)")
+                logger.error("Error al subir material: \(resultError.localizedDescription)")
             }
 
         } catch {

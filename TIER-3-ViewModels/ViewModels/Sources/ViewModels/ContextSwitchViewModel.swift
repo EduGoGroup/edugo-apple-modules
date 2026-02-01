@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 import SwiftUI
 import CQRS
 import Models
@@ -108,6 +109,9 @@ public final class ContextSwitchViewModel {
     /// IDs de suscripciones a eventos
     private var subscriptionIds: [UUID] = []
 
+    /// Logger para debugging y monitoreo
+    private let logger = Logger(subsystem: "com.edugo.viewmodels", category: "ContextSwitch")
+
     // MARK: - Initialization
 
     /// Crea un nuevo ContextSwitchViewModel.
@@ -166,11 +170,11 @@ public final class ContextSwitchViewModel {
                 currentMembershipId = firstActive.id
             }
 
-            print("Contextos cargados: \(context.memberships.count) memberships")
+            logger.info("Contextos cargados: \(context.memberships.count) memberships")
 
         } catch {
             self.error = error
-            print("Error cargando contextos: \(error.localizedDescription)")
+            logger.error("Error cargando contextos: \(error.localizedDescription)")
         }
 
         isLoading = false
@@ -197,11 +201,11 @@ public final class ContextSwitchViewModel {
             schoolsMap = context.schoolsMap
             unitsMap = context.unitsMap
 
-            print("Contextos refrescados: \(context.memberships.count) memberships")
+            logger.info("Contextos refrescados: \(context.memberships.count) memberships")
 
         } catch {
             self.error = error
-            print("Error refrescando contextos: \(error.localizedDescription)")
+            logger.error("Error refrescando contextos: \(error.localizedDescription)")
         }
 
         isLoading = false
@@ -228,7 +232,7 @@ public final class ContextSwitchViewModel {
         // Validar que no es el mismo membership
         guard membershipId != currentMembershipId else {
             // No es un error, simplemente no hay nada que hacer
-            print("Ya esta en este contexto")
+            logger.debug("Ya está en este contexto, no se realiza cambio")
             return
         }
 
@@ -261,16 +265,16 @@ public final class ContextSwitchViewModel {
                 }
 
                 switchSuccess = true
-                print("Contexto cambiado a: \(output.newContext.school.name)")
+                logger.info("Contexto cambiado a: \(output.newContext.school.name)")
 
             } else if let resultError = result.getError() {
                 self.error = resultError
-                print("Error al cambiar contexto: \(resultError.localizedDescription)")
+                logger.error("Error al cambiar contexto: \(resultError.localizedDescription)")
             }
 
         } catch {
             self.error = error
-            print("Error ejecutando SwitchContextCommand: \(error.localizedDescription)")
+            logger.error("Error ejecutando SwitchContextCommand: \(error.localizedDescription)")
         }
 
         isSwitching = false

@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import OSLog
 import CQRS
 import Models
 import EduGoCommon
@@ -84,6 +85,9 @@ public final class MaterialAssignmentViewModel {
 
     /// ID del usuario que realiza la asignación
     private let assignedBy: UUID
+
+    /// Logger para debugging y monitoreo
+    private let logger = Logger(subsystem: "com.edugo.viewmodels", category: "MaterialAssignment")
 
     // MARK: - Cached Permission State
 
@@ -220,15 +224,15 @@ public final class MaterialAssignmentViewModel {
                 if result.isSuccess, let assignment = result.getValue() {
                     assignmentResults.append(assignment)
                     successCount += 1
-                    print("✅ Material asignado a unidad: \(unitId)")
+                    logger.info("Material asignado a unidad: \(unitId)")
                 } else if let resultError = result.getError() {
                     lastError = resultError
-                    print("❌ Error asignando a unidad \(unitId): \(resultError.localizedDescription)")
+                    logger.error("Error asignando a unidad \(unitId): \(resultError.localizedDescription)")
                 }
 
             } catch {
                 lastError = error
-                print("❌ Error ejecutando command para unidad \(unitId): \(error.localizedDescription)")
+                logger.error("Error ejecutando command para unidad \(unitId): \(error.localizedDescription)")
             }
         }
 
@@ -237,16 +241,16 @@ public final class MaterialAssignmentViewModel {
         // Determinar resultado final
         if successCount == selectedUnitIds.count {
             assignmentSuccess = true
-            print("✅ Todas las asignaciones completadas exitosamente")
+            logger.info("Todas las asignaciones completadas exitosamente")
         } else if successCount > 0 {
             // Éxito parcial
             assignmentSuccess = true
             self.error = lastError
-            print("⚠️ Asignación parcial: \(successCount)/\(selectedUnitIds.count)")
+            logger.warning("Asignación parcial: \(successCount)/\(self.selectedUnitIds.count)")
         } else {
             // Todas fallaron
             self.error = lastError
-            print("❌ Todas las asignaciones fallaron")
+            logger.error("Todas las asignaciones fallaron")
         }
     }
 

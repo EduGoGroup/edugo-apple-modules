@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 import SwiftUI
 import CQRS
 import Models
@@ -88,6 +89,9 @@ public final class UserProfileViewModel {
     /// IDs de suscripciones a eventos (para cleanup)
     private var subscriptionIds: [UUID] = []
 
+    /// Logger para debugging y monitoreo
+    private let logger = Logger(subsystem: "com.edugo.viewmodels", category: "UserProfile")
+
     // MARK: - Initialization
 
     /// Crea un nuevo UserProfileViewModel.
@@ -151,14 +155,14 @@ public final class UserProfileViewModel {
                 try await localRepository.save(context.user)
             } catch {
                 // Cache update failed, but we still have fresh data
-                print("⚠️ Error actualizando cache: \(error.localizedDescription)")
+                logger.warning("Error actualizando cache: \(error.localizedDescription)")
             }
 
-            print("✅ Perfil cargado: \(context.user.fullName)")
+            logger.info("Perfil cargado: \(context.user.fullName)")
 
         } catch {
             self.error = error
-            print("❌ Error cargando perfil: \(error.localizedDescription)")
+            logger.error("Error cargando perfil: \(error.localizedDescription)")
         }
 
         isLoading = false
@@ -249,17 +253,17 @@ public final class UserProfileViewModel {
             do {
                 try await localRepository.save(updatedUser)
             } catch {
-                print("⚠️ Error guardando en cache: \(error.localizedDescription)")
+                logger.warning("Error guardando en cache: \(error.localizedDescription)")
             }
 
-            print("✅ Perfil actualizado localmente: \(updatedUser.fullName)")
+            logger.info("Perfil actualizado localmente: \(updatedUser.fullName)")
 
             // Nota: Para persistir en el servidor, se debe implementar
             // UpdateUserProfileCommand y ejecutarlo via mediator
 
         } catch {
             self.error = error
-            print("❌ Error guardando perfil: \(error.localizedDescription)")
+            logger.error("Error guardando perfil: \(error.localizedDescription)")
         }
 
         isSaving = false
@@ -283,7 +287,7 @@ public final class UserProfileViewModel {
             return users.first
         } catch {
             // Cache unavailable, will load from remote
-            print("⚠️ Cache no disponible: \(error.localizedDescription)")
+            logger.warning("Cache no disponible: \(error.localizedDescription)")
             return nil
         }
     }
@@ -308,7 +312,7 @@ public final class UserProfileViewModel {
             guard let self = self else { return }
 
             Task { @MainActor in
-                print("📢 Login detectado, refrescando perfil...")
+                self.logger.debug("Login detectado, refrescando perfil...")
                 await self.loadProfile(forceRefresh: true)
             }
         }
