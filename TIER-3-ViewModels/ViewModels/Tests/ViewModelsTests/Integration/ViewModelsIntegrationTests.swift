@@ -44,9 +44,6 @@ struct ViewModelsIntegrationTests {
             userId: testUserId
         )
 
-        // Esperar a que se suscriba
-        try await Task.sleep(nanoseconds: 50_000_000)
-
         // Cargar dashboard primero
         await dashboardVM.loadDashboard()
 
@@ -60,8 +57,10 @@ struct ViewModelsIntegrationTests {
         )
         await eventBus.publish(loginEvent)
 
-        // Esperar propagacion del evento
-        try await Task.sleep(nanoseconds: 300_000_000)
+        // Esperar a que el dashboard se refresque
+        try await waitForCondition(timeout: 1.0) {
+            await dashboardHandler.callCount > initialCallCount
+        }
 
         // Assert: Dashboard debe haberse refrescado
         let finalCallCount = await dashboardHandler.callCount
@@ -87,9 +86,6 @@ struct ViewModelsIntegrationTests {
             eventBus: eventBus
         )
 
-        // Esperar suscripcion
-        try await Task.sleep(nanoseconds: 50_000_000)
-
         // Cargar materiales primero
         await listVM.loadMaterials()
 
@@ -107,8 +103,10 @@ struct ViewModelsIntegrationTests {
         )
         await eventBus.publish(uploadEvent)
 
-        // Esperar propagacion
-        try await Task.sleep(nanoseconds: 300_000_000)
+        // Esperar a que la lista se refresque
+        try await waitForCondition(timeout: 1.0) {
+            await materialsHandler.callCount > initialCallCount
+        }
 
         // Assert: MaterialList debe haberse refrescado
         let finalCallCount = await materialsHandler.callCount
@@ -135,8 +133,8 @@ struct ViewModelsIntegrationTests {
             userId: testUserId
         )
 
-        // Esperar suscripcion
-        try await Task.sleep(nanoseconds: 50_000_000)
+        // Esperar a que las suscripciones a eventos se completen
+        try await Task.sleep(nanoseconds: 50_000_000)  // 50ms para suscripciones
 
         // Cargar dashboard primero
         await dashboardVM.loadDashboard()
@@ -157,8 +155,10 @@ struct ViewModelsIntegrationTests {
         )
         await eventBus.publish(submitEvent)
 
-        // Esperar propagacion
-        try await Task.sleep(nanoseconds: 300_000_000)
+        // Esperar a que el dashboard se actualice
+        try await waitForCondition(timeout: 3.0) {
+            await dashboardHandler.callCount > initialCallCount
+        }
 
         // Assert: Dashboard debe haberse refrescado
         let finalCallCount = await dashboardHandler.callCount
@@ -198,8 +198,10 @@ struct ViewModelsIntegrationTests {
             userId: testUserId
         )
 
-        // Esperar carga inicial
-        try await Task.sleep(nanoseconds: 150_000_000)
+        // Esperar a que termine la carga del contexto
+        try await waitForCondition(timeout: 1.0) {
+            !contextVM.isLoading
+        }
 
         // Verificar rol inicial
         let initialRole = await roleManager.getCurrentRole()
@@ -307,9 +309,6 @@ struct ViewModelsIntegrationTests {
             eventBus: eventBus
         )
 
-        // Esperar suscripciones
-        try await Task.sleep(nanoseconds: 100_000_000)
-
         // Cargar datos inicialmente
         await dashboardVM.loadDashboard()
         await materialsVM.loadMaterials()
@@ -396,8 +395,8 @@ struct ViewModelsIntegrationTests {
             eventBus: eventBus
         )
 
-        // Esperar suscripcion
-        try await Task.sleep(nanoseconds: 100_000_000)
+        // Esperar a que las suscripciones a eventos se completen
+        try await Task.sleep(nanoseconds: 50_000_000)  // 50ms para suscripciones
 
         // Act: Publicar muchos eventos rapidamente
         await withTaskGroup(of: Void.self) { group in
@@ -415,11 +414,14 @@ struct ViewModelsIntegrationTests {
             }
         }
 
-        // Esperar procesamiento
-        try await Task.sleep(nanoseconds: 500_000_000)
+        // Esperar a que los eventos se procesen (test complejo con 10 eventos rápidos)
+        try await Task.sleep(nanoseconds: 500_000_000)  // 500ms
 
         // Assert: No crash, estado consistente
         #expect(!materialsVM.isLoading, "Should not be in loading state")
+        // El test verifica que no hay crashes con eventos rápidos
+        // El callCount puede variar debido a timing de suscripciones
+        #expect(await materialsHandler.callCount > 0, "Debería haber procesado al menos algunos eventos")
     }
 
     // MARK: - Test: ViewModel Cleanup Does Not Crash
@@ -435,19 +437,20 @@ struct ViewModelsIntegrationTests {
         try await mediator.registerQueryHandler(dashboardHandler)
 
         // Crear y destruir ViewModel en scope
+        weak var weakDashboard: DashboardViewModel?
         do {
-            let _ = DashboardViewModel(
+            let dashboard = DashboardViewModel(
                 mediator: mediator,
                 eventBus: eventBus,
                 userId: testUserId
             )
-
-            // Esperar suscripcion
-            try await Task.sleep(nanoseconds: 100_000_000)
+            weakDashboard = dashboard
         }
 
-        // Esperar para que se limpie
-        try await Task.sleep(nanoseconds: 100_000_000)
+        // Esperar a que el ViewModel sea deallocado
+        try await waitForCondition(timeout: 1.0) {
+            weakDashboard == nil
+        }
 
         // Act: Publicar evento despues de que el ViewModel fue deallocated
         let event = LoginSuccessEvent(
@@ -456,11 +459,46 @@ struct ViewModelsIntegrationTests {
         )
         await eventBus.publish(event)
 
-        // Esperar propagacion
-        try await Task.sleep(nanoseconds: 200_000_000)
-
-        // Assert: No crash
+        // Assert: No crash (el evento se publica pero no hay subscribers)
         #expect(Bool(true), "No crash should occur")
+    }
+
+    // MARK: - Test Helpers
+
+    /// Espera hasta que una condición sea verdadera o se alcance el timeout
+    /// - Parameters:
+    ///   - timeout: Tiempo máximo de espera en segundos (default: 2.0)
+    ///   - pollInterval: Intervalo entre verificaciones en segundos (default: 0.01)
+    ///   - condition: Closure asíncrono que retorna true cuando la condición se cumple
+    /// - Throws: Error si se alcanza el timeout sin cumplir la condición
+    @MainActor
+    private func waitForCondition(
+        timeout: TimeInterval = 2.0,
+        pollInterval: TimeInterval = 0.01,
+        condition: @escaping () async -> Bool
+    ) async throws {
+        let deadline = Date().addingTimeInterval(timeout)
+
+        while Date() < deadline {
+            if await condition() {
+                return
+            }
+            try await Task.sleep(nanoseconds: UInt64(pollInterval * 1_000_000_000))
+        }
+
+        throw TestError.timeout("Timeout esperando condición después de \(timeout)s")
+    }
+
+    /// Error personalizado para tests
+    enum TestError: Error, CustomStringConvertible {
+        case timeout(String)
+
+        var description: String {
+            switch self {
+            case .timeout(let message):
+                return message
+            }
+        }
     }
 }
 
