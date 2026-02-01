@@ -200,58 +200,88 @@ public final class MaterialAssignmentViewModel {
         assignmentSuccess = false
         assignmentResults = []
 
-        var successCount = 0
-        var failuresByUnit: [UUID: Error] = [:]  // Trackear errores por unidad
+        // Capturar propiedades antes del TaskGroup para evitar acceso async
+        let materialId = self.materialId
+        let assignedBy = self.assignedBy
+        let deadline = self.assignmentDeadline
+        let isVisible = self.isVisible
+        let notifyStudents = self.notifyStudents
+        let mediator = self.mediator
 
-        // Asignar a cada unidad seleccionada
-        for unitId in selectedUnitIds {
-            do {
-                let command = AssignMaterialCommand(
-                    materialId: materialId,
-                    unitId: unitId,
-                    assignedBy: assignedBy,
-                    dueDate: assignmentDeadline,
-                    visible: isVisible,
-                    notifyStudents: notifyStudents,
-                    metadata: [
-                        "source": "MaterialAssignmentViewModel",
-                        "timestamp": ISO8601DateFormatter().string(from: Date())
-                    ]
-                )
+        // Procesar asignaciones en paralelo usando TaskGroup
+        let results = await withTaskGroup(of: (UUID, Result<MaterialAssignment, Error>).self) { group in
+            for unitId in selectedUnitIds {
+                group.addTask {
+                    do {
+                        let command = AssignMaterialCommand(
+                            materialId: materialId,
+                            unitId: unitId,
+                            assignedBy: assignedBy,
+                            dueDate: deadline,
+                            visible: isVisible,
+                            notifyStudents: notifyStudents,
+                            metadata: [
+                                "source": "MaterialAssignmentViewModel",
+                                "timestamp": ISO8601DateFormatter().string(from: Date())
+                            ]
+                        )
 
-                let result = try await mediator.execute(command)
-
-                if result.isSuccess, let assignment = result.getValue() {
-                    assignmentResults.append(assignment)
-                    successCount += 1
-                    logger.info("Material asignado a unidad: \(unitId)")
-                } else if let resultError = result.getError() {
-                    failuresByUnit[unitId] = resultError  // Guardar error específico por unidad
-                    logger.error("Error asignando a unidad \(unitId): \(resultError.localizedDescription)")
+                        let result = try await mediator.execute(command)
+                        guard let assignment = try result.getValue() else {
+                            throw MediatorError.executionError(
+                                message: "No se pudo obtener el resultado de la asignación",
+                                underlyingError: nil
+                            )
+                        }
+                        return (unitId, .success(assignment))
+                    } catch {
+                        return (unitId, .failure(error))
+                    }
                 }
+            }
 
-            } catch {
-                failuresByUnit[unitId] = error  // Guardar error específico por unidad
-                logger.error("Error ejecutando command para unidad \(unitId): \(error.localizedDescription)")
+            // Recolectar resultados
+            var taskResults: [(UUID, Result<MaterialAssignment, Error>)] = []
+            for await result in group {
+                taskResults.append(result)
+            }
+            return taskResults
+        }
+
+        // Procesar resultados
+        var successfulAssignments: [MaterialAssignment] = []
+        var failuresByUnit: [UUID: Error] = [:]
+
+        for (unitId, result) in results {
+            switch result {
+            case .success(let assignment):
+                successfulAssignments.append(assignment)
+                logger.info("Material asignado a unidad: \(unitId)")
+            case .failure(let error):
+                failuresByUnit[unitId] = error
+                logger.error("Error asignando material a unidad \(unitId): \(error.localizedDescription)")
             }
         }
+
+        // Actualizar array de resultados (successfulAssignmentsCount se calcula automáticamente)
+        self.assignmentResults = successfulAssignments
 
         isAssigning = false
 
         // Determinar resultado final con información detallada
-        if successCount == selectedUnitIds.count {
+        if successfulAssignments.count == selectedUnitIds.count {
             // Todas exitosas
             assignmentSuccess = true
             logger.info("Todas las asignaciones completadas exitosamente")
-        } else if successCount > 0 {
+        } else if successfulAssignments.count > 0 {
             // Éxito parcial - crear error con detalles
             assignmentSuccess = true
             self.error = createPartialSuccessError(
-                successCount: successCount,
+                successCount: successfulAssignments.count,
                 totalCount: selectedUnitIds.count,
                 failures: failuresByUnit
             )
-            logger.warning("Asignación parcial: \(successCount)/\(self.selectedUnitIds.count)")
+            logger.warning("Asignación parcial: \(successfulAssignments.count)/\(self.selectedUnitIds.count)")
         } else {
             // Todas fallaron
             assignmentSuccess = false
