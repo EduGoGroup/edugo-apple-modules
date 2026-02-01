@@ -246,18 +246,64 @@ public final class MaterialUploadViewModel {
             return
         }
 
+        // VALIDACIÓN: Verificar título no esté vacío
+        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedTitle.isEmpty else {
+            error = ValidationError.emptyField(fieldName: "title")
+            return
+        }
+
+        // VALIDACIÓN: Verificar longitud del título (3-200 caracteres según documentación)
+        guard trimmedTitle.count >= 3 else {
+            error = ValidationError.outOfRange(
+                fieldName: "title",
+                min: 3,
+                max: 200,
+                actual: trimmedTitle.count
+            )
+            return
+        }
+
+        guard trimmedTitle.count <= 200 else {
+            error = ValidationError.outOfRange(
+                fieldName: "title",
+                min: 3,
+                max: 200,
+                actual: trimmedTitle.count
+            )
+            return
+        }
+
+        // VALIDACIÓN: Verificar longitud de descripción si existe (máximo 1000 caracteres)
+        let trimmedDescription: String?
+        if let desc = description {
+            let trimmed = desc.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard trimmed.count <= 1000 else {
+                error = ValidationError.outOfRange(
+                    fieldName: "description",
+                    min: nil,
+                    max: 1000,
+                    actual: trimmed.count
+                )
+                return
+            }
+            trimmedDescription = trimmed.isEmpty ? nil : trimmed
+        } else {
+            trimmedDescription = nil
+        }
+
         isUploading = true
         uploadProgress = 0.0
         error = nil
 
         do {
-            // Crear command con datos del material
+            // Crear command con datos del material validados y limpios
             let command = UploadMaterialCommand(
                 fileURL: fileURL,
-                title: title,
+                title: trimmedTitle,
                 subjectId: subjectId,
                 unitId: unitId,
-                description: description,
+                description: trimmedDescription,
                 metadata: [
                     "source": "MaterialUploadViewModel",
                     "timestamp": ISO8601DateFormatter().string(from: Date())

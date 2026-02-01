@@ -360,6 +360,185 @@ struct MaterialUploadViewModelTests {
         #expect(viewModel.fileValidationError != nil, "Debe haber un error de validación")
         #expect(viewModel.selectedFile == nil, "selectedFile debe ser nil")
     }
+
+    // MARK: - Test: Validación de título vacío
+
+    @Test("Rejects empty title")
+    @MainActor
+    func testRejectsEmptyTitle() async throws {
+        // Setup
+        let mediator = Mediator(loggingEnabled: false, metricsEnabled: false)
+        let eventBus = EventBus()
+        let viewModel = MaterialUploadViewModel(mediator: mediator, eventBus: eventBus)
+
+        // Crear y seleccionar archivo válido
+        let fileURL = try FileTestHelper.createValidPDF()
+        defer { FileTestHelper.cleanup(fileURL) }
+        _ = viewModel.validateFile(fileURL)
+
+        // Execute: Intentar subir con título vacío
+        await viewModel.uploadMaterial(
+            title: "",
+            description: nil,
+            subjectId: UUID(),
+            unitId: UUID()
+        )
+
+        // Verify
+        #expect(!viewModel.isUploading)
+        #expect(viewModel.error != nil)
+        #expect(viewModel.uploadedMaterial == nil)
+    }
+
+    // MARK: - Test: Validación de título solo espacios
+
+    @Test("Rejects title with only whitespace")
+    @MainActor
+    func testRejectsTitleWithOnlyWhitespace() async throws {
+        // Setup
+        let mediator = Mediator(loggingEnabled: false, metricsEnabled: false)
+        let eventBus = EventBus()
+        let viewModel = MaterialUploadViewModel(mediator: mediator, eventBus: eventBus)
+
+        // Crear y seleccionar archivo válido
+        let fileURL = try FileTestHelper.createValidPDF()
+        defer { FileTestHelper.cleanup(fileURL) }
+        _ = viewModel.validateFile(fileURL)
+
+        // Execute: Intentar subir con título de solo espacios
+        await viewModel.uploadMaterial(
+            title: "   ",
+            description: nil,
+            subjectId: UUID(),
+            unitId: UUID()
+        )
+
+        // Verify
+        #expect(!viewModel.isUploading)
+        #expect(viewModel.error != nil)
+        #expect(viewModel.uploadedMaterial == nil)
+    }
+
+    // MARK: - Test: Validación de título muy corto
+
+    @Test("Rejects title too short")
+    @MainActor
+    func testRejectsTitleTooShort() async throws {
+        // Setup
+        let mediator = Mediator(loggingEnabled: false, metricsEnabled: false)
+        let eventBus = EventBus()
+        let viewModel = MaterialUploadViewModel(mediator: mediator, eventBus: eventBus)
+
+        // Crear y seleccionar archivo válido
+        let fileURL = try FileTestHelper.createValidPDF()
+        defer { FileTestHelper.cleanup(fileURL) }
+        _ = viewModel.validateFile(fileURL)
+
+        // Execute: Intentar subir con título de 2 caracteres (mínimo es 3)
+        await viewModel.uploadMaterial(
+            title: "AB",
+            description: nil,
+            subjectId: UUID(),
+            unitId: UUID()
+        )
+
+        // Verify
+        #expect(!viewModel.isUploading)
+        #expect(viewModel.error != nil)
+        #expect(viewModel.uploadedMaterial == nil)
+    }
+
+    // MARK: - Test: Validación de título muy largo
+
+    @Test("Rejects title too long")
+    @MainActor
+    func testRejectsTitleTooLong() async throws {
+        // Setup
+        let mediator = Mediator(loggingEnabled: false, metricsEnabled: false)
+        let eventBus = EventBus()
+        let viewModel = MaterialUploadViewModel(mediator: mediator, eventBus: eventBus)
+
+        // Crear y seleccionar archivo válido
+        let fileURL = try FileTestHelper.createValidPDF()
+        defer { FileTestHelper.cleanup(fileURL) }
+        _ = viewModel.validateFile(fileURL)
+
+        // Execute: Intentar subir con título de 201 caracteres (máximo es 200)
+        let longTitle = String(repeating: "a", count: 201)
+        await viewModel.uploadMaterial(
+            title: longTitle,
+            description: nil,
+            subjectId: UUID(),
+            unitId: UUID()
+        )
+
+        // Verify
+        #expect(!viewModel.isUploading)
+        #expect(viewModel.error != nil)
+        #expect(viewModel.uploadedMaterial == nil)
+    }
+
+    // MARK: - Test: Validación de descripción muy larga
+
+    @Test("Rejects description too long")
+    @MainActor
+    func testRejectsDescriptionTooLong() async throws {
+        // Setup
+        let mediator = Mediator(loggingEnabled: false, metricsEnabled: false)
+        let eventBus = EventBus()
+        let viewModel = MaterialUploadViewModel(mediator: mediator, eventBus: eventBus)
+
+        // Crear y seleccionar archivo válido
+        let fileURL = try FileTestHelper.createValidPDF()
+        defer { FileTestHelper.cleanup(fileURL) }
+        _ = viewModel.validateFile(fileURL)
+
+        // Execute: Intentar subir con descripción de 1001 caracteres (máximo es 1000)
+        let longDescription = String(repeating: "a", count: 1001)
+        await viewModel.uploadMaterial(
+            title: "Valid Title",
+            description: longDescription,
+            subjectId: UUID(),
+            unitId: UUID()
+        )
+
+        // Verify
+        #expect(!viewModel.isUploading)
+        #expect(viewModel.error != nil)
+        #expect(viewModel.uploadedMaterial == nil)
+    }
+
+    // MARK: - Test: Título válido con espacios al inicio y final
+
+    @Test("Trims whitespace from title")
+    @MainActor
+    func testTrimsWhitespaceFromTitle() async throws {
+        // Setup
+        let mediator = Mediator(loggingEnabled: false, metricsEnabled: false)
+        let eventBus = EventBus()
+        let mockHandler = MockUploadMaterialCommandHandler()
+        try await mediator.registerCommandHandler(mockHandler)
+        let viewModel = MaterialUploadViewModel(mediator: mediator, eventBus: eventBus)
+
+        // Crear y seleccionar archivo válido
+        let fileURL = try FileTestHelper.createValidPDF()
+        defer { FileTestHelper.cleanup(fileURL) }
+        _ = viewModel.validateFile(fileURL)
+
+        // Execute: Subir con título que tiene espacios al inicio y final
+        await viewModel.uploadMaterial(
+            title: "  Valid Title  ",
+            description: "  Valid Description  ",
+            subjectId: UUID(),
+            unitId: UUID()
+        )
+
+        // Verify: El upload debe ser exitoso con el título trimmed
+        #expect(!viewModel.isUploading)
+        #expect(viewModel.error == nil)
+        #expect(viewModel.uploadedMaterial != nil)
+        #expect(viewModel.uploadedMaterial?.title == "Valid Title")
+    }
 }
 
 // MARK: - Mock Handlers
