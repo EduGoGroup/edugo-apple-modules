@@ -203,13 +203,33 @@ public final class MaterialAssignmentViewModel {
     /// Ejecuta AssignMaterialCommand para cada unidad seleccionada.
     /// Si alguna falla, continúa con las demás y reporta errores parciales.
     public func assignMaterial() async {
+        // SEGURIDAD: Validación de permisos PRIMERO (fail fast)
+        // Refresh permissions antes de validar para evitar race conditions
+        // Los permisos pueden haber cambiado desde que se cargaron en init
+        await loadPermissions()
+
+        guard canAssignMaterials else {
+            error = MediatorError.validationError(
+                message: "No tiene permisos para asignar materiales",
+                underlyingError: nil
+            )
+            return
+        }
+
         // SEGURIDAD: Prevenir race conditions - validar que no haya operación en progreso
         guard !isAssigning else {
             logger.warning("Intento de asignar material mientras ya hay una asignación en progreso")
             return
         }
 
+        // Validar selección temprano
+        guard !selectedUnitIds.isEmpty else {
+            error = ValidationError.emptyField(fieldName: "units")
+            return
+        }
+
         // SEGURIDAD: Rate limiting - prevenir llamadas muy rápidas (throttling)
+        // Solo aplicar rate limit DESPUÉS de validaciones rápidas
         let now = Date()
         if let lastAttempt = self.lastAssignmentAttempt {
             let timeSinceLastAttempt = now.timeIntervalSince(lastAttempt)
@@ -219,25 +239,6 @@ public final class MaterialAssignmentViewModel {
             }
         }
         self.lastAssignmentAttempt = now
-
-        // SEGURIDAD: Refresh permissions antes de validar para evitar race conditions
-        // Los permisos pueden haber cambiado desde que se cargaron en init
-        await loadPermissions()
-
-        // Verificar permisos
-        guard canAssignMaterials else {
-            error = MediatorError.validationError(
-                message: "No tiene permisos para asignar materiales",
-                underlyingError: nil
-            )
-            return
-        }
-
-        // Validar selección
-        guard !selectedUnitIds.isEmpty else {
-            error = ValidationError.emptyField(fieldName: "units")
-            return
-        }
 
         isAssigning = true
         error = nil
@@ -259,27 +260,36 @@ public final class MaterialAssignmentViewModel {
         // Procesar asignaciones en paralelo usando TaskGroup
         let results = await withTaskGroup(of: (UUID, Result<MaterialAssignment, Error>).self) { group in
             for unitId in selectedUnitIds {
-                group.addTask {
-                    do {
-                        let command = AssignMaterialCommand(
-                            materialId: materialId,
-                            unitId: unitId,
-                            assignedBy: assignedBy,
-                            dueDate: deadline,
-                            visible: isVisible,
-                            notifyStudents: notifyStudents,
-                            metadata: [
-                                "source": "MaterialAssignmentViewModel",
-                                "timestamp": ISO8601DateFormatter().string(from: Date())
-                            ]
-                        )
+                group.addTask { [weak self] in
+                    guard let self = self else {
+                        return (unitId, .failure(DomainError.invalidOperation(operation: "ViewModel fue liberado")))
+                    }
 
-                        let result = try await mediator.execute(command)
-                        guard let assignment = try result.getValue() else {
-                            throw DomainError.invalidOperation(
-                                operation: "No se pudo completar la asignación del material. Intente nuevamente."
+                    do {
+                        // Ejecutar con lógica de reintento para fallos transitorios
+                        let assignment = try await self.executeWithRetry {
+                            let command = AssignMaterialCommand(
+                                materialId: materialId,
+                                unitId: unitId,
+                                assignedBy: assignedBy,
+                                dueDate: deadline,
+                                visible: isVisible,
+                                notifyStudents: notifyStudents,
+                                metadata: [
+                                    "source": "MaterialAssignmentViewModel",
+                                    "timestamp": ISO8601DateFormatter().string(from: Date())
+                                ]
                             )
+
+                            let result = try await mediator.execute(command)
+                            guard let assignment = try result.getValue() else {
+                                throw DomainError.invalidOperation(
+                                    operation: "No se pudo completar la asignación del material. Intente nuevamente."
+                                )
+                            }
+                            return assignment
                         }
+
                         return (unitId, .success(assignment))
                     } catch {
                         return (unitId, .failure(error))
@@ -331,7 +341,7 @@ public final class MaterialAssignmentViewModel {
         } else if successfulAssignments.count > 0 {
             // Éxito parcial - crear error con detalles
             assignmentSuccess = true
-            self.error = createPartialSuccessError(
+            self.error = createAssignmentError(
                 successCount: successfulAssignments.count,
                 totalCount: selectedUnitIds.count,
                 failures: failuresByUnit
@@ -340,7 +350,11 @@ public final class MaterialAssignmentViewModel {
         } else {
             // Todas fallaron
             assignmentSuccess = false
-            self.error = createAllFailedError(failures: failuresByUnit)
+            self.error = createAssignmentError(
+                successCount: 0,
+                totalCount: selectedUnitIds.count,
+                failures: failuresByUnit
+            )
             logger.error("Todas las asignaciones fallaron")
         }
     }
@@ -367,37 +381,84 @@ public final class MaterialAssignmentViewModel {
     // MARK: - Error Helpers
 
     /// Crea un error descriptivo para éxito parcial
-    private func createPartialSuccessError(
+    /// Ejecuta una operación con lógica de reintento para fallos transitorios.
+    ///
+    /// - Parameters:
+    ///   - maxAttempts: Número máximo de intentos (por defecto 3)
+    ///   - operation: Operación asíncrona a ejecutar
+    /// - Returns: Resultado de la operación
+    /// - Throws: El último error si todos los intentos fallan
+    ///
+    /// ## Estrategia de Reintento
+    /// - Exponential backoff: 0.5s, 1s, 2s
+    /// - No reintenta errores de validación o dominio
+    /// - Solo reintenta errores transitorios (network, timeout)
+    private func executeWithRetry<T>(
+        maxAttempts: Int = 3,
+        operation: @escaping () async throws -> T
+    ) async throws -> T {
+        var lastError: Error?
+
+        for attempt in 1...maxAttempts {
+            do {
+                return try await operation()
+            } catch {
+                lastError = error
+
+                // No reintentar errores de validación o dominio (son permanentes)
+                if error is ValidationError || error is DomainError {
+                    throw error
+                }
+
+                // No reintentar errores de permisos
+                if let mediatorError = error as? MediatorError,
+                   case .validationError = mediatorError {
+                    throw error
+                }
+
+                // Si no es el último intento, esperar antes de reintentar
+                if attempt < maxAttempts {
+                    let delay = pow(2.0, Double(attempt - 1)) * 0.5
+                    try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                    logger.warning("Reintento \(attempt)/\(maxAttempts) después de \(String(format: "%.1f", delay))s - Error: \(error.localizedDescription)")
+                }
+            }
+        }
+
+        throw lastError!
+    }
+
+    /// Crea un error descriptivo para asignaciones fallidas (parcial o totalmente).
+    ///
+    /// - Parameters:
+    ///   - successCount: Número de asignaciones exitosas
+    ///   - totalCount: Número total de asignaciones intentadas
+    ///   - failures: Diccionario de UUID a Error para las asignaciones fallidas
+    /// - Returns: Error con mensaje amigable sin UUIDs expuestos
+    private func createAssignmentError(
         successCount: Int,
         totalCount: Int,
         failures: [UUID: Error]
     ) -> Error {
         let failureCount = totalCount - successCount
 
-        // SEGURIDAD: No exponer UUIDs internos al usuario
-        // Los UUIDs completos se registran en logs del sistema para debugging
-        logger.error("Asignaciones fallidas - UUIDs: \(failures.keys.map { $0.uuidString }.joined(separator: ", "))")
-
-        // Mensaje amigable sin UUIDs
-        return MediatorError.executionError(
-            message: "\(successCount) de \(totalCount) asignaciones completadas. \(failureCount) \(failureCount == 1 ? "asignación falló" : "asignaciones fallaron"). Por favor, verifique los permisos e intente nuevamente.",
-            underlyingError: nil
-        )
-    }
-
-    /// Crea un error descriptivo cuando todas las asignaciones fallan
-    private func createAllFailedError(failures: [UUID: Error]) -> Error {
-        let failureCount = failures.count
-
-        // SEGURIDAD: No exponer UUIDs internos ni detalles técnicos al usuario
-        // Los errores completos se registran en logs del sistema para debugging
+        // SEGURIDAD: Logging detallado sin exponer al usuario
         for (unitId, error) in failures {
             logger.error("Asignación fallida - Unidad: \(unitId.uuidString), Error: \(error.localizedDescription)")
         }
 
-        // Mensaje genérico sin información técnica sensible
+        // Mensaje amigable sin UUIDs
+        let message: String
+        if successCount == 0 {
+            // Todas fallaron
+            message = "No se pudo completar la asignación en \(failureCount) \(failureCount == 1 ? "unidad" : "unidades"). Por favor, verifique los permisos e intente nuevamente."
+        } else {
+            // Éxito parcial
+            message = "\(successCount) de \(totalCount) asignaciones completadas. \(failureCount) \(failureCount == 1 ? "asignación falló" : "asignaciones fallaron"). Por favor, verifique los permisos e intente nuevamente."
+        }
+
         return MediatorError.executionError(
-            message: "No se pudo completar la asignación en \(failureCount) \(failureCount == 1 ? "unidad" : "unidades"). Por favor, verifique los permisos e intente nuevamente.",
+            message: message,
             underlyingError: nil
         )
     }
