@@ -21,7 +21,8 @@ let package = Package(
         .package(path: "../../TIER-2-Domain/CQRS"),
         .package(path: "../../TIER-2-Domain/UseCases"),
         .package(path: "../../TIER-3-Domain/Roles"),
-        .package(path: "../../TIER-2-Infrastructure/LocalPersistence")
+        .package(path: "../../TIER-2-Infrastructure/LocalPersistence"),
+        .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0")
     ],
     targets: [
         .target(
