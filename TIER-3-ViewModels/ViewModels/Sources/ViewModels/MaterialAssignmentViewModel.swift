@@ -201,7 +201,7 @@ public final class MaterialAssignmentViewModel {
         assignmentResults = []
 
         var successCount = 0
-        var lastError: Error?
+        var failuresByUnit: [UUID: Error] = [:]  // Trackear errores por unidad
 
         // Asignar a cada unidad seleccionada
         for unitId in selectedUnitIds {
@@ -226,30 +226,36 @@ public final class MaterialAssignmentViewModel {
                     successCount += 1
                     logger.info("Material asignado a unidad: \(unitId)")
                 } else if let resultError = result.getError() {
-                    lastError = resultError
+                    failuresByUnit[unitId] = resultError  // Guardar error específico por unidad
                     logger.error("Error asignando a unidad \(unitId): \(resultError.localizedDescription)")
                 }
 
             } catch {
-                lastError = error
+                failuresByUnit[unitId] = error  // Guardar error específico por unidad
                 logger.error("Error ejecutando command para unidad \(unitId): \(error.localizedDescription)")
             }
         }
 
         isAssigning = false
 
-        // Determinar resultado final
+        // Determinar resultado final con información detallada
         if successCount == selectedUnitIds.count {
+            // Todas exitosas
             assignmentSuccess = true
             logger.info("Todas las asignaciones completadas exitosamente")
         } else if successCount > 0 {
-            // Éxito parcial
+            // Éxito parcial - crear error con detalles
             assignmentSuccess = true
-            self.error = lastError
+            self.error = createPartialSuccessError(
+                successCount: successCount,
+                totalCount: selectedUnitIds.count,
+                failures: failuresByUnit
+            )
             logger.warning("Asignación parcial: \(successCount)/\(self.selectedUnitIds.count)")
         } else {
             // Todas fallaron
-            self.error = lastError
+            assignmentSuccess = false
+            self.error = createAllFailedError(failures: failuresByUnit)
             logger.error("Todas las asignaciones fallaron")
         }
     }
@@ -271,6 +277,33 @@ public final class MaterialAssignmentViewModel {
     /// Limpia el error actual.
     public func clearError() {
         error = nil
+    }
+
+    // MARK: - Error Helpers
+
+    /// Crea un error descriptivo para éxito parcial
+    private func createPartialSuccessError(
+        successCount: Int,
+        totalCount: Int,
+        failures: [UUID: Error]
+    ) -> Error {
+        let failedUnits = failures.keys.map { $0.uuidString }.joined(separator: ", ")
+        return MediatorError.executionError(
+            message: "\(successCount) de \(totalCount) asignaciones exitosas. Unidades fallidas: \(failedUnits)",
+            underlyingError: nil
+        )
+    }
+
+    /// Crea un error descriptivo cuando todas las asignaciones fallan
+    private func createAllFailedError(failures: [UUID: Error]) -> Error {
+        let failureMessages = failures.map { unitId, error in
+            "\(unitId.uuidString): \(error.localizedDescription)"
+        }.joined(separator: "; ")
+
+        return MediatorError.executionError(
+            message: "Todas las asignaciones fallaron. Detalles: \(failureMessages)",
+            underlyingError: nil
+        )
     }
 }
 
