@@ -137,7 +137,8 @@ public final class UserProfileViewModel {
             }
         }
 
-        logger.debug("UserProfileViewModel deinicializado - \(self.subscriptionIds.count) suscripciones canceladas")
+        let subscriptionCount = self.subscriptionIds.count
+        logger.debug("UserProfileViewModel deinicializado - \(subscriptionCount, privacy: .public) suscripciones canceladas")
     }
 
     // MARK: - Public Methods
@@ -179,14 +180,14 @@ public final class UserProfileViewModel {
                 try await localRepository.save(context.user)
             } catch {
                 // Cache update failed, but we still have fresh data
-                logger.warning("Error actualizando cache: \(error.localizedDescription)")
+                logger.warning("Error actualizando cache: \(error.localizedDescription, privacy: .public)")
             }
 
-            logger.info("Perfil cargado: \(context.user.fullName)")
+            logger.info("Perfil cargado: \(context.user.fullName, privacy: .private)")
 
         } catch {
             self.error = error
-            logger.error("Error cargando perfil: \(error.localizedDescription)")
+            logger.error("Error cargando perfil: \(error.localizedDescription, privacy: .public)")
         }
 
         isLoading = false
@@ -283,17 +284,17 @@ public final class UserProfileViewModel {
             do {
                 try await localRepository.save(updatedUser)
             } catch {
-                logger.warning("Error guardando en cache: \(error.localizedDescription)")
+                logger.warning("Error guardando en cache: \(error.localizedDescription, privacy: .public)")
             }
 
-            logger.info("Perfil actualizado localmente: \(updatedUser.fullName)")
+            logger.info("Perfil actualizado localmente: \(updatedUser.fullName, privacy: .private)")
 
             // Nota: Para persistir en el servidor, se debe implementar
             // UpdateUserProfileCommand y ejecutarlo via mediator
 
         } catch {
             self.error = error
-            logger.error("Error guardando perfil: \(error.localizedDescription)")
+            logger.error("Error guardando perfil: \(error.localizedDescription, privacy: .public)")
         }
 
         isSaving = false
@@ -317,7 +318,7 @@ public final class UserProfileViewModel {
             return users.first
         } catch {
             // Cache unavailable, will load from remote
-            logger.warning("Cache no disponible: \(error.localizedDescription)")
+            logger.warning("Cache no disponible: \(error.localizedDescription, privacy: .public)")
             return nil
         }
     }

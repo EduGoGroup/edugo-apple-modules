@@ -303,6 +303,14 @@ public final class MaterialAssignmentViewModel {
                                 )
                             }
 
+                            // VALIDACIÓN: Verificar que el assignment tenga los campos esperados
+                            guard assignment.material.id == materialId else {
+                                self.logger.error("Backend retornó assignment con materialId incorrecto - Esperado: \(materialId.uuidString, privacy: .private), Recibido: \(assignment.material.id.uuidString, privacy: .private)")
+
+                                throw DomainError.invalidOperation(
+                                    operation: "Respuesta inválida del servidor. Intente nuevamente."
+                                )
+                            }
 
                             // VALIDACIÓN: Verificar que el assignment esté asociado a la unidad correcta
                             guard assignment.unit.id == unitId else {
