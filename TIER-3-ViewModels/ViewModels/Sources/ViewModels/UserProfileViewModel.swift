@@ -19,7 +19,7 @@ import UseCases
 ///
 /// ## Integración con CQRS
 /// - **Queries**: GetUserContextQuery (con cache de sesión)
-/// - **Events**: LoginSuccessEvent (refrescar perfil después de login)
+/// - **Events**: LoginSuccessEvent, UserProfileUpdatedEvent (refrescar perfil)
 ///
 /// ## Estrategia Cache-First
 /// 1. Intentar cargar desde cache local primero
@@ -218,10 +218,7 @@ public final class UserProfileViewModel {
         editedEmail = ""
     }
 
-    /// Guarda los cambios del perfil.
-    ///
-    /// - Note: Esta implementación actualiza el usuario localmente.
-    ///   Para persistir en el servidor, se requiere implementar `UpdateUserProfileCommand`.
+    /// Guarda los cambios del perfil y sincroniza con backend.
     public func saveChanges() async {
         // SEGURIDAD: Prevenir race conditions - validar que no haya operación en progreso
         guard !isSaving else {
@@ -264,33 +261,36 @@ public final class UserProfileViewModel {
         error = nil
 
         do {
-            // Crear usuario actualizado usando copy methods
-            var updatedUser = currentUser
-            if trimmedFirstName != currentUser.firstName {
-                updatedUser = try updatedUser.with(firstName: trimmedFirstName)
-            }
-            if trimmedLastName != currentUser.lastName {
-                updatedUser = try updatedUser.with(lastName: trimmedLastName)
-            }
-            if trimmedEmail != currentUser.email {
-                updatedUser = try updatedUser.with(email: trimmedEmail)
-            }
+            let command = UpdateUserProfileCommand(
+                userId: currentUser.id,
+                firstName: trimmedFirstName,
+                lastName: trimmedLastName,
+                email: trimmedEmail,
+                metadata: [
+                    "source": "UserProfileViewModel",
+                    "timestamp": ISO8601DateFormatter().string(from: Date())
+                ]
+            )
 
-            // Actualizar estado
-            user = updatedUser
-            editMode = false
+            let result = try await mediator.execute(command)
 
-            // Guardar en cache local (non-blocking)
-            do {
-                try await localRepository.save(updatedUser)
-            } catch {
-                logger.warning("Error guardando en cache: \(error.localizedDescription, privacy: .public)")
+            if result.isSuccess, let updatedUser = result.getValue() {
+                // Actualizar estado local
+                user = updatedUser
+                editMode = false
+
+                // Guardar en cache local (non-blocking)
+                do {
+                    try await localRepository.save(updatedUser)
+                } catch {
+                    logger.warning("Error guardando en cache: \(error.localizedDescription, privacy: .public)")
+                }
+
+                logger.info("Perfil actualizado: \(updatedUser.fullName, privacy: .private)")
+            } else if let resultError = result.getError() {
+                self.error = resultError
+                logger.error("Error actualizando perfil: \(resultError.localizedDescription, privacy: .public)")
             }
-
-            logger.info("Perfil actualizado localmente: \(updatedUser.fullName, privacy: .private)")
-
-            // Nota: Para persistir en el servidor, se debe implementar
-            // UpdateUserProfileCommand y ejecutarlo via mediator
 
         } catch {
             self.error = error
@@ -348,6 +348,17 @@ public final class UserProfileViewModel {
             }
         }
         subscriptionIds.append(loginSubscriptionId)
+
+        // Suscribirse a UserProfileUpdatedEvent para refrescar después de cambios
+        let updateSubscriptionId = await eventBus.subscribe(to: UserProfileUpdatedEvent.self) { [weak self] event in
+            guard let self = self else { return }
+
+            Task { @MainActor in
+                self.logger.debug("Perfil actualizado, refrescando datos...")
+                await self.loadProfile(forceRefresh: true)
+            }
+        }
+        subscriptionIds.append(updateSubscriptionId)
     }
 }
 

@@ -30,6 +30,8 @@ struct UserProfileViewModelTests {
         let mockHandler = MockGetUserContextQueryHandler()
 
         try await mediator.registerQueryHandler(mockHandler)
+        let mockUpdateHandler = MockUpdateUserProfileCommandHandler()
+        try await mediator.registerCommandHandler(mockUpdateHandler)
 
         let viewModel = UserProfileViewModel(
             mediator: mediator,
@@ -59,6 +61,8 @@ struct UserProfileViewModelTests {
         let mockHandler = MockGetUserContextQueryHandler()
 
         try await mediator.registerQueryHandler(mockHandler)
+        let mockUpdateHandler = MockUpdateUserProfileCommandHandler()
+        try await mediator.registerCommandHandler(mockUpdateHandler)
 
         let viewModel = UserProfileViewModel(
             mediator: mediator,
@@ -95,6 +99,8 @@ struct UserProfileViewModelTests {
         let mockHandler = MockGetUserContextQueryHandler()
 
         try await mediator.registerQueryHandler(mockHandler)
+        let mockUpdateHandler = MockUpdateUserProfileCommandHandler()
+        try await mediator.registerCommandHandler(mockUpdateHandler)
 
         let viewModel = UserProfileViewModel(
             mediator: mediator,
@@ -131,6 +137,8 @@ struct UserProfileViewModelTests {
         let mockHandler = MockGetUserContextQueryHandler()
 
         try await mediator.registerQueryHandler(mockHandler)
+        let mockUpdateHandler = MockUpdateUserProfileCommandHandler()
+        try await mediator.registerCommandHandler(mockUpdateHandler)
 
         let viewModel = UserProfileViewModel(
             mediator: mediator,
@@ -168,6 +176,8 @@ struct UserProfileViewModelTests {
         let mockHandler = MockGetUserContextQueryHandler()
 
         try await mediator.registerQueryHandler(mockHandler)
+        let mockUpdateHandler = MockUpdateUserProfileCommandHandler()
+        try await mediator.registerCommandHandler(mockUpdateHandler)
 
         let viewModel = UserProfileViewModel(
             mediator: mediator,
@@ -202,6 +212,8 @@ struct UserProfileViewModelTests {
         let mockHandler = MockGetUserContextQueryHandler()
 
         try await mediator.registerQueryHandler(mockHandler)
+        let mockUpdateHandler = MockUpdateUserProfileCommandHandler()
+        try await mediator.registerCommandHandler(mockUpdateHandler)
 
         let viewModel = UserProfileViewModel(
             mediator: mediator,
@@ -235,6 +247,8 @@ struct UserProfileViewModelTests {
         let mockHandler = MockGetUserContextQueryHandler()
 
         try await mediator.registerQueryHandler(mockHandler)
+        let mockUpdateHandler = MockUpdateUserProfileCommandHandler()
+        try await mediator.registerCommandHandler(mockUpdateHandler)
 
         let viewModel = UserProfileViewModel(
             mediator: mediator,
@@ -354,6 +368,47 @@ struct UserProfileViewModelTests {
         #expect(newCallCount > initialCallCount)
     }
 
+    // MARK: - Test: UserProfileUpdatedEvent triggers refresh
+
+    @Test("UserProfileUpdatedEvent triggers refresh")
+    @MainActor
+    func testUserProfileUpdatedEventTriggersRefresh() async throws {
+        // Setup
+        let mediator = Mediator(loggingEnabled: false, metricsEnabled: false)
+        let eventBus = EventBus()
+        let localRepository = MockUserRepository()
+        let mockHandler = MockGetUserContextQueryHandler()
+
+        try await mediator.registerQueryHandler(mockHandler)
+
+        let viewModel = UserProfileViewModel(
+            mediator: mediator,
+            eventBus: eventBus,
+            localRepository: localRepository
+        )
+
+        // Esperar carga inicial
+        try await Task.sleep(nanoseconds: 100_000_000)
+        let initialCallCount = await mockHandler.callCount
+
+        // Act: Publicar evento de perfil actualizado
+        let userId = viewModel.user?.id ?? UUID()
+        let event = UserProfileUpdatedEvent(
+            userId: userId,
+            firstName: "Updated",
+            lastName: "User",
+            email: "updated@example.com"
+        )
+        await eventBus.publish(event)
+
+        // Esperar refresco
+        try await Task.sleep(nanoseconds: 100_000_000)
+
+        // Assert
+        let newCallCount = await mockHandler.callCount
+        #expect(newCallCount > initialCallCount)
+    }
+
     // MARK: - Test: initials calculation
 
     @Test("Initials calculated correctly")
@@ -393,6 +448,8 @@ struct UserProfileViewModelTests {
         let mockHandler = MockGetUserContextQueryHandler()
 
         try await mediator.registerQueryHandler(mockHandler)
+        let mockUpdateHandler = MockUpdateUserProfileCommandHandler()
+        try await mediator.registerCommandHandler(mockUpdateHandler)
 
         let viewModel = UserProfileViewModel(
             mediator: mediator,
@@ -426,6 +483,8 @@ struct UserProfileViewModelTests {
         let mockHandler = MockGetUserContextQueryHandler()
 
         try await mediator.registerQueryHandler(mockHandler)
+        let mockUpdateHandler = MockUpdateUserProfileCommandHandler()
+        try await mediator.registerCommandHandler(mockUpdateHandler)
 
         let viewModel = UserProfileViewModel(
             mediator: mediator,
@@ -459,6 +518,8 @@ struct UserProfileViewModelTests {
         let mockHandler = MockGetUserContextQueryHandler()
 
         try await mediator.registerQueryHandler(mockHandler)
+        let mockUpdateHandler = MockUpdateUserProfileCommandHandler()
+        try await mediator.registerCommandHandler(mockUpdateHandler)
 
         let viewModel = UserProfileViewModel(
             mediator: mediator,
@@ -542,6 +603,35 @@ actor MockGetUserContextQueryHandler: QueryHandler {
             unitsMap: [:],
             schoolsMap: [:],
             partialErrors: []
+        )
+    }
+}
+
+// MARK: - Mock Command Handler
+
+/// Mock CommandHandler para UpdateUserProfileCommand
+actor MockUpdateUserProfileCommandHandler: CommandHandler {
+    typealias CommandType = UpdateUserProfileCommand
+
+    private(set) var callCount = 0
+
+    func handle(_ command: UpdateUserProfileCommand) async throws -> CommandResult<User> {
+        callCount += 1
+
+        let updatedUser = try User(
+            id: command.userId,
+            firstName: command.firstName,
+            lastName: command.lastName,
+            email: command.email,
+            isActive: true
+        )
+
+        return .success(
+            updatedUser,
+            events: ["UserProfileUpdatedEvent"],
+            metadata: [
+                "userId": command.userId.uuidString
+            ]
         )
     }
 }

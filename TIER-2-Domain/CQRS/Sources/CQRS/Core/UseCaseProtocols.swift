@@ -82,6 +82,11 @@ public protocol SwitchSchoolContextUseCaseProtocol: Actor, Sendable {
     func execute(input: SwitchSchoolInput) async throws -> SwitchSchoolOutput
 }
 
+/// Protocolo para UpdateUserProfileUseCase
+public protocol UpdateUserProfileUseCaseProtocol: Actor, Sendable {
+    func execute(input: UpdateUserProfileInput) async throws -> User
+}
+
 // MARK: - Sync UseCases
 
 /// Protocolo para SyncProgressUseCase
@@ -103,4 +108,5 @@ extension LoadAssessmentUseCase: LoadAssessmentUseCaseProtocol {}
 extension LoadStudentDashboardUseCase: LoadStudentDashboardUseCaseProtocol {}
 extension LoadUserContextUseCase: LoadUserContextUseCaseProtocol {}
 extension SwitchSchoolContextUseCase: SwitchSchoolContextUseCaseProtocol {}
+extension UpdateUserProfileUseCase: UpdateUserProfileUseCaseProtocol {}
 extension SyncProgressUseCase: SyncProgressUseCaseProtocol {}
