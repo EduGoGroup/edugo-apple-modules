@@ -112,6 +112,12 @@ public final class ContextSwitchViewModel {
     /// Logger para debugging y monitoreo
     private let logger = Logger(subsystem: "com.edugo.viewmodels", category: "ContextSwitch")
 
+    // MARK: - Task Management
+
+    /// Task de carga inicial de contextos para cancelación en cleanup
+    /// Marcado como nonisolated(unsafe) para acceso desde deinit
+    nonisolated(unsafe) private var contextLoadTask: Task<Void, Never>?
+
     // MARK: - Initialization
 
     /// Crea un nuevo ContextSwitchViewModel.
@@ -132,10 +138,20 @@ public final class ContextSwitchViewModel {
         self.eventBus = eventBus
         self.userId = userId
 
-        // Cargar contextos disponibles
-        Task {
+        // Cargar contextos disponibles, guardar Task para cleanup
+        contextLoadTask = Task {
             await loadAvailableContexts()
         }
+    }
+
+    // MARK: - Deinitialization
+
+    /// Limpia recursos al destruir el ViewModel
+    deinit {
+        // Cancelar tasks en progreso
+        contextLoadTask?.cancel()
+
+        logger.debug("ContextSwitchViewModel deinicializado - recursos limpiados")
     }
 
     // MARK: - Load Contexts

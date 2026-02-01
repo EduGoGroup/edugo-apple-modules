@@ -105,6 +105,12 @@ public final class MaterialAssignmentViewModel {
     /// Timeout para operaciones de asignación (en segundos)
     private let assignmentTimeout: TimeInterval = 30.0
 
+    // MARK: - Task Management
+
+    /// Task de carga inicial de permisos para cancelación en cleanup
+    /// Marcado como nonisolated(unsafe) para acceso desde deinit
+    nonisolated(unsafe) private var permissionLoadTask: Task<Void, Never>?
+
     // MARK: - Initialization
 
     /// Crea un nuevo MaterialAssignmentViewModel.
@@ -125,10 +131,20 @@ public final class MaterialAssignmentViewModel {
         self.materialId = materialId
         self.assignedBy = assignedBy
 
-        // Cargar permisos de forma asíncrona
-        Task {
+        // Cargar permisos de forma asíncrona y guardar Task para cleanup
+        permissionLoadTask = Task {
             await loadPermissions()
         }
+    }
+
+    // MARK: - Deinitialization
+
+    /// Limpia recursos al destruir el ViewModel
+    deinit {
+        // Cancelar tasks en progreso
+        permissionLoadTask?.cancel()
+
+        logger.debug("MaterialAssignmentViewModel deinicializado - recursos limpiados")
     }
 
     // MARK: - Permission Loading
@@ -260,9 +276,8 @@ public final class MaterialAssignmentViewModel {
 
                         let result = try await mediator.execute(command)
                         guard let assignment = try result.getValue() else {
-                            throw MediatorError.executionError(
-                                message: "No se pudo obtener el resultado de la asignación",
-                                underlyingError: nil
+                            throw DomainError.invalidOperation(
+                                operation: "No se pudo completar la asignación del material. Intente nuevamente."
                             )
                         }
                         return (unitId, .success(assignment))

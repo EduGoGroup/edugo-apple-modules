@@ -122,6 +122,13 @@ public final class MaterialUploadViewModel {
         self.eventBus = eventBus
     }
 
+    // MARK: - Deinitialization
+
+    /// Limpia recursos al destruir el ViewModel
+    deinit {
+        logger.debug("MaterialUploadViewModel deinicializado - recursos limpiados")
+    }
+
     // MARK: - Public Methods
 
     /// Valida un archivo antes de la subida.

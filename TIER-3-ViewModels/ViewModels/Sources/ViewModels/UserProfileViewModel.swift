@@ -86,11 +86,18 @@ public final class UserProfileViewModel {
     /// Repositorio local para cache (usa protocolo para testability)
     private let localRepository: any UserRepositoryProtocol
 
-    /// IDs de suscripciones a eventos (para cleanup)
-    private var subscriptionIds: [UUID] = []
-
     /// Logger para debugging y monitoreo
     private let logger = Logger(subsystem: "com.edugo.viewmodels", category: "UserProfile")
+
+    // MARK: - Task Management
+
+    /// Task de carga inicial para cancelación en cleanup
+    /// Marcado como nonisolated(unsafe) para acceso desde deinit
+    nonisolated(unsafe) private var initializationTask: Task<Void, Never>?
+
+    /// IDs de suscripciones a eventos (para cleanup)
+    /// Marcado como nonisolated(unsafe) para acceso desde deinit
+    nonisolated(unsafe) private var subscriptionIds: [UUID] = []
 
     // MARK: - Initialization
 
@@ -109,11 +116,28 @@ public final class UserProfileViewModel {
         self.eventBus = eventBus
         self.localRepository = localRepository
 
-        // Suscribirse a eventos y cargar perfil
-        Task {
+        // Suscribirse a eventos y cargar perfil, guardar Task para cleanup
+        initializationTask = Task {
             await subscribeToEvents()
             await loadProfile()
         }
+    }
+
+    // MARK: - Deinitialization
+
+    /// Limpia recursos al destruir el ViewModel
+    deinit {
+        // Cancelar tasks en progreso
+        initializationTask?.cancel()
+
+        // Cancelar suscripciones a eventos
+        for subscriptionId in subscriptionIds {
+            Task { [eventBus] in
+                await eventBus.unsubscribe(subscriptionId)
+            }
+        }
+
+        logger.debug("UserProfileViewModel deinicializado - \(self.subscriptionIds.count) suscripciones canceladas")
     }
 
     // MARK: - Public Methods
