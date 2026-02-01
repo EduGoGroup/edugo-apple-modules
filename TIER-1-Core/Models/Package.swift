@@ -24,6 +24,9 @@ let package = Package(
             dependencies: [
                 .product(name: "EduGoCommon", package: "EduGoCommon")
             ],
+            exclude: [
+                "Validation/README.md"
+            ],
             swiftSettings: [
                 .swiftLanguageMode(.v6),
                 .enableExperimentalFeature("StrictConcurrency=complete")

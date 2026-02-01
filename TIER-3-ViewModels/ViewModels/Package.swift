@@ -35,6 +35,9 @@ let package = Package(
                 .product(name: "Roles", package: "Roles"),
                 .product(name: "LocalPersistence", package: "LocalPersistence")
             ],
+            exclude: [
+                "MaterialAssignmentViewModel.swift.bak"
+            ],
             swiftSettings: [
                 .swiftLanguageMode(.v6),
                 .enableExperimentalFeature("StrictConcurrency=complete")
