@@ -342,7 +342,7 @@ extension View {
         isPresented: $showActionSheet,
         content: EduActionSheetContent(
             title: "Opciones",
-            message: "Selecciona una acci\u00f3n",
+            message: "Selecciona una accion",
             actions: [
                 EduActionSheetAction(title: "Editar", icon: "pencil") { print("Editar") },
                 EduActionSheetAction(title: "Compartir", icon: "square.and.arrow.up") { print("Compartir") },
@@ -362,7 +362,7 @@ extension View {
         isPresented: $showActionSheet,
         content: EduActionSheetContent(
             title: "Eliminar",
-            message: "\u00bfEst\u00e1s seguro de eliminar este elemento?",
+            message: "Estas seguro de eliminar este elemento?",
             actions: [
                 EduActionSheetAction(title: "Eliminar", icon: "trash", role: .destructive) { print("Eliminado") },
                 EduActionSheetAction(title: "Cancelar", role: .cancel) {}
@@ -371,10 +371,10 @@ extension View {
     )
 }
 
-#Preview("Action Sheet con m\u00faltiples opciones") {
+#Preview("Action Sheet con multiples opciones") {
     @Previewable @State var showActionSheet = false
 
-    Button("M\u00e1s opciones") {
+    Button("Mas opciones") {
         showActionSheet = true
     }
     .eduActionSheet(

@@ -191,10 +191,9 @@ public final class MockListViewModel {
 extension Binding where Value == String {
     /// Crea un Binding mock para previews con un valor inicial.
     public static func mock(_ initialValue: String = "") -> Binding<String> {
-        var value = initialValue
         return Binding(
-            get: { value },
-            set: { value = $0 }
+            get: { initialValue },
+            set: { _ in }
         )
     }
 }
@@ -202,10 +201,9 @@ extension Binding where Value == String {
 extension Binding where Value == Bool {
     /// Crea un Binding mock para previews con un valor inicial.
     public static func mock(_ initialValue: Bool = false) -> Binding<Bool> {
-        var value = initialValue
         return Binding(
-            get: { value },
-            set: { value = $0 }
+            get: { initialValue },
+            set: { _ in }
         )
     }
 }
@@ -213,10 +211,9 @@ extension Binding where Value == Bool {
 extension Binding where Value == Int {
     /// Crea un Binding mock para previews con un valor inicial.
     public static func mock(_ initialValue: Int = 0) -> Binding<Int> {
-        var value = initialValue
         return Binding(
-            get: { value },
-            set: { value = $0 }
+            get: { initialValue },
+            set: { _ in }
         )
     }
 }
@@ -224,10 +221,9 @@ extension Binding where Value == Int {
 extension Binding where Value == Double {
     /// Crea un Binding mock para previews con un valor inicial.
     public static func mock(_ initialValue: Double = 0.0) -> Binding<Double> {
-        var value = initialValue
         return Binding(
-            get: { value },
-            set: { value = $0 }
+            get: { initialValue },
+            set: { _ in }
         )
     }
 }
