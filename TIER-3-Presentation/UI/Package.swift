@@ -16,13 +16,15 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(path: "../Binding")
+        .package(path: "../Binding"),
+        .package(path: "../../TIER-2-Domain/StateManagement")
     ],
     targets: [
         .target(
             name: "UI",
             dependencies: [
-                .product(name: "Binding", package: "Binding")
+                .product(name: "Binding", package: "Binding"),
+                .product(name: "StateManagement", package: "StateManagement")
             ],
             swiftSettings: [
                 .swiftLanguageMode(.v6),
