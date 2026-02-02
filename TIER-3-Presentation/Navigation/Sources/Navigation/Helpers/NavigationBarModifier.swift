@@ -1,4 +1,11 @@
 import SwiftUI
+import os.log
+
+/// Logger para diagnóstico de NavigationBar.
+private let navigationBarLogger = Logger(
+    subsystem: "com.edugo.navigation",
+    category: "NavigationBar"
+)
 
 /// ViewModifier que configura la barra de navegación con botón de retroceso automático.
 ///
@@ -6,6 +13,7 @@ import SwiftUI
 /// - Título configurable con display mode
 /// - Botón de retroceso automático basado en estado del coordinador
 /// - Botón trailing opcional con acción personalizada
+/// - Ocultación automática del back button nativo cuando se usa custom
 ///
 /// # Ejemplo de uso:
 /// ```swift
@@ -29,14 +37,26 @@ public struct NavigationBarModifier: ViewModifier {
 
     @Environment(\.appCoordinator) private var coordinator
 
+    /// Determina si debemos mostrar el custom back button.
+    private var shouldShowCustomBackButton: Bool {
+        guard showBackButton else { return false }
+        guard let coordinator else {
+            navigationBarLogger.debug("Back button requested but coordinator not available")
+            return false
+        }
+        return coordinator.canGoBack
+    }
+
     public func body(content: Content) -> some View {
         content
             .navigationTitle(title)
             #if os(iOS)
             .navigationBarTitleDisplayMode(.large)
+            // Ocultar el back button nativo cuando usamos uno custom
+            .navigationBarBackButtonHidden(shouldShowCustomBackButton)
             #endif
             .toolbar {
-                if showBackButton, let coordinator = coordinator, coordinator.canGoBack {
+                if shouldShowCustomBackButton, let coordinator {
                     #if os(iOS)
                     ToolbarItem(placement: .navigationBarLeading) {
                         Button {

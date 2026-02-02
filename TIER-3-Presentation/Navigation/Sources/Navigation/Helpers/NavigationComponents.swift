@@ -1,10 +1,18 @@
 import SwiftUI
+import os.log
+
+/// Logger para diagnóstico de NavigationComponents.
+private let componentsLogger = Logger(
+    subsystem: "com.edugo.navigation",
+    category: "NavigationComponents"
+)
 
 // MARK: - NavigationButton
 
 /// Botón que navega a una pantalla específica al presionarse.
 ///
 /// Simplifica la navegación evitando acceder directamente al coordinador.
+/// Si el coordinador no está disponible, loggea un warning y no realiza navegación.
 ///
 /// # Ejemplo de uso:
 /// ```swift
@@ -30,7 +38,13 @@ public struct NavigationButton<Label: View>: View {
 
     public var body: some View {
         Button {
-            coordinator?.navigate(to: destination)
+            guard let coordinator else {
+                componentsLogger.warning(
+                    "NavigationButton: Coordinator not available for navigation to \(destination.id, privacy: .public)"
+                )
+                return
+            }
+            coordinator.navigate(to: destination)
         } label: {
             label
         }
@@ -42,6 +56,7 @@ public struct NavigationButton<Label: View>: View {
 /// Botón que presenta una pantalla como sheet modal al presionarse.
 ///
 /// Simplifica la presentación de modales evitando acceder directamente al coordinador.
+/// Si el coordinador no está disponible, loggea un warning y no presenta el modal.
 ///
 /// # Ejemplo de uso:
 /// ```swift
@@ -67,7 +82,13 @@ public struct SheetButton<Label: View>: View {
 
     public var body: some View {
         Button {
-            coordinator?.presentSheet(screen)
+            guard let coordinator else {
+                componentsLogger.warning(
+                    "SheetButton: Coordinator not available for presenting sheet \(screen.id, privacy: .public)"
+                )
+                return
+            }
+            coordinator.presentSheet(screen)
         } label: {
             label
         }
@@ -77,6 +98,8 @@ public struct SheetButton<Label: View>: View {
 // MARK: - FullScreenCoverButton
 
 /// Botón que presenta una pantalla como full screen cover al presionarse.
+///
+/// Si el coordinador no está disponible, loggea un warning y no presenta el cover.
 ///
 /// # Ejemplo de uso:
 /// ```swift
@@ -102,7 +125,13 @@ public struct FullScreenCoverButton<Label: View>: View {
 
     public var body: some View {
         Button {
-            coordinator?.presentFullScreenCover(screen)
+            guard let coordinator else {
+                componentsLogger.warning(
+                    "FullScreenCoverButton: Coordinator not available for presenting cover \(screen.id, privacy: .public)"
+                )
+                return
+            }
+            coordinator.presentFullScreenCover(screen)
         } label: {
             label
         }
