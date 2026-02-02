@@ -72,10 +72,14 @@ public final class AppCoordinator {
     public init(mediator: Mediator, eventBus: EventBus) {
         self.mediator = mediator
         self.eventBus = eventBus
+    }
 
-        Task {
-            await subscribeToNavigationEvents()
-        }
+    /// Configura las suscripciones a eventos de navegación.
+    ///
+    /// Este método debe ser llamado después de crear la instancia
+    /// para habilitar la navegación automática basada en eventos.
+    public func setup() async {
+        await subscribeToNavigationEvents()
     }
 
     // MARK: - Navigation Actions

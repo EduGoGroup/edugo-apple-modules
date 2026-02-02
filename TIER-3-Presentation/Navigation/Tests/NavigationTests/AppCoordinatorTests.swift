@@ -26,6 +26,7 @@ final class AppCoordinatorTests: XCTestCase {
         mediator = Mediator()
         eventBus = EventBus()
         sut = AppCoordinator(mediator: mediator, eventBus: eventBus)
+        await sut.setup()
     }
 
     override func tearDown() async throws {
