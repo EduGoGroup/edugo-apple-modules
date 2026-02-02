@@ -1,50 +1,40 @@
-# Guía de Integración - EduGo UI Components
+# Guia de Integracion - EduGo UI Components
 
-Esta guía te ayudará a integrar y utilizar los componentes de EduGo UI en tu proyecto SwiftUI.
+Esta guia explica como integrar y usar los componentes UI de EduGo en tu proyecto.
 
-## Tabla de Contenidos
+## Requisitos
 
-1. [Instalación](#instalación)
-2. [Configuración Inicial](#configuración-inicial)
-3. [Uso Básico](#uso-básico)
-4. [Patrones Comunes](#patrones-comunes)
-5. [Formularios y Validación](#formularios-y-validación)
-6. [Listas y Estados](#listas-y-estados)
-7. [Navegación](#navegación)
-8. [Feedback y Notificaciones](#feedback-y-notificaciones)
-9. [Testing y Previews](#testing-y-previews)
-10. [Mejores Prácticas](#mejores-prácticas)
+- Swift 6.0+
+- iOS 26+ / macOS 26+
+- Xcode 16+
 
----
-
-## Instalación
+## Instalacion
 
 ### Swift Package Manager
 
-El módulo UI es parte del workspace EduGo Apple Modules. Ya está incluido en el `Package.swift` del proyecto.
+Agrega el paquete como dependencia local en tu `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(path: "../UI")
+    .package(path: "../TIER-3-Presentation/UI")
 ]
 ```
 
-### Importar en tu código
+O en Xcode:
+1. File > Add Packages...
+2. Selecciona el directorio local del paquete UI
+
+### Importar el modulo
 
 ```swift
 import UI
-import Styling  // Para colores y tipografía
-import StateManagement  // Para FormState
-import Binding  // Para validación
 ```
 
----
+## Configuracion Inicial
 
-## Configuración Inicial
+### 1. Configurar Overlays Globales
 
-### 1. Configurar el Theme
-
-Asegúrate de que tu aplicación use los colores y estilos de EduGo:
+Para usar Toast, Alert y Modal managers de forma global, agrega el modifier en tu vista raiz:
 
 ```swift
 @main
@@ -52,181 +42,98 @@ struct MyApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .preferredColorScheme(.light)  // O .dark según preferencia
+                .eduOverlay()  // Habilita toasts, alerts y modals globales
         }
     }
 }
 ```
 
-### 2. Configurar Navigation
-
-Para apps con navegación:
-
-```swift
-NavigationStack {
-    HomeView()
-}
-```
-
-### 3. Configurar Overlays
-
-En tu view principal, agrega el modifier de overlays:
+### 2. Configurar TabBar (si aplica)
 
 ```swift
 struct ContentView: View {
-    @State private var overlayItem: EduOverlayItem?
+    @State private var selectedTab = "home"
+    
+    let tabs = [
+        EduTabItem(id: "home", title: "Inicio", icon: "house", selectedIcon: "house.fill"),
+        EduTabItem(id: "courses", title: "Cursos", icon: "book", selectedIcon: "book.fill"),
+        EduTabItem(id: "profile", title: "Perfil", icon: "person", selectedIcon: "person.fill")
+    ]
     
     var body: some View {
-        MainView()
-            .eduOverlay(item: $overlayItem)
-    }
-}
-```
-
----
-
-## Uso Básico
-
-### Botones
-
-```swift
-// Botón primario simple
-EduButton.primary("Guardar") {
-    save()
-}
-
-// Botón con icono
-EduButton(
-    "Eliminar",
-    icon: "trash",
-    style: .destructive
-) {
-    delete()
-}
-
-// Botón con estado de carga
-@State var isLoading = false
-
-EduButton.primary(
-    "Enviar",
-    isLoading: isLoading
-) {
-    submit()
-}
-```
-
-### Text Fields
-
-```swift
-@State var email = ""
-@State var password = ""
-
-VStack(spacing: 16) {
-    EduTextField(
-        "Email",
-        text: $email,
-        placeholder: "tu@email.com",
-        validation: Validators.email()
-    )
-    
-    EduSecureField(
-        "Contraseña",
-        text: $password,
-        showPassword: $showPassword
-    )
-}
-```
-
-### Contenedores
-
-```swift
-EduCard(title: "Estudiantes", subtitle: "Total: 25") {
-    VStack(spacing: 12) {
-        ForEach(students) { student in
-            EduRow(
-                title: student.name,
-                subtitle: student.grade,
-                icon: "person.fill"
-            )
+        EduTabBar(selection: $selectedTab, items: tabs) { tabId in
+            switch tabId {
+            case "home": HomeView()
+            case "courses": CoursesView()
+            case "profile": ProfileView()
+            default: EmptyView()
+            }
         }
     }
 }
 ```
 
----
+## Patrones de Uso Comunes
 
-## Patrones Comunes
-
-### 1. Lista con Estados
+### Pantalla con Lista y Estados
 
 ```swift
-struct StudentsView: View {
-    @StateObject var viewModel = StudentsViewModel()
+struct CoursesView: View {
+    @State private var viewModel = CoursesViewModel()
     
     var body: some View {
-        EduListView(
-            items: viewModel.students,
-            isLoading: viewModel.isLoading,
-            error: viewModel.error,
-            emptyTitle: "No hay estudiantes",
-            emptyMessage: "Comienza agregando estudiantes",
-            emptyIcon: "person.2.slash",
-            retryAction: { viewModel.loadStudents() }
-        ) { student in
-            EduRow(
-                title: student.name,
-                subtitle: student.grade,
-                icon: "person.fill",
-                action: { viewModel.selectStudent(student) }
-            )
-        }
-        .onAppear {
-            viewModel.loadStudents()
+        NavigationStack {
+            EduListView(
+                state: viewModel.state,
+                emptyTitle: "Sin cursos",
+                emptyDescription: "No tienes cursos inscritos aun",
+                onRetry: { Task { await viewModel.loadCourses() } }
+            ) { course in
+                EduStyledNavigationLink(
+                    title: course.name,
+                    subtitle: course.instructor,
+                    icon: "book",
+                    style: .row
+                ) {
+                    CourseDetailView(course: course)
+                }
+            }
+            .eduNavigationBar(title: "Mis Cursos", displayMode: .large)
+            .refreshable {
+                await viewModel.loadCourses()
+            }
         }
     }
 }
 ```
 
-### 2. Formulario con Validación
+### Formulario con Validacion
 
 ```swift
-struct CreateStudentView: View {
-    @StateObject var formState = FormState()
-    @State var name = ""
-    @State var email = ""
-    @State var grade = ""
+struct LoginView: View {
+    @State private var email = ""
+    @State private var password = ""
+    @State private var isLoading = false
     
     var body: some View {
-        VStack(spacing: 20) {
-            EduTextField(
-                "Nombre",
-                text: $name,
-                validation: Validators.required("Nombre requerido"),
-                formState: formState,
-                fieldKey: "name"
-            )
+        VStack(spacing: 24) {
+            EduCard {
+                VStack(spacing: 16) {
+                    EduTextField("Email", text: $email, icon: "envelope")
+                    EduSecureField("Contrasena", text: $password)
+                }
+            }
             
-            EduTextField(
-                "Email",
-                text: $email,
-                validation: Validators.email(),
-                formState: formState,
-                fieldKey: "email"
-            )
+            EduButton.primary("Iniciar Sesion", isLoading: isLoading) {
+                Task {
+                    isLoading = true
+                    await login()
+                    isLoading = false
+                }
+            }
             
-            EduTextField(
-                "Grado",
-                text: $grade,
-                validation: Validators.required("Grado requerido"),
-                formState: formState,
-                fieldKey: "grade"
-            )
-            
-            EduButton.primary(
-                "Crear Estudiante",
-                isDisabled: !formState.isValid
-            ) {
-                createStudent()
+            EduButton.link("Olvidaste tu contrasena?") {
+                // Navegar a recuperacion
             }
         }
         .padding()
@@ -234,569 +141,325 @@ struct CreateStudentView: View {
 }
 ```
 
-### 3. Modal con Confirmación
+### Modal con Formulario
 
 ```swift
-struct DeleteConfirmationView: View {
-    @Binding var isPresented: Bool
-    let studentName: String
-    let onConfirm: () -> Void
+struct ProfileView: View {
+    @State private var showEditModal = false
     
     var body: some View {
-        EduModal(
-            title: "Eliminar Estudiante",
-            content: {
-                VStack(spacing: 16) {
-                    Image(systemName: "trash")
-                        .font(.system(size: 50))
-                        .foregroundStyle(.red)
-                    
-                    Text("¿Estás seguro de eliminar a \(studentName)?")
-                        .multilineTextAlignment(.center)
-                    
-                    Text("Esta acción no se puede deshacer")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            },
-            actions: {
-                HStack(spacing: 12) {
-                    EduButton.secondary("Cancelar") {
-                        isPresented = false
-                    }
-                    
-                    EduButton.destructive("Eliminar") {
-                        onConfirm()
-                        isPresented = false
-                    }
-                }
+        VStack {
+            // Contenido del perfil
+            
+            EduButton.secondary("Editar Perfil") {
+                showEditModal = true
             }
+        }
+        .eduModal(isPresented: $showEditModal) {
+            EduModalContent(
+                title: "Editar Perfil",
+                size: .medium,
+                onDismiss: { showEditModal = false }
+            ) {
+                EditProfileForm()
+            }
+        }
+    }
+}
+```
+
+### Action Sheet con Opciones
+
+```swift
+struct DocumentRow: View {
+    let document: Document
+    @State private var showActions = false
+    
+    var body: some View {
+        EduRow(
+            title: document.name,
+            subtitle: document.formattedDate,
+            icon: "doc"
+        )
+        .onTapGesture {
+            showActions = true
+        }
+        .eduActionSheet(
+            isPresented: $showActions,
+            content: EduActionSheetContent(
+                title: document.name,
+                actions: [
+                    EduActionSheetAction(title: "Abrir", icon: "eye") { open() },
+                    EduActionSheetAction(title: "Compartir", icon: "square.and.arrow.up") { share() },
+                    EduActionSheetAction(title: "Eliminar", icon: "trash", role: .destructive) { delete() },
+                    EduActionSheetAction(title: "Cancelar", role: .cancel) { }
+                ]
+            )
         )
     }
 }
 ```
 
-### 4. Navigation Menu
+### Indicadores de Progreso
 
 ```swift
-struct MenuView: View {
+struct UploadView: View {
+    @State private var progress: Double = 0
+    @State private var isUploading = false
+    
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 16) {
-                EduNavigationLink(
-                    "Mi Perfil",
-                    icon: "person.fill"
-                ) {
-                    ProfileView()
-                }
-                
-                EduNavigationLink(
-                    "Cursos",
-                    icon: "book.fill"
-                ) {
-                    CoursesView()
-                }
-                
-                EduNavigationLink(
-                    "Configuración",
-                    icon: "gearshape.fill"
-                ) {
-                    SettingsView()
-                }
-            }
-            .padding()
-        }
-    }
-}
-```
-
----
-
-## Formularios y Validación
-
-### Crear Validadores Personalizados
-
-```swift
-extension Validators {
-    static func gradeLevel() -> (String) -> ValidationResult {
-        return { value in
-            guard let grade = Int(value), grade >= 1, grade <= 12 else {
-                return ValidationResult(
-                    isValid: false,
-                    errorMessage: "Grado debe ser entre 1 y 12"
+        VStack(spacing: 24) {
+            if isUploading {
+                EduLabeledProgressBar(
+                    progress: progress,
+                    label: "Subiendo archivo..."
                 )
+                
+                // O circular
+                EduProgressCircle(progress: progress, showPercentage: true)
+                    .frame(width: 100, height: 100)
             }
-            return ValidationResult(isValid: true)
+            
+            EduButton.primary(isUploading ? "Cancelar" : "Subir") {
+                isUploading.toggle()
+            }
         }
+        .padding()
     }
 }
 ```
 
-### Usar FormState
+### Estados de Carga con Skeleton
 
 ```swift
-@StateObject var formState = FormState()
-
-// Registrar campos
-formState.registerField("email") { value in
-    Validators.email()(value)
-}
-
-formState.registerField("password") { value in
-    Validators.minLength(6)(value)
-}
-
-// Validar todo el formulario
-if formState.isValid {
-    // Enviar formulario
-}
-```
-
----
-
-## Listas y Estados
-
-### ViewModel Típico
-
-```swift
-@MainActor
-@Observable
-final class ListViewModel {
-    enum State {
-        case idle
-        case loading
-        case loaded([Item])
-        case empty
-        case error(Error)
-    }
-    
-    var state: State = .idle
-    
-    func load() async {
-        state = .loading
-        
-        do {
-            let items = try await fetchItems()
-            state = items.isEmpty ? .empty : .loaded(items)
-        } catch {
-            state = .error(error)
-        }
-    }
-}
-```
-
-### Vista con Estados
-
-```swift
-struct ListView: View {
-    @StateObject var viewModel = ListViewModel()
+struct ContentView: View {
+    @State private var isLoading = true
+    @State private var items: [Item] = []
     
     var body: some View {
         Group {
-            switch viewModel.state {
-            case .idle:
-                Color.clear.onAppear {
-                    Task { await viewModel.load() }
+            if isLoading {
+                EduSkeletonGroup {
+                    VStack(spacing: 12) {
+                        EduSkeletonCard()
+                        EduSkeletonList(count: 3)
+                    }
                 }
-            case .loading:
-                EduLoadingStateView()
-            case .loaded(let items):
+            } else {
+                // Contenido real
                 List(items) { item in
                     ItemRow(item: item)
                 }
-            case .empty:
-                EduEmptyStateView(
-                    title: "No hay elementos",
-                    message: "Comienza agregando elementos",
-                    icon: "tray"
-                )
-            case .error(let error):
-                EduErrorStateView(
-                    message: error.localizedDescription,
-                    retryAction: {
-                        Task { await viewModel.load() }
-                    }
-                )
             }
+        }
+        .task {
+            await loadContent()
+            isLoading = false
         }
     }
 }
 ```
 
----
+## Integracion con ViewModels
 
-## Navegación
-
-### Navigation Stack
+### ViewModel con ViewState
 
 ```swift
-struct MainView: View {
+@Observable
+@MainActor
+final class CoursesViewModel {
+    var state: ViewState<[Course]> = .loading
+    
+    func loadCourses() async {
+        state = .loading
+        
+        do {
+            let courses = try await courseRepository.fetchCourses()
+            if courses.isEmpty {
+                state = .empty
+            } else {
+                state = .success(courses)
+            }
+        } catch {
+            state = .error(error.localizedDescription)
+        }
+    }
+}
+```
+
+### Uso en Vista
+
+```swift
+struct CoursesView: View {
+    @State private var viewModel = CoursesViewModel()
+    
     var body: some View {
-        NavigationStack {
+        EduListView(state: viewModel.state) { course in
+            CourseRow(course: course)
+        }
+        .task {
+            await viewModel.loadCourses()
+        }
+    }
+}
+```
+
+## Notificaciones con Toast
+
+### Mostrar Toast Programaticamente
+
+```swift
+// Exito
+ToastManager.shared.show("Guardado exitosamente", style: .success)
+
+// Error
+ToastManager.shared.show("Error al guardar", style: .error)
+
+// Advertencia
+ToastManager.shared.show("Conexion inestable", style: .warning)
+
+// Informacion
+ToastManager.shared.show("Nueva version disponible", style: .info)
+```
+
+### Toast con Duracion Personalizada
+
+```swift
+ToastManager.shared.show(
+    "Procesando...",
+    style: .info,
+    duration: 5.0  // 5 segundos
+)
+```
+
+## Alertas Programaticas
+
+### Confirmacion Simple
+
+```swift
+EduAlertManager.shared.showConfirmation(
+    title: "Guardar cambios",
+    message: "Deseas guardar los cambios realizados?",
+    confirmTitle: "Guardar",
+    cancelTitle: "Descartar"
+) {
+    saveChanges()
+}
+```
+
+### Alerta Destructiva
+
+```swift
+EduAlertManager.shared.showDestructive(
+    title: "Eliminar curso",
+    message: "Esta accion no se puede deshacer",
+    destructiveTitle: "Eliminar"
+) {
+    deleteCourse()
+}
+```
+
+## Navegacion
+
+### Con NavigationStack
+
+```swift
+struct ContentView: View {
+    @State private var path = NavigationPath()
+    
+    var body: some View {
+        NavigationStack(path: $path) {
             HomeView()
-                .navigationTitle("Inicio")
+                .navigationDestination(for: Course.self) { course in
+                    CourseDetailView(course: course)
+                }
         }
     }
 }
 ```
 
-### Custom Navigation Bar
+### Con EduNavigationRouter
 
 ```swift
-struct DetailView: View {
-    @Environment(\.dismiss) var dismiss
-    @State var showSettings = false
+@Observable
+@MainActor
+final class AppRouter {
+    let router = EduNavigationRouter()
     
-    var body: some View {
-        VStack(spacing: 0) {
-            EduNavigationBar(
-                title: "Detalles",
-                subtitle: "Vista de detalles",
-                leadingAction: { dismiss() },
-                trailingIcon: "gearshape.fill",
-                trailingAction: { showSettings = true }
-            )
-            
-            ScrollView {
-                // Contenido
-            }
-        }
+    func goToDetail(id: String) {
+        router.navigate(to: .detail(id: id))
+    }
+    
+    func goToSettings() {
+        router.navigate(to: .settings)
+    }
+    
+    func goBack() {
+        router.goBack()
     }
 }
 ```
 
-### Tab Bar
+## Temas y Personalizacion
+
+### Colores Personalizados
+
+Los componentes usan `Color.accentColor` por defecto. Personaliza el accent color en tu Asset Catalog o programaticamente:
 
 ```swift
-struct MainTabView: View {
-    @State var selectedTab = 0
-    
-    var body: some View {
-        VStack(spacing: 0) {
-            TabContentView(selectedTab: selectedTab)
-            
-            EduTabBar(
-                selectedTab: $selectedTab,
-                tabs: [
-                    TabItem(title: "Inicio", icon: "house"),
-                    TabItem(title: "Buscar", icon: "magnifyingglass"),
-                    TabItem(title: "Perfil", icon: "person")
-                ]
-            )
-        }
-    }
-}
+ContentView()
+    .tint(.purple)  // Cambia el accent color
 ```
 
----
+### Modo Oscuro
 
-## Feedback y Notificaciones
-
-### Toasts
+Todos los componentes soportan modo oscuro automaticamente. Para forzar un esquema:
 
 ```swift
-// Mostrar toast de éxito
-ToastManager.shared.show(
-    "Guardado exitosamente",
-    style: .success,
-    duration: 3.0
-)
-
-// Mostrar toast de error
-ToastManager.shared.show(
-    "Error al guardar",
-    style: .error,
-    duration: 5.0
-)
+ContentView()
+    .preferredColorScheme(.dark)  // o .light
 ```
 
-### Banners
+## Accesibilidad
+
+Los componentes incluyen soporte de accesibilidad:
+
+- Labels descriptivos
+- Traits apropiados (`.button`, `.link`, etc.)
+- Soporte de VoiceOver
+- Dynamic Type
+
+### Verificar Accesibilidad en Previews
 
 ```swift
-@State var showBanner = false
-
-VStack {
-    if showBanner {
-        EduBanner(
-            message: "Nueva actualización disponible",
-            style: .info,
-            action: { installUpdate() },
-            onDismiss: { showBanner = false }
-        )
-    }
-    
-    // Contenido principal
-}
-```
-
-### Alerts
-
-```swift
-@State var showAlert = false
-
-Button("Eliminar") {
-    showAlert = true
-}
-.alert(isPresented: $showAlert) {
-    EduAlert(
-        title: "Confirmar",
-        message: "¿Estás seguro?",
-        primaryButton: .init(title: "Eliminar", style: .destructive) {
-            delete()
-        },
-        secondaryButton: .init(title: "Cancelar", style: .cancel) {}
-    )
-}
-```
-
-### Overlays Centralizados
-
-```swift
-@State var overlayItem: EduOverlayItem?
-
-MyView()
-    .eduOverlay(item: $overlayItem)
-
-// Mostrar diferentes overlays
-overlayItem = .toast(message: "Guardado", style: .success)
-overlayItem = .banner(message: "Error", style: .error)
-overlayItem = .loading(message: "Procesando...")
-
-// Ocultar
-overlayItem = nil
-```
-
----
-
-## Testing y Previews
-
-### Previews con Estados
-
-```swift
-#Preview("Loading") {
-    ListView(viewModel: .loading)
-}
-
-#Preview("With Data") {
-    ListView(viewModel: .loaded(PreviewMocks.students))
-}
-
-#Preview("Empty") {
-    ListView(viewModel: .empty)
-}
-
-#Preview("Error") {
-    ListView(viewModel: .error)
-}
-```
-
-### Usar PreviewHelpers
-
-```swift
-#Preview("iPhone 15 Pro") {
-    MyView()
-        .previewDevice(.iPhone15Pro)
-}
-
-#Preview("All Color Schemes") {
-    MyView()
-        .previewAllColorSchemes()
-}
-
-#Preview("Dynamic Type Sizes") {
+#Preview("Accessibility") {
     MyView()
         .previewCommonDynamicTypeSizes()
 }
 ```
 
-### Usar PreviewMocks
+## Soluccion de Problemas
 
-```swift
-#Preview {
-    @Previewable @State var text = PreviewMocks.userEmail
-    @Previewable @State var isLoading = false
-    
-    VStack {
-        EduTextField("Email", text: $text)
-        EduButton.primary("Submit", isLoading: isLoading) {
-            isLoading = true
-        }
-    }
-}
-```
+### El Toast no aparece
 
----
+Verifica que hayas agregado `.eduOverlay()` en la vista raiz de tu app.
 
-## Mejores Prácticas
+### El TabBar tiene mas de 5 items
 
-### 1. Estado y Observabilidad
+El componente lanzara un error en tiempo de ejecucion. Segun iOS HIG, usa maximo 5 tabs.
 
-```swift
-// ✅ CORRECTO: Usar @Observable para ViewModels
-@MainActor
-@Observable
-final class MyViewModel {
-    var items: [Item] = []
-    var isLoading = false
-    var error: Error?
-}
+### Los Previews no cargan
 
-// ❌ INCORRECTO: No usar @Published con @Observable
-```
+1. Limpia la build folder (Cmd+Shift+K)
+2. Reinicia Xcode
+3. Verifica que todas las dependencias esten correctamente vinculadas
 
-### 2. Composición de Componentes
+### Componentes no se actualizan
 
-```swift
-// ✅ CORRECTO: Componentes pequeños y reutilizables
-struct StudentCard: View {
-    let student: Student
-    
-    var body: some View {
-        EduCard(title: student.name, subtitle: student.grade) {
-            StudentDetails(student: student)
-        }
-    }
-}
-
-// ❌ INCORRECTO: Componentes monolíticos
-```
-
-### 3. Manejo de Estado
-
-```swift
-// ✅ CORRECTO: Estado mínimo en la View
-@State private var selectedStudent: Student?
-
-// ❌ INCORRECTO: Lógica compleja en la View
-```
-
-### 4. Validación
-
-```swift
-// ✅ CORRECTO: Validación declarativa
-EduTextField(
-    "Email",
-    text: $email,
-    validation: Validators.email()
-)
-
-// ❌ INCORRECTO: Validación imperativa en callbacks
-```
-
-### 5. Previews
-
-```swift
-// ✅ CORRECTO: Múltiples previews con estados
-#Preview("Normal") { MyView() }
-#Preview("Loading") { MyView(isLoading: true) }
-#Preview("Error") { MyView(error: PreviewError.network) }
-
-// ❌ INCORRECTO: Un solo preview sin variaciones
-```
-
-### 6. Accesibilidad
-
-```swift
-// ✅ CORRECTO: Labels descriptivos
-EduButton("Guardar cambios") { save() }
-
-// ❌ INCORRECTO: Labels genéricos
-EduButton("OK") { save() }
-```
-
-### 7. Performance
-
-```swift
-// ✅ CORRECTO: Lazy loading de listas
-EduListView(items: students) { student in
-    StudentRow(student: student)
-}
-
-// ❌ INCORRECTO: Cargar todo de una vez
-ForEach(allStudents) { student in ... }
-```
-
-### 8. Theming
-
-```swift
-// ✅ CORRECTO: Usar colores del theme
-.foregroundStyle(Color.eduPrimary)
-
-// ❌ INCORRECTO: Hard-coded colors
-.foregroundStyle(.blue)
-```
-
----
-
-## Ejemplos Completos
-
-### App de Gestión de Estudiantes
-
-Ver `/Examples/StudentManagementApp/` para un ejemplo completo de:
-- Autenticación con formularios
-- Listas con estados
-- Navegación multinivel
-- CRUD operations
-- Manejo de errores
-- Feedback con toasts y alerts
-
-### App de E-learning
-
-Ver `/Examples/ELearningApp/` para un ejemplo de:
-- Tab navigation
-- Cursos y materiales
-- Progreso con círculos y barras
-- Skeleton loaders
-- Búsqueda y filtros
-
----
-
-## Troubleshooting
-
-### Problema: "No such module 'UI'"
-
-**Solución:** Verifica que el paquete esté agregado en `Package.swift`:
-
-```swift
-.product(name: "UI", package: "UI")
-```
-
-### Problema: Previews no se actualizan
-
-**Solución:** 
-1. Limpia build folder (Cmd+Shift+K)
-2. Rebuild (Cmd+B)
-3. Restart Xcode Previews
-
-### Problema: Validación no funciona
-
-**Solución:** Verifica que hayas registrado el campo en FormState:
-
-```swift
-formState.registerField("email") { value in
-    Validators.email()(value)
-}
-```
-
-### Problema: Overlays no se muestran
-
-**Solución:** Asegúrate de tener `.eduOverlay(item: $overlayItem)` en la jerarquía de views.
-
----
+Asegurate de usar `@State`, `@Binding` o `@Observable` correctamente para el estado reactivo.
 
 ## Recursos Adicionales
 
-- [Documentación de Componentes](COMPONENTS.md)
-- [Guía de Contribución](CONTRIBUTING.md)
-- [Changelog](../CHANGELOG.md)
-- [SwiftUI Documentation](https://developer.apple.com/documentation/swiftui)
-
----
-
-## Soporte
-
-Si tienes preguntas o problemas:
-1. Consulta esta guía y `COMPONENTS.md`
-2. Revisa los ejemplos en `/Examples/`
-3. Consulta los previews de los componentes
-4. Contacta al equipo de desarrollo
+- [COMPONENTS.md](./COMPONENTS.md) - Documentacion detallada de cada componente
+- [CONTRIBUTING.md](./CONTRIBUTING.md) - Guia para contribuir al proyecto
+- Apple Human Interface Guidelines: https://developer.apple.com/design/human-interface-guidelines/

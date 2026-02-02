@@ -143,3 +143,57 @@ public struct EduInlineLoader: View {
         }
     }
 }
+
+// MARK: - Previews
+
+#Preview("Tama\u00f1os") {
+    VStack(spacing: 32) {
+        EduActivityIndicator(style: .small)
+        EduActivityIndicator(style: .medium)
+        EduActivityIndicator(style: .large)
+    }
+    .padding()
+}
+
+#Preview("Con color personalizado") {
+    VStack(spacing: 32) {
+        EduActivityIndicator(style: .medium, color: .blue)
+        EduActivityIndicator(style: .medium, color: .green)
+        EduActivityIndicator(style: .medium, color: .orange)
+    }
+    .padding()
+}
+
+#Preview("Loading Overlay") {
+    VStack {
+        Text("Contenido de la vista")
+            .font(.title)
+        Text("Este contenido est\u00e1 detr\u00e1s del overlay")
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .loadingOverlay(isLoading: true, message: "Cargando...")
+}
+
+#Preview("Loading Overlay sin mensaje") {
+    Text("Contenido")
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .loadingOverlay(isLoading: true)
+}
+
+#Preview("Inline Loader") {
+    HStack(spacing: 16) {
+        EduInlineLoader(style: .small)
+        Text("Procesando...")
+    }
+    .padding()
+}
+
+#Preview("Dark Mode") {
+    VStack(spacing: 32) {
+        EduActivityIndicator(style: .small)
+        EduActivityIndicator(style: .medium)
+        EduActivityIndicator(style: .large)
+    }
+    .padding()
+    .preferredColorScheme(.dark)
+}

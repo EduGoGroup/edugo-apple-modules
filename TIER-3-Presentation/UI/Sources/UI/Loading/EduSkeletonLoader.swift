@@ -249,3 +249,80 @@ public struct EduSkeletonGroup<Content: View>: View {
             .shimmer()
     }
 }
+
+// MARK: - Previews
+
+#Preview("Formas b\u00e1sicas") {
+    VStack(spacing: 24) {
+        EduSkeletonLoader(shape: .rectangle)
+            .frame(height: 40)
+        EduSkeletonLoader(shape: .roundedRectangle(12))
+            .frame(height: 40)
+        EduSkeletonLoader(shape: .capsule)
+            .frame(height: 40)
+        EduSkeletonLoader(shape: .circle)
+            .frame(width: 60, height: 60)
+    }
+    .padding()
+}
+
+#Preview("Skeleton Text") {
+    VStack(alignment: .leading, spacing: 24) {
+        EduSkeletonText(lines: 1)
+        EduSkeletonText(lines: 3)
+        EduSkeletonText(lines: 5, spacing: 10)
+    }
+    .padding()
+}
+
+#Preview("Skeleton Image") {
+    VStack(spacing: 24) {
+        EduSkeletonImage(aspectRatio: 16/9)
+            .frame(height: 180)
+        EduSkeletonImage(aspectRatio: 1.0, shape: .circle)
+            .frame(width: 100, height: 100)
+    }
+    .padding()
+}
+
+#Preview("Skeleton Card") {
+    VStack(spacing: 16) {
+        EduSkeletonCard()
+        EduSkeletonCard(showImage: false, lines: 2)
+    }
+    .padding()
+}
+
+#Preview("Skeleton List") {
+    EduSkeletonList(count: 4)
+        .padding()
+}
+
+#Preview("Skeleton List Row") {
+    VStack(spacing: 8) {
+        EduSkeletonListRow()
+        EduSkeletonListRow()
+        EduSkeletonListRow()
+    }
+    .padding()
+}
+
+#Preview("Con Shimmer Effect") {
+    EduSkeletonGroup {
+        VStack(spacing: 16) {
+            EduSkeletonListRow()
+            EduSkeletonListRow()
+            EduSkeletonListRow()
+        }
+    }
+    .padding()
+}
+
+#Preview("Dark Mode") {
+    VStack(spacing: 16) {
+        EduSkeletonCard(showImage: false, lines: 2)
+        EduSkeletonListRow()
+    }
+    .padding()
+    .preferredColorScheme(.dark)
+}

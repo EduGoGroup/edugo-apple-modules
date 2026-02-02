@@ -305,3 +305,52 @@ public final class EduNavigationCoordinator: Sendable {
         currentTitle = route.last ?? ""
     }
 }
+
+// MARK: - Previews
+
+#Preview("Navigation Bar personalizada") {
+    EduNavigationBar(
+        title: "Configuraci\u00f3n",
+        leadingItem: EduNavigationBarItem(icon: "chevron.left") { print("Atr\u00e1s") },
+        trailingItem: EduNavigationBarItem(icon: "gear") { print("Opciones") }
+    ) {
+        Text("Contenido de la pantalla")
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+#Preview("Navigation Bar con texto") {
+    EduNavigationBar(
+        title: "Perfil",
+        leadingItem: EduNavigationBarItem(title: "Cancelar") { print("Cancelar") },
+        trailingItem: EduNavigationBarItem(title: "Guardar") { print("Guardar") }
+    ) {
+        VStack(spacing: 16) {
+            Text("Nombre: Juan P\u00e9rez")
+            Text("Email: juan@email.com")
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+#Preview("Native Navigation Bar") {
+    NavigationStack {
+        Text("Contenido")
+            .eduNavigationBar(title: "T\u00edtulo", displayMode: .large)
+            .eduNavigationBarItems(
+                leading: EduNavigationBarItem(icon: "chevron.left") { print("Atr\u00e1s") },
+                trailing: EduNavigationBarItem(icon: "plus") { print("A\u00f1adir") }
+            )
+    }
+}
+
+#Preview("Dark Mode") {
+    EduNavigationBar(
+        title: "Dashboard",
+        trailingItem: EduNavigationBarItem(icon: "bell") { print("Notificaciones") }
+    ) {
+        Text("Contenido en modo oscuro")
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+    .preferredColorScheme(.dark)
+}

@@ -190,3 +190,66 @@ public struct EduSegmentedProgressBar: View {
         }
     }
 }
+
+// MARK: - Previews
+
+#Preview("Progress Bar - Determinado") {
+    VStack(spacing: 24) {
+        EduProgressBar(mode: .determinate(0.25))
+        EduProgressBar(mode: .determinate(0.50))
+        EduProgressBar(mode: .determinate(0.75))
+        EduProgressBar(mode: .determinate(1.0))
+    }
+    .padding()
+}
+
+#Preview("Progress Bar - Estilos") {
+    VStack(spacing: 24) {
+        EduProgressBar(mode: .determinate(0.6), style: .linear)
+        EduProgressBar(mode: .determinate(0.6), style: .rounded)
+        EduProgressBar(mode: .determinate(0.6), style: .thin)
+    }
+    .padding()
+}
+
+#Preview("Progress Bar - Indeterminado") {
+    EduProgressBar(mode: .indeterminate)
+        .padding()
+}
+
+#Preview("Progress Bar con etiqueta") {
+    VStack(spacing: 24) {
+        EduLabeledProgressBar(progress: 0.35, label: "Descargando...")
+        EduLabeledProgressBar(progress: 0.75, label: "Subiendo archivo")
+        EduLabeledProgressBar(progress: 1.0, label: "Completado")
+    }
+    .padding()
+}
+
+#Preview("Progress Bar segmentado") {
+    VStack(spacing: 24) {
+        EduSegmentedProgressBar(totalSteps: 5, currentStep: 1)
+        EduSegmentedProgressBar(totalSteps: 5, currentStep: 3)
+        EduSegmentedProgressBar(totalSteps: 5, currentStep: 5)
+    }
+    .padding()
+}
+
+#Preview("Colores personalizados") {
+    VStack(spacing: 24) {
+        EduProgressBar(mode: .determinate(0.6), tint: .green)
+        EduProgressBar(mode: .determinate(0.6), tint: .orange)
+        EduProgressBar(mode: .determinate(0.6), tint: .purple)
+    }
+    .padding()
+}
+
+#Preview("Dark Mode") {
+    VStack(spacing: 24) {
+        EduProgressBar(mode: .determinate(0.5))
+        EduLabeledProgressBar(progress: 0.75, label: "Progreso")
+        EduSegmentedProgressBar(totalSteps: 4, currentStep: 2)
+    }
+    .padding()
+    .preferredColorScheme(.dark)
+}

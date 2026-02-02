@@ -252,3 +252,71 @@ extension View {
     }
 }
 #endif
+
+// MARK: - Previews
+
+#Preview("Modal Content") {
+    EduModalContent(
+        title: "Configuraci\u00f3n",
+        size: .medium,
+        onDismiss: { print("Cerrado") }
+    ) {
+        VStack(spacing: 16) {
+            Text("Contenido del modal")
+            Text("Puedes agregar cualquier vista aqu\u00ed")
+            Spacer()
+        }
+    }
+}
+
+#Preview("Modal peque\u00f1o") {
+    EduModalContent(
+        title: "Alerta",
+        size: .small,
+        onDismiss: { print("Cerrado") }
+    ) {
+        Text("Este es un modal peque\u00f1o")
+    }
+}
+
+#Preview("Modal grande") {
+    EduModalContent(
+        title: "Detalles",
+        size: .large,
+        onDismiss: { print("Cerrado") }
+    ) {
+        VStack(spacing: 12) {
+            ForEach(1..<10) { i in
+                Text("Elemento \(i)")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+                    .background(Color(white: 0.95))
+                    .cornerRadius(8)
+            }
+        }
+    }
+}
+
+#Preview("Modal sin bot\u00f3n cerrar") {
+    EduModalContent(
+        title: "Proceso en curso",
+        size: .small,
+        showCloseButton: false
+    ) {
+        VStack(spacing: 16) {
+            ProgressView()
+            Text("Procesando...")
+        }
+    }
+}
+
+#Preview("Dark Mode") {
+    EduModalContent(
+        title: "Modal oscuro",
+        size: .medium,
+        onDismiss: {}
+    ) {
+        Text("Contenido en modo oscuro")
+    }
+    .preferredColorScheme(.dark)
+}

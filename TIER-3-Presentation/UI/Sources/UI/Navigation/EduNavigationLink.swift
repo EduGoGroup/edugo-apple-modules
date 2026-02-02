@@ -310,3 +310,128 @@ public final class EduNavigationRouter: Sendable {
         path = route
     }
 }
+
+// MARK: - Previews
+
+#Preview("NavigationLink b\u00e1sico") {
+    NavigationStack {
+        VStack(spacing: 16) {
+            EduNavigationLink {
+                Text("Vista de destino")
+            } label: {
+                Text("Ir a destino")
+            }
+        }
+        .padding()
+        .navigationTitle("Inicio")
+    }
+}
+
+#Preview("NavigationLink deshabilitado") {
+    NavigationStack {
+        VStack(spacing: 16) {
+            EduNavigationLink(isEnabled: true) {
+                Text("Destino habilitado")
+            } label: {
+                Text("Link habilitado")
+            }
+
+            EduNavigationLink(isEnabled: false) {
+                Text("Destino deshabilitado")
+            } label: {
+                Text("Link deshabilitado")
+            }
+        }
+        .padding()
+        .navigationTitle("Estados")
+    }
+}
+
+#Preview("Styled NavigationLink - Row") {
+    NavigationStack {
+        VStack(spacing: 8) {
+            EduStyledNavigationLink(
+                title: "Configuraci\u00f3n",
+                subtitle: "Ajustes de la aplicaci\u00f3n",
+                icon: "gear",
+                style: .row
+            ) {
+                Text("Vista de configuraci\u00f3n")
+            }
+
+            EduStyledNavigationLink(
+                title: "Notificaciones",
+                subtitle: "3 nuevas",
+                icon: "bell",
+                badge: "3",
+                style: .row
+            ) {
+                Text("Vista de notificaciones")
+            }
+
+            EduStyledNavigationLink(
+                title: "Deshabilitado",
+                icon: "lock",
+                style: .row,
+                isEnabled: false
+            ) {
+                Text("No accesible")
+            }
+        }
+        .padding()
+        .navigationTitle("Ajustes")
+    }
+}
+
+#Preview("Styled NavigationLink - Card") {
+    NavigationStack {
+        VStack(spacing: 16) {
+            EduStyledNavigationLink(
+                title: "Nuevo Proyecto",
+                subtitle: "Crea un proyecto desde cero",
+                icon: "plus.rectangle",
+                style: .card
+            ) {
+                Text("Crear proyecto")
+            }
+
+            EduStyledNavigationLink(
+                title: "Cursos",
+                subtitle: "12 cursos disponibles",
+                icon: "book",
+                badge: "12",
+                style: .card
+            ) {
+                Text("Lista de cursos")
+            }
+        }
+        .padding()
+        .navigationTitle("Dashboard")
+    }
+}
+
+#Preview("Dark Mode") {
+    NavigationStack {
+        VStack(spacing: 16) {
+            EduStyledNavigationLink(
+                title: "Perfil",
+                subtitle: "Ver mi perfil",
+                icon: "person.circle",
+                style: .card
+            ) {
+                Text("Perfil")
+            }
+
+            EduStyledNavigationLink(
+                title: "Ayuda",
+                icon: "questionmark.circle",
+                style: .row
+            ) {
+                Text("Ayuda")
+            }
+        }
+        .padding()
+        .navigationTitle("Men\u00fa")
+    }
+    .preferredColorScheme(.dark)
+}

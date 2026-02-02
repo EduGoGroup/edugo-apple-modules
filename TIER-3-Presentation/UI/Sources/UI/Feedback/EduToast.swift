@@ -76,3 +76,56 @@ public struct EduToast: View {
         .padding(.horizontal)
     }
 }
+
+// MARK: - Previews
+
+#Preview("Toast Info") {
+    EduToast(
+        item: ToastItem(message: "Informaci\u00f3n actualizada", style: .info, duration: 3),
+        onDismiss: {}
+    )
+    .padding(.top, 50)
+}
+
+#Preview("Toast Success") {
+    EduToast(
+        item: ToastItem(message: "Guardado exitosamente", style: .success, duration: 3),
+        onDismiss: {}
+    )
+    .padding(.top, 50)
+}
+
+#Preview("Toast Warning") {
+    EduToast(
+        item: ToastItem(message: "Conexi\u00f3n inestable", style: .warning, duration: 3),
+        onDismiss: {}
+    )
+    .padding(.top, 50)
+}
+
+#Preview("Toast Error") {
+    EduToast(
+        item: ToastItem(message: "Error al guardar", style: .error, duration: 3),
+        onDismiss: {}
+    )
+    .padding(.top, 50)
+}
+
+#Preview("Todos los estilos") {
+    VStack(spacing: 16) {
+        EduToast(item: ToastItem(message: "Info", style: .info, duration: 3), onDismiss: {})
+        EduToast(item: ToastItem(message: "Success", style: .success, duration: 3), onDismiss: {})
+        EduToast(item: ToastItem(message: "Warning", style: .warning, duration: 3), onDismiss: {})
+        EduToast(item: ToastItem(message: "Error", style: .error, duration: 3), onDismiss: {})
+    }
+    .padding(.top, 50)
+}
+
+#Preview("Dark Mode") {
+    VStack(spacing: 16) {
+        EduToast(item: ToastItem(message: "Toast en modo oscuro", style: .info, duration: 3), onDismiss: {})
+        EduToast(item: ToastItem(message: "Error en modo oscuro", style: .error, duration: 3), onDismiss: {})
+    }
+    .padding(.top, 50)
+    .preferredColorScheme(.dark)
+}

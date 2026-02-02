@@ -209,3 +209,82 @@ public struct EduGaugeProgress: View {
         }
     }
 }
+
+// MARK: - Previews
+
+#Preview("Progress Circle b\u00e1sico") {
+    VStack(spacing: 32) {
+        EduProgressCircle(progress: 0.25)
+            .frame(width: 80, height: 80)
+        EduProgressCircle(progress: 0.50)
+            .frame(width: 80, height: 80)
+        EduProgressCircle(progress: 0.75)
+            .frame(width: 80, height: 80)
+    }
+    .padding()
+}
+
+#Preview("Con porcentaje") {
+    EduProgressCircle(progress: 0.68, showPercentage: true)
+        .frame(width: 120, height: 120)
+        .padding()
+}
+
+#Preview("Indeterminado") {
+    EduIndeterminateCircle()
+        .frame(width: 80, height: 80)
+        .padding()
+}
+
+#Preview("Con icono") {
+    VStack(spacing: 32) {
+        EduCircularProgressWithIcon(progress: 0.75, icon: "arrow.down")
+            .frame(width: 80, height: 80)
+        EduCircularProgressWithIcon(progress: 1.0, icon: "checkmark")
+            .frame(width: 80, height: 80)
+    }
+    .padding()
+}
+
+#Preview("Multi-Ring") {
+    EduMultiRingProgress(rings: [
+        .init(progress: 0.8, color: .red),
+        .init(progress: 0.6, color: .green),
+        .init(progress: 0.4, color: .blue)
+    ])
+    .frame(width: 120, height: 120)
+    .padding()
+}
+
+#Preview("Gauge Progress") {
+    VStack(spacing: 32) {
+        EduGaugeProgress(progress: 0.35)
+            .frame(width: 150, height: 150)
+        EduGaugeProgress(progress: 0.75, tint: .green)
+            .frame(width: 150, height: 150)
+    }
+    .padding()
+}
+
+#Preview("Colores personalizados") {
+    HStack(spacing: 24) {
+        EduProgressCircle(progress: 0.7, tint: .green)
+            .frame(width: 60, height: 60)
+        EduProgressCircle(progress: 0.7, tint: .orange)
+            .frame(width: 60, height: 60)
+        EduProgressCircle(progress: 0.7, tint: .purple)
+            .frame(width: 60, height: 60)
+    }
+    .padding()
+}
+
+#Preview("Dark Mode") {
+    VStack(spacing: 32) {
+        EduProgressCircle(progress: 0.65, showPercentage: true)
+            .frame(width: 100, height: 100)
+        EduGaugeProgress(progress: 0.5)
+            .frame(width: 120, height: 120)
+    }
+    .padding()
+    .preferredColorScheme(.dark)
+}

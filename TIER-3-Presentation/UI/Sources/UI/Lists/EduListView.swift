@@ -15,7 +15,7 @@ public struct EduListView<Item, Content: View>: View where Item: Sendable {
     private let emptyDescription: String
     private let onRetry: (() -> Void)?
     private let content: (Item) -> Content
-    
+
     public init(
         state: ViewState<[Item]>,
         emptyTitle: String = "Sin resultados",
@@ -29,7 +29,7 @@ public struct EduListView<Item, Content: View>: View where Item: Sendable {
         self.onRetry = onRetry
         self.content = content
     }
-    
+
     public var body: some View {
         Group {
             switch state {
@@ -63,4 +63,59 @@ public struct EduListView<Item, Content: View>: View where Item: Sendable {
             }
         }
     }
+}
+
+// MARK: - Previews
+
+#Preview("Estado: Loading") {
+    EduListView(
+        state: ViewState<[String]>.loading
+    ) { item in
+        Text(item)
+            .padding()
+    }
+}
+
+#Preview("Estado: Success") {
+    EduListView(
+        state: ViewState.success(["Elemento 1", "Elemento 2", "Elemento 3", "Elemento 4", "Elemento 5"])
+    ) { item in
+        HStack {
+            Image(systemName: "doc")
+            Text(item)
+            Spacer()
+            Image(systemName: "chevron.right")
+                .foregroundStyle(.secondary)
+        }
+        .padding()
+    }
+}
+
+#Preview("Estado: Empty") {
+    EduListView(
+        state: ViewState<[String]>.empty,
+        emptyTitle: "Sin elementos",
+        emptyDescription: "Agrega tu primer elemento para comenzar"
+    ) { item in
+        Text(item)
+    }
+}
+
+#Preview("Estado: Error") {
+    EduListView(
+        state: ViewState<[String]>.error("No se pudo conectar al servidor"),
+        onRetry: { print("Reintentando...") }
+    ) { item in
+        Text(item)
+    }
+}
+
+#Preview("Dark Mode - Success") {
+    EduListView(
+        state: ViewState.success(["Item A", "Item B", "Item C"])
+    ) { item in
+        Text(item)
+            .padding()
+    }
+    .preferredColorScheme(.dark)
 }

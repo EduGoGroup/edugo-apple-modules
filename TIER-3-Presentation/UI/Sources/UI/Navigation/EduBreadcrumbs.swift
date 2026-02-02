@@ -179,6 +179,60 @@ public final class EduBreadcrumbCoordinator: Sendable {
     }
 }
 
+// MARK: - Previews
+
+#if os(macOS)
+#Preview("Breadcrumbs b\u00e1sico") {
+    EduBreadcrumbs(
+        items: [
+            EduBreadcrumbItem(id: "home", title: "Inicio", icon: "house", destination: "home"),
+            EduBreadcrumbItem(id: "docs", title: "Documentos", icon: "folder", destination: "docs"),
+            EduBreadcrumbItem(id: "file", title: "Archivo.pdf", icon: "doc")
+        ]
+    ) { destination in
+        print("Navegar a: \(destination)")
+    }
+    .padding()
+}
+
+#Preview("Breadcrumbs largo") {
+    EduBreadcrumbs(
+        items: [
+            EduBreadcrumbItem(id: "1", title: "Ra\u00edz", destination: "1"),
+            EduBreadcrumbItem(id: "2", title: "Carpeta A", destination: "2"),
+            EduBreadcrumbItem(id: "3", title: "Subcarpeta", destination: "3"),
+            EduBreadcrumbItem(id: "4", title: "Proyecto", destination: "4"),
+            EduBreadcrumbItem(id: "5", title: "Archivo actual")
+        ]
+    ) { destination in
+        print("Navegar a: \(destination)")
+    }
+    .padding()
+}
+
+#Preview("Dark Mode") {
+    EduBreadcrumbs(
+        items: [
+            EduBreadcrumbItem(id: "home", title: "Inicio", icon: "house", destination: "home"),
+            EduBreadcrumbItem(id: "settings", title: "Configuraci\u00f3n", icon: "gear")
+        ]
+    )
+    .padding()
+    .preferredColorScheme(.dark)
+}
+#endif
+
+#Preview("Platform Breadcrumbs") {
+    EduPlatformBreadcrumbs(
+        items: [
+            EduBreadcrumbItem(id: "home", title: "Inicio"),
+            EduBreadcrumbItem(id: "section", title: "Secci\u00f3n"),
+            EduBreadcrumbItem(id: "current", title: "P\u00e1gina actual")
+        ]
+    )
+    .padding()
+}
+
 // MARK: - Platform Independent Breadcrumb
 
 /// Breadcrumb que se adapta a la plataforma

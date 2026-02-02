@@ -205,3 +205,71 @@ public struct EduCoordinatedTabBar<Content: View>: View {
         }
     }
 }
+
+// MARK: - Previews
+
+#Preview("TabBar b\u00e1sico") {
+    @Previewable @State var selection = "home"
+
+    let items = [
+        EduTabItem(id: "home", title: "Inicio", icon: "house"),
+        EduTabItem(id: "search", title: "Buscar", icon: "magnifyingglass"),
+        EduTabItem(id: "profile", title: "Perfil", icon: "person")
+    ]
+
+    EduTabBar(selection: $selection, items: items) { tabId in
+        Text("Contenido de \(tabId)")
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+#Preview("TabBar con iconos seleccionados") {
+    @Previewable @State var selection = "home"
+
+    let items = [
+        EduTabItem(id: "home", title: "Inicio", icon: "house", selectedIcon: "house.fill"),
+        EduTabItem(id: "explore", title: "Explorar", icon: "safari", selectedIcon: "safari.fill"),
+        EduTabItem(id: "favorites", title: "Favoritos", icon: "heart", selectedIcon: "heart.fill"),
+        EduTabItem(id: "profile", title: "Perfil", icon: "person", selectedIcon: "person.fill")
+    ]
+
+    EduTabBar(selection: $selection, items: items) { tabId in
+        VStack {
+            Image(systemName: items.first { $0.id == tabId }?.icon ?? "questionmark")
+                .font(.largeTitle)
+            Text("Vista: \(tabId)")
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+#Preview("TabBar con badges") {
+    @Previewable @State var selection = "inbox"
+
+    let items = [
+        EduTabItem(id: "inbox", title: "Bandeja", icon: "tray", badge: "5"),
+        EduTabItem(id: "sent", title: "Enviados", icon: "paperplane"),
+        EduTabItem(id: "trash", title: "Papelera", icon: "trash")
+    ]
+
+    EduTabBar(selection: $selection, items: items) { tabId in
+        Text("Contenido de \(tabId)")
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+#Preview("Dark Mode") {
+    @Previewable @State var selection = "home"
+
+    let items = [
+        EduTabItem(id: "home", title: "Inicio", icon: "house", selectedIcon: "house.fill"),
+        EduTabItem(id: "search", title: "Buscar", icon: "magnifyingglass"),
+        EduTabItem(id: "profile", title: "Perfil", icon: "person", selectedIcon: "person.fill")
+    ]
+
+    EduTabBar(selection: $selection, items: items) { tabId in
+        Text("Modo oscuro: \(tabId)")
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+    .preferredColorScheme(.dark)
+}

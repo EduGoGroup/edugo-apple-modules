@@ -329,3 +329,66 @@ extension View {
         modifier(EduActionSheetOverlayModifier())
     }
 }
+
+// MARK: - Previews
+
+#Preview("Action Sheet b\u00e1sico") {
+    @Previewable @State var showActionSheet = false
+
+    Button("Mostrar opciones") {
+        showActionSheet = true
+    }
+    .eduActionSheet(
+        isPresented: $showActionSheet,
+        content: EduActionSheetContent(
+            title: "Opciones",
+            message: "Selecciona una acci\u00f3n",
+            actions: [
+                EduActionSheetAction(title: "Editar", icon: "pencil") { print("Editar") },
+                EduActionSheetAction(title: "Compartir", icon: "square.and.arrow.up") { print("Compartir") },
+                EduActionSheetAction(title: "Cancelar", role: .cancel) {}
+            ]
+        )
+    )
+}
+
+#Preview("Action Sheet destructivo") {
+    @Previewable @State var showActionSheet = false
+
+    Button("Eliminar elemento") {
+        showActionSheet = true
+    }
+    .eduActionSheet(
+        isPresented: $showActionSheet,
+        content: EduActionSheetContent(
+            title: "Eliminar",
+            message: "\u00bfEst\u00e1s seguro de eliminar este elemento?",
+            actions: [
+                EduActionSheetAction(title: "Eliminar", icon: "trash", role: .destructive) { print("Eliminado") },
+                EduActionSheetAction(title: "Cancelar", role: .cancel) {}
+            ]
+        )
+    )
+}
+
+#Preview("Action Sheet con m\u00faltiples opciones") {
+    @Previewable @State var showActionSheet = false
+
+    Button("M\u00e1s opciones") {
+        showActionSheet = true
+    }
+    .eduActionSheet(
+        isPresented: $showActionSheet,
+        content: EduActionSheetContent(
+            title: "Acciones",
+            actions: [
+                EduActionSheetAction(title: "Copiar", icon: "doc.on.doc") { print("Copiar") },
+                EduActionSheetAction(title: "Mover", icon: "folder") { print("Mover") },
+                EduActionSheetAction(title: "Renombrar", icon: "pencil") { print("Renombrar") },
+                EduActionSheetAction(title: "Duplicar", icon: "plus.square.on.square") { print("Duplicar") },
+                EduActionSheetAction(title: "Eliminar", icon: "trash", role: .destructive) { print("Eliminar") },
+                EduActionSheetAction(title: "Cancelar", role: .cancel) {}
+            ]
+        )
+    )
+}

@@ -1,14 +1,23 @@
-# EduGo UI Components - Documentación Completa
+# EduGo UI Components
 
-## Tabla de Contenidos
+Documentacion completa de los componentes SwiftUI disponibles en el modulo UI.
 
-1. [Input Components](#input-components)
-2. [Containers](#containers)
-3. [Lists](#lists)
-4. [Navigation](#navigation)
-5. [Feedback](#feedback)
-6. [Loading](#loading)
-7. [Utilities](#utilities)
+## Plataformas Soportadas
+
+| Plataforma | Version Minima |
+|------------|----------------|
+| iOS        | 26+            |
+| macOS      | 26+            |
+
+## Indice
+
+- [Input Components](#input-components)
+- [Container Components](#container-components)
+- [List Components](#list-components)
+- [Feedback Components](#feedback-components)
+- [Loading Components](#loading-components)
+- [Navigation Components](#navigation-components)
+- [Utilities](#utilities)
 
 ---
 
@@ -16,612 +25,443 @@
 
 ### EduButton
 
-Botón genérico con variantes de estilo y soporte multi-plataforma.
+Boton generico con variantes de estilo y soporte multi-plataforma.
 
-**Props:**
-- `title: String` - Texto del botón
-- `icon: String?` - Nombre del SF Symbol opcional
-- `iconPosition: IconPosition` - Posición del icono (.leading o .trailing)
-- `style: Style` - Estilo visual (.primary, .secondary, .destructive, .link)
-- `size: Size` - Tamaño del botón (.small, .medium, .large)
-- `isLoading: Bool` - Estado de carga (muestra spinner)
-- `isDisabled: Bool` - Si el botón está deshabilitado
-- `action: () -> Void` - Closure que se ejecuta al presionar
+**Ubicacion:** `Sources/UI/Input/EduButton.swift`
+
+**Propiedades:**
+
+| Propiedad | Tipo | Default | Descripcion |
+|-----------|------|---------|-------------|
+| title | String | requerido | Texto del boton |
+| icon | String? | nil | Nombre del SF Symbol |
+| iconPosition | IconPosition | .leading | Posicion del icono |
+| style | Style | .primary | Estilo visual |
+| size | Size | .medium | Tamano del boton |
+| isLoading | Bool | false | Estado de carga |
+| isDisabled | Bool | false | Estado deshabilitado |
+| action | () -> Void | requerido | Accion al presionar |
 
 **Estilos disponibles:**
-- `primary` - Botón principal con fondo de color acento
-- `secondary` - Botón secundario con borde
-- `destructive` - Botón destructivo en rojo
-- `link` - Botón de texto sin fondo
+- `.primary` - Fondo de color accent, texto blanco
+- `.secondary` - Borde de color accent, fondo transparente
+- `.destructive` - Borde rojo, para acciones peligrosas
+- `.link` - Sin fondo ni borde, solo texto
+
+**Tamanos:**
+- `.small` - Padding reducido
+- `.medium` - Tamano estandar
+- `.large` - Padding amplio
 
 **Ejemplo:**
+
 ```swift
-EduButton.primary("Guardar", size: .medium) {
-    print("Guardado")
+// Boton primary basico
+EduButton.primary("Guardar") {
+    saveData()
 }
 
+// Boton con icono
 EduButton(
-    "Eliminar",
-    icon: "trash",
-    style: .destructive,
-    action: { print("Eliminado") }
-)
-```
+    "Compartir",
+    icon: "square.and.arrow.up",
+    style: .secondary
+) {
+    shareContent()
+}
 
-**Archivo:** `Sources/UI/Input/EduButton.swift`
+// Boton en estado de carga
+EduButton.primary("Enviando...", isLoading: true) { }
+```
 
 ---
 
 ### EduTextField
 
-TextField genérico con validación integrada y soporte multi-plataforma.
+Campo de texto con validacion integrada.
 
-**Props:**
-- `title: String` - Título del campo (label)
-- `text: Binding<String>` - Binding al texto del campo
-- `placeholder: String` - Texto placeholder cuando está vacío
-- `helperText: String?` - Texto de ayuda opcional
-- `validation: ((String) -> ValidationResult)?` - Closure de validación
-- `formState: FormState?` - FormState opcional para integración
-- `fieldKey: String?` - Clave única para registro en FormState
-- `isDisabled: Bool` - Si el campo está deshabilitado
-- `onCommit: (() -> Void)?` - Closure al presionar enter
+**Ubicacion:** `Sources/UI/Input/EduTextField.swift`
 
-**Estados:**
-- Normal
-- Focused (borde azul)
-- Error (borde rojo + mensaje)
-- Disabled (opacidad reducida)
+**Propiedades:**
+
+| Propiedad | Tipo | Default | Descripcion |
+|-----------|------|---------|-------------|
+| placeholder | String | requerido | Texto placeholder |
+| text | Binding<String> | requerido | Binding del texto |
+| icon | String? | nil | Icono leading |
+| isSecure | Bool | false | Campo de contrasena |
+| validation | Validation? | nil | Regla de validacion |
 
 **Ejemplo:**
+
 ```swift
-@State var email = ""
+@State private var email = ""
 
-EduTextField(
-    "Email",
-    text: $email,
-    placeholder: "tu@email.com",
-    validation: Validators.email()
-)
+EduTextField("Email", text: $email, icon: "envelope")
 ```
-
-**Archivo:** `Sources/UI/Input/EduTextField.swift`
 
 ---
 
 ### EduSecureField
 
-Campo de contraseña con visibilidad toggle.
+Campo de contrasena con toggle de visibilidad.
 
-**Props:**
-- Similares a `EduTextField`
-- `showPassword: Binding<Bool>` - Control de visibilidad
+**Ubicacion:** `Sources/UI/Input/EduSecureField.swift`
 
 **Ejemplo:**
+
 ```swift
-@State var password = ""
-@State var showPassword = false
+@State private var password = ""
 
-EduSecureField(
-    "Contraseña",
-    text: $password,
-    showPassword: $showPassword
-)
+EduSecureField("Contrasena", text: $password)
 ```
-
-**Archivo:** `Sources/UI/Input/EduSecureField.swift`
 
 ---
 
 ### EduSearchField
 
-Campo de búsqueda con icono y botón de limpiar.
+Campo de busqueda con icono y boton de limpiar.
 
-**Props:**
-- `text: Binding<String>` - Binding al texto de búsqueda
-- `placeholder: String` - Placeholder
-- `onSearch: ((String) -> Void)?` - Callback al buscar
+**Ubicacion:** `Sources/UI/Input/EduSearchField.swift`
 
 **Ejemplo:**
+
 ```swift
-@State var searchText = ""
+@State private var query = ""
 
-EduSearchField(
-    text: $searchText,
-    placeholder: "Buscar estudiantes..."
-) { query in
-    print("Buscando: \(query)")
-}
+EduSearchField("Buscar...", text: $query)
 ```
-
-**Archivo:** `Sources/UI/Input/EduSearchField.swift`
 
 ---
 
-## Containers
+## Container Components
 
 ### EduCard
 
-Contenedor tipo tarjeta con sombra y bordes redondeados.
+Contenedor tarjeta estilizada con sombra y esquinas redondeadas.
 
-**Props:**
-- `title: String?` - Título opcional
-- `subtitle: String?` - Subtítulo opcional
-- `content: () -> Content` - Contenido de la tarjeta
+**Ubicacion:** `Sources/UI/Containers/EduCard.swift`
 
-**Ejemplo:**
-```swift
-EduCard(title: "Estudiantes", subtitle: "Total: 25") {
-    Text("Contenido de la tarjeta")
-}
-```
+**Propiedades:**
 
-**Archivo:** `Sources/UI/Containers/EduCard.swift`
-
----
-
-### EduGroupBox
-
-Agrupación visual de contenido con título.
-
-**Props:**
-- `title: String` - Título del grupo
-- `content: () -> Content` - Contenido agrupado
+| Propiedad | Tipo | Default | Descripcion |
+|-----------|------|---------|-------------|
+| padding | CGFloat | 16 | Padding interno |
+| cornerRadius | CGFloat | 12 | Radio de esquinas |
+| content | View | requerido | Contenido de la tarjeta |
 
 **Ejemplo:**
+
 ```swift
-EduGroupBox(title: "Información Personal") {
+EduCard {
     VStack {
-        Text("Nombre: Juan")
-        Text("Email: juan@example.com")
+        Text("Titulo")
+            .font(.headline)
+        Text("Descripcion del contenido")
     }
 }
 ```
-
-**Archivo:** `Sources/UI/Containers/EduGroupBox.swift`
 
 ---
 
 ### EduSection
 
-Sección de contenido con header y footer opcionales.
+Seccion de contenido con titulo y separadores.
 
-**Props:**
-- `header: String?` - Texto del header
-- `footer: String?` - Texto del footer
-- `content: () -> Content` - Contenido de la sección
+**Ubicacion:** `Sources/UI/Containers/EduSection.swift`
 
 **Ejemplo:**
+
 ```swift
-EduSection(
-    header: "Ajustes",
-    footer: "Personaliza tu experiencia"
-) {
-    Toggle("Notificaciones", isOn: $enabled)
+EduSection(title: "Configuracion") {
+    Toggle("Notificaciones", isOn: $notificationsEnabled)
+    Toggle("Modo oscuro", isOn: $darkModeEnabled)
 }
 ```
-
-**Archivo:** `Sources/UI/Containers/EduSection.swift`
 
 ---
 
-## Lists
+### EduGroupBox
+
+Caja de grupo con estilo nativo.
+
+**Ubicacion:** `Sources/UI/Containers/EduGroupBox.swift`
+
+---
+
+## List Components
 
 ### EduListView
 
-Lista genérica con estados de carga, error y vacío.
+Lista principal con gestion de estados (loading, success, error, empty).
 
-**Props:**
-- `items: [Item]` - Array de items Identifiable
-- `isLoading: Bool` - Estado de carga
-- `error: Error?` - Error opcional
-- `emptyTitle: String` - Título cuando está vacío
-- `emptyMessage: String` - Mensaje cuando está vacío
-- `emptyIcon: String` - Icono cuando está vacío
-- `retryAction: (() -> Void)?` - Acción de reintentar
-- `content: (Item) -> Content` - Builder del contenido
+**Ubicacion:** `Sources/UI/Lists/EduListView.swift`
 
-**Estados automáticos:**
-- Loading: Muestra `EduLoadingStateView`
-- Error: Muestra `EduErrorStateView`
-- Empty: Muestra `EduEmptyStateView`
-- Loaded: Muestra la lista
+**Propiedades:**
+
+| Propiedad | Tipo | Default | Descripcion |
+|-----------|------|---------|-------------|
+| state | ViewState<[Item]> | requerido | Estado de la lista |
+| emptyTitle | String | "Sin resultados" | Titulo estado vacio |
+| emptyDescription | String | "No hay elementos" | Descripcion estado vacio |
+| onRetry | (() -> Void)? | nil | Accion de reintento |
+| content | (Item) -> View | requerido | Vista por item |
+
+**Estados:**
+- `.loading` - Muestra skeleton loader
+- `.success([Item])` - Muestra lista de items
+- `.error(String)` - Muestra vista de error con retry
+- `.empty` - Muestra vista de estado vacio
 
 **Ejemplo:**
+
 ```swift
 EduListView(
-    items: students,
-    isLoading: viewModel.isLoading,
-    error: viewModel.error,
-    emptyTitle: "No hay estudiantes",
-    emptyMessage: "Comienza agregando estudiantes",
-    retryAction: { viewModel.retry() }
-) { student in
-    EduRow(
-        title: student.name,
-        subtitle: student.grade
-    )
+    state: viewModel.state,
+    emptyTitle: "Sin cursos",
+    emptyDescription: "No tienes cursos inscritos",
+    onRetry: { viewModel.loadCourses() }
+) { course in
+    EduRow(title: course.name, subtitle: course.instructor)
 }
 ```
-
-**Archivo:** `Sources/UI/Lists/EduListView.swift`
 
 ---
 
 ### EduRow
 
-Fila reutilizable para listas.
+Fila personalizable con swipe actions.
 
-**Props:**
-- `title: String` - Título principal
-- `subtitle: String?` - Subtítulo opcional
-- `icon: String?` - Icono SF Symbol opcional
-- `iconColor: Color` - Color del icono
-- `badge: String?` - Badge opcional
-- `action: (() -> Void)?` - Acción al tocar
+**Ubicacion:** `Sources/UI/Lists/EduRow.swift`
+
+**Propiedades:**
+
+| Propiedad | Tipo | Default | Descripcion |
+|-----------|------|---------|-------------|
+| title | String | requerido | Titulo principal |
+| subtitle | String? | nil | Subtitulo |
+| icon | String? | nil | Icono leading |
+| accessory | Accessory | .chevron | Accesorio trailing |
+| swipeActions | [SwipeAction] | [] | Acciones de swipe |
 
 **Ejemplo:**
+
 ```swift
 EduRow(
-    title: "María González",
-    subtitle: "5to Grado",
-    icon: "person.fill",
-    iconColor: .blue,
-    badge: "Nuevo",
-    action: { print("Tapped") }
+    title: "Matematicas",
+    subtitle: "Prof. Garcia",
+    icon: "book"
 )
 ```
-
-**Archivo:** `Sources/UI/Lists/EduRow.swift`
 
 ---
 
 ### EduEmptyStateView
 
-Vista de estado vacío para listas.
+Vista de estado vacio con icono, titulo y accion opcional.
 
-**Props:**
-- `title: String` - Título
-- `message: String` - Mensaje descriptivo
-- `icon: String` - Icono SF Symbol
-- `action: (() -> Void)?` - Acción opcional
-- `actionTitle: String?` - Título del botón de acción
+**Ubicacion:** `Sources/UI/Lists/EduEmptyStateView.swift`
 
 **Ejemplo:**
+
 ```swift
 EduEmptyStateView(
-    title: "No hay estudiantes",
-    message: "Comienza agregando tu primer estudiante",
-    icon: "person.2.slash",
-    action: { print("Add tapped") },
-    actionTitle: "Agregar Estudiante"
-)
+    icon: "tray",
+    title: "Sin mensajes",
+    description: "No tienes mensajes nuevos",
+    actionTitle: "Actualizar"
+) {
+    refreshMessages()
+}
 ```
-
-**Archivo:** `Sources/UI/Lists/EduEmptyStateView.swift`
-
----
-
-### EduErrorStateView
-
-Vista de estado de error para listas.
-
-**Props:**
-- `title: String` - Título del error
-- `message: String` - Mensaje descriptivo
-- `retryAction: (() -> Void)?` - Acción de reintentar
-
-**Ejemplo:**
-```swift
-EduErrorStateView(
-    title: "Error de Conexión",
-    message: "No se pudo conectar al servidor",
-    retryAction: { viewModel.retry() }
-)
-```
-
-**Archivo:** `Sources/UI/Lists/EduErrorStateView.swift`
 
 ---
 
 ### EduLoadingStateView
 
-Vista de estado de carga para listas.
+Vista de carga con skeleton animado.
 
-**Props:**
-- `message: String` - Mensaje de carga
-
-**Ejemplo:**
-```swift
-EduLoadingStateView(message: "Cargando estudiantes...")
-```
-
-**Archivo:** `Sources/UI/Lists/EduLoadingStateView.swift`
+**Ubicacion:** `Sources/UI/Lists/EduLoadingStateView.swift`
 
 ---
 
-## Navigation
+### EduErrorStateView
 
-### EduNavigationBar
+Vista de error con mensaje y boton de reintento.
 
-Barra de navegación personalizada con acciones.
-
-**Props:**
-- `title: String` - Título principal
-- `subtitle: String?` - Subtítulo opcional
-- `leadingIcon: String?` - Icono izquierdo
-- `trailingIcon: String?` - Icono derecho
-- `leadingAction: (() -> Void)?` - Acción izquierda
-- `trailingAction: (() -> Void)?` - Acción derecha
+**Ubicacion:** `Sources/UI/Lists/EduErrorStateView.swift`
 
 **Ejemplo:**
+
 ```swift
-EduNavigationBar(
-    title: "Mi Perfil",
-    subtitle: "Estudiante activo",
-    leadingAction: { dismiss() },
-    trailingIcon: "gearshape.fill",
-    trailingAction: { showSettings() }
-)
-```
-
-**Archivo:** `Sources/UI/Navigation/EduNavigationBar.swift`
-
----
-
-### EduNavigationLink
-
-Link de navegación con estilo EduGo.
-
-**Props:**
-- `title: String` - Título del link
-- `icon: String?` - Icono opcional
-- `showChevron: Bool` - Mostrar chevron
-- `destination: () -> Destination` - Vista de destino
-
-**Ejemplo:**
-```swift
-EduNavigationLink(
-    "Mi Perfil",
-    icon: "person.fill"
+EduErrorStateView(
+    title: "Error de conexion",
+    message: "No se pudo cargar la informacion",
+    retryTitle: "Reintentar"
 ) {
-    ProfileView()
+    viewModel.retry()
 }
 ```
 
-**Archivo:** `Sources/UI/Navigation/EduNavigationLink.swift`
-
 ---
 
-### EduTabBar
-
-Barra de pestañas personalizada.
-
-**Props:**
-- `selectedTab: Binding<Int>` - Tab seleccionado
-- `tabs: [TabItem]` - Array de tabs
-
-**TabItem:**
-- `title: String`
-- `icon: String`
-- `selectedIcon: String?`
-
-**Ejemplo:**
-```swift
-@State var selectedTab = 0
-
-EduTabBar(
-    selectedTab: $selectedTab,
-    tabs: [
-        TabItem(title: "Inicio", icon: "house"),
-        TabItem(title: "Buscar", icon: "magnifyingglass"),
-        TabItem(title: "Perfil", icon: "person")
-    ]
-)
-```
-
-**Archivo:** `Sources/UI/Navigation/EduTabBar.swift`
-
----
-
-### EduBreadcrumbs
-
-Componente de navegación breadcrumb.
-
-**Props:**
-- `items: [BreadcrumbItem]` - Items del breadcrumb
-- `onItemTap: (BreadcrumbItem) -> Void` - Callback al tocar
-
-**BreadcrumbItem:**
-- `id: String`
-- `title: String`
-
-**Ejemplo:**
-```swift
-EduBreadcrumbs(items: [
-    BreadcrumbItem(id: "home", title: "Inicio"),
-    BreadcrumbItem(id: "courses", title: "Cursos"),
-    BreadcrumbItem(id: "math", title: "Matemáticas")
-]) { item in
-    navigateTo(item)
-}
-```
-
-**Archivo:** `Sources/UI/Navigation/EduBreadcrumbs.swift`
-
----
-
-## Feedback
-
-### EduToast
-
-Notificación toast temporal.
-
-**Props:**
-- `message: String` - Mensaje del toast
-- `style: Style` - Estilo (.success, .error, .warning, .info)
-
-**Uso con ToastManager:**
-```swift
-ToastManager.shared.show(
-    "Guardado exitosamente",
-    style: .success,
-    duration: 3.0
-)
-```
-
-**Archivo:** `Sources/UI/Feedback/EduToast.swift`
-
----
+## Feedback Components
 
 ### EduBanner
 
-Banner informativo persistente.
+Banner informativo con diferentes estilos.
 
-**Props:**
-- `message: String` - Mensaje del banner
-- `style: Style` - Estilo (.success, .error, .warning, .info)
-- `action: (() -> Void)?` - Acción opcional
-- `onDismiss: (() -> Void)?` - Callback al cerrar
+**Ubicacion:** `Sources/UI/Feedback/EduBanner.swift`
+
+**Estilos:**
+- `.info` - Azul, informativo
+- `.success` - Verde, exito
+- `.warning` - Naranja, advertencia
+- `.error` - Rojo, error
 
 **Ejemplo:**
+
 ```swift
 EduBanner(
-    message: "Nueva actualización disponible",
-    style: .info,
-    action: { install() },
-    onDismiss: { hideBanner() }
+    message: "Cambios guardados exitosamente",
+    style: .success
 )
 ```
 
-**Archivo:** `Sources/UI/Feedback/EduBanner.swift`
+---
+
+### EduToast
+
+Notificacion tipo toast con auto-dismiss.
+
+**Ubicacion:** `Sources/UI/Feedback/EduToast.swift`
+
+**Uso con ToastManager:**
+
+```swift
+// Mostrar toast
+ToastManager.shared.show("Guardado", style: .success)
+
+// En la vista raiz
+.eduToastOverlay()
+```
 
 ---
 
 ### EduAlert
 
-Alerta modal con botones.
+Sistema de alertas nativas con acciones.
 
-**Props:**
-- `title: String` - Título de la alerta
-- `message: String` - Mensaje descriptivo
-- `primaryButton: AlertButton` - Botón primario
-- `secondaryButton: AlertButton?` - Botón secundario opcional
+**Ubicacion:** `Sources/UI/Feedback/EduAlert.swift`
 
 **Ejemplo:**
+
 ```swift
-.alert(isPresented: $showAlert) {
-    EduAlert(
-        title: "Eliminar",
-        message: "¿Estás seguro?",
-        primaryButton: .init(title: "Eliminar", style: .destructive) {
-            delete()
-        },
-        secondaryButton: .init(title: "Cancelar", style: .cancel) {}
+// Usando el modifier
+.eduAlert(
+    isPresented: $showAlert,
+    content: EduAlertContent(
+        title: "Confirmar",
+        message: "Deseas continuar?",
+        actions: [
+            EduAlertAction(title: "Cancelar", role: .cancel) { },
+            EduAlertAction(title: "Confirmar") { confirm() }
+        ]
     )
-}
+)
+
+// Usando AlertManager
+EduAlertManager.shared.showConfirmation(
+    title: "Eliminar",
+    message: "Esta accion no se puede deshacer",
+    onConfirm: { delete() }
+)
 ```
-
-**Archivo:** `Sources/UI/Feedback/EduAlert.swift`
-
----
-
-### EduModal
-
-Modal personalizado.
-
-**Props:**
-- `title: String` - Título del modal
-- `content: () -> Content` - Contenido del modal
-- `actions: (() -> Actions)?` - Acciones opcionales
-
-**Ejemplo:**
-```swift
-.sheet(isPresented: $showModal) {
-    EduModal(
-        title: "Crear Estudiante",
-        content: {
-            CreateStudentForm()
-        },
-        actions: {
-            HStack {
-                Button("Cancelar") { dismiss() }
-                Button("Guardar") { save() }
-            }
-        }
-    )
-}
-```
-
-**Archivo:** `Sources/UI/Feedback/EduModal.swift`
 
 ---
 
 ### EduActionSheet
 
-Action sheet personalizado.
+Action sheet adaptativo por plataforma.
 
-**Props:**
-- `title: String` - Título
-- `message: String?` - Mensaje opcional
-- `actions: [ActionSheetAction]` - Array de acciones
+**Ubicacion:** `Sources/UI/Feedback/EduActionSheet.swift`
 
 **Ejemplo:**
+
 ```swift
-.actionSheet(isPresented: $showActions) {
-    EduActionSheet(
+.eduActionSheet(
+    isPresented: $showOptions,
+    content: EduActionSheetContent(
         title: "Opciones",
-        message: "Selecciona una acción",
         actions: [
-            .init(title: "Editar", style: .default) { edit() },
-            .init(title: "Eliminar", style: .destructive) { delete() },
-            .init(title: "Cancelar", style: .cancel) {}
+            EduActionSheetAction(title: "Editar", icon: "pencil") { edit() },
+            EduActionSheetAction(title: "Eliminar", role: .destructive) { delete() },
+            EduActionSheetAction(title: "Cancelar", role: .cancel) { }
         ]
     )
-}
+)
 ```
 
-**Archivo:** `Sources/UI/Feedback/EduActionSheet.swift`
+---
+
+### EduModal
+
+Sistema de modales con diferentes tamanos.
+
+**Ubicacion:** `Sources/UI/Feedback/EduModal.swift`
+
+**Tamanos:**
+- `.small` - 300pt
+- `.medium` - 500pt
+- `.large` - 700pt
+- `.fullScreen` - Pantalla completa
+
+**Ejemplo:**
+
+```swift
+.eduModal(isPresented: $showModal) {
+    EduModalContent(title: "Configuracion", size: .medium) {
+        // Contenido del modal
+    }
+}
+```
 
 ---
 
 ### EduOverlayManager
 
-Gestor centralizado de overlays.
+Gestor centralizado de overlays (toasts, alerts, modals).
+
+**Ubicacion:** `Sources/UI/Feedback/EduOverlayManager.swift`
 
 **Uso:**
+
 ```swift
-@State var overlayItem: EduOverlayItem?
-
-MyView()
-    .eduOverlay(item: $overlayItem)
-
-// Mostrar overlay
-overlayItem = .toast(message: "Guardado", style: .success)
-overlayItem = .banner(message: "Error", style: .error)
-overlayItem = .loading(message: "Procesando...")
+// En la vista raiz
+ContentView()
+    .eduOverlay()
 ```
-
-**Archivo:** `Sources/UI/Feedback/EduOverlayManager.swift`
 
 ---
 
-## Loading
+## Loading Components
 
 ### EduActivityIndicator
 
-Indicador de actividad circular.
+Indicador de actividad adaptativo por plataforma.
 
-**Props:**
-- `size: Size` - Tamaño (.small, .medium, .large)
-- `color: Color` - Color del indicador
+**Ubicacion:** `Sources/UI/Loading/EduActivityIndicator.swift`
+
+**Tamanos:** `.small`, `.medium`, `.large`
 
 **Ejemplo:**
-```swift
-EduActivityIndicator(size: .medium, color: .blue)
-```
 
-**Archivo:** `Sources/UI/Loading/EduActivityIndicator.swift`
+```swift
+EduActivityIndicator(style: .medium, color: .blue)
+
+// Con loading overlay
+.loadingOverlay(isLoading: true, message: "Procesando...")
+```
 
 ---
 
@@ -629,24 +469,26 @@ EduActivityIndicator(size: .medium, color: .blue)
 
 Barra de progreso lineal.
 
-**Props:**
-- `progress: Double` - Progreso (0.0 a 1.0)
-- `height: CGFloat` - Altura de la barra
-- `progressColor: Color` - Color del progreso
-- `trackColor: Color` - Color del track
+**Ubicacion:** `Sources/UI/Loading/EduProgressBar.swift`
+
+**Modos:**
+- `.determinate(Double)` - Progreso especifico (0.0 a 1.0)
+- `.indeterminate` - Progreso continuo
+
+**Estilos:** `.linear`, `.rounded`, `.thin`
 
 **Ejemplo:**
+
 ```swift
-@State var progress = 0.5
+// Barra con progreso
+EduProgressBar(mode: .determinate(0.75), style: .rounded)
 
-EduProgressBar(
-    progress: progress,
-    height: 8,
-    progressColor: .blue
-)
+// Con etiqueta
+EduLabeledProgressBar(progress: 0.5, label: "Descargando...")
+
+// Segmentado
+EduSegmentedProgressBar(totalSteps: 5, currentStep: 3)
 ```
-
-**Archivo:** `Sources/UI/Loading/EduProgressBar.swift`
 
 ---
 
@@ -654,49 +496,175 @@ EduProgressBar(
 
 Indicador de progreso circular.
 
-**Props:**
-- `progress: Double` - Progreso (0.0 a 1.0)
-- `size: CGFloat` - Tamaño del círculo
-- `lineWidth: CGFloat` - Grosor de la línea
-- `progressColor: Color` - Color del progreso
-- `trackColor: Color` - Color del track
+**Ubicacion:** `Sources/UI/Loading/EduProgressCircle.swift`
+
+**Variantes:**
+- `EduProgressCircle` - Circulo basico
+- `EduIndeterminateCircle` - Animacion continua
+- `EduCircularProgressWithIcon` - Con icono central
+- `EduMultiRingProgress` - Multiples anillos
+- `EduGaugeProgress` - Estilo gauge (semi-circulo)
 
 **Ejemplo:**
+
 ```swift
-@State var progress = 0.75
-
-EduProgressCircle(
-    progress: progress,
-    size: 100,
-    lineWidth: 10,
-    progressColor: .green
-)
+EduProgressCircle(progress: 0.75, showPercentage: true)
+    .frame(width: 100, height: 100)
 ```
-
-**Archivo:** `Sources/UI/Loading/EduProgressCircle.swift`
 
 ---
 
 ### EduSkeletonLoader
 
-Skeleton loader para contenido en carga.
+Skeleton loader con efecto shimmer.
 
-**Props:**
-- `lines: Int` - Número de líneas
-- `height: CGFloat` - Altura de cada línea
-- `spacing: CGFloat` - Espacio entre líneas
-- `cornerRadius: CGFloat` - Radio de esquinas
+**Ubicacion:** `Sources/UI/Loading/EduSkeletonLoader.swift`
+
+**Formas:**
+- `.rectangle`
+- `.roundedRectangle(CGFloat)`
+- `.circle`
+- `.capsule`
+
+**Componentes prefabricados:**
+- `EduSkeletonText` - Para texto
+- `EduSkeletonImage` - Para imagenes
+- `EduSkeletonCard` - Para tarjetas
+- `EduSkeletonList` - Para listas
+- `EduSkeletonListRow` - Para filas
 
 **Ejemplo:**
+
 ```swift
-EduSkeletonLoader(
-    lines: 3,
-    height: 16,
-    spacing: 8
+EduSkeletonCard(showImage: true, lines: 3)
+
+// Con efecto shimmer
+EduSkeletonGroup {
+    EduSkeletonListRow()
+    EduSkeletonListRow()
+}
+```
+
+---
+
+## Navigation Components
+
+### EduNavigationBar
+
+Barra de navegacion personalizada y native.
+
+**Ubicacion:** `Sources/UI/Navigation/EduNavigationBar.swift`
+
+**Ejemplo personalizado:**
+
+```swift
+EduNavigationBar(
+    title: "Perfil",
+    leadingItem: EduNavigationBarItem(icon: "chevron.left") { goBack() },
+    trailingItem: EduNavigationBarItem(icon: "gear") { openSettings() }
+) {
+    // Contenido
+}
+```
+
+**Ejemplo nativo:**
+
+```swift
+.eduNavigationBar(title: "Dashboard", displayMode: .large)
+.eduNavigationBarItems(
+    leading: EduNavigationBarItem(icon: "chevron.left") { },
+    trailing: EduNavigationBarItem(icon: "plus") { }
 )
 ```
 
-**Archivo:** `Sources/UI/Loading/EduSkeletonLoader.swift`
+---
+
+### EduTabBar
+
+TabBar multi-plataforma adaptativo.
+
+**Ubicacion:** `Sources/UI/Navigation/EduTabBar.swift`
+
+**Limites:** 2-5 tabs (segun iOS Human Interface Guidelines)
+
+**Ejemplo:**
+
+```swift
+@State var selection = "home"
+
+let items = [
+    EduTabItem(id: "home", title: "Inicio", icon: "house", selectedIcon: "house.fill"),
+    EduTabItem(id: "search", title: "Buscar", icon: "magnifyingglass"),
+    EduTabItem(id: "profile", title: "Perfil", icon: "person", badge: "3")
+]
+
+EduTabBar(selection: $selection, items: items) { tabId in
+    switch tabId {
+    case "home": HomeView()
+    case "search": SearchView()
+    case "profile": ProfileView()
+    default: EmptyView()
+    }
+}
+```
+
+---
+
+### EduNavigationLink
+
+NavigationLink mejorado con lazy loading y estado disabled.
+
+**Ubicacion:** `Sources/UI/Navigation/EduNavigationLink.swift`
+
+**Variantes:**
+- `EduNavigationLink` - Basico con lazy loading
+- `EduStyledNavigationLink` - Con estilos predefinidos (.plain, .card, .row)
+- `EduTrackedNavigationLink` - Con tracking de navegacion
+
+**Ejemplo:**
+
+```swift
+// Basico
+EduNavigationLink {
+    DetailView()
+} label: {
+    Text("Ver detalles")
+}
+
+// Styled
+EduStyledNavigationLink(
+    title: "Configuracion",
+    subtitle: "Ajustes de la app",
+    icon: "gear",
+    style: .row
+) {
+    SettingsView()
+}
+```
+
+---
+
+### EduBreadcrumbs
+
+Navegacion por migas de pan (solo macOS).
+
+**Ubicacion:** `Sources/UI/Navigation/EduBreadcrumbs.swift`
+
+**Ejemplo:**
+
+```swift
+#if os(macOS)
+EduBreadcrumbs(
+    items: [
+        EduBreadcrumbItem(id: "home", title: "Inicio", destination: "home"),
+        EduBreadcrumbItem(id: "docs", title: "Documentos", destination: "docs"),
+        EduBreadcrumbItem(id: "file", title: "Archivo.pdf")
+    ]
+) { destination in
+    navigateTo(destination)
+}
+#endif
+```
 
 ---
 
@@ -704,120 +672,108 @@ EduSkeletonLoader(
 
 ### PreviewHelpers
 
-Utilidades para Xcode Previews.
+Helpers para facilitar Xcode Previews.
 
-**Funciones disponibles:**
+**Ubicacion:** `Sources/UI/Utilities/PreviewHelpers.swift`
 
-**Dispositivos:**
+**Dispositivos disponibles:**
+- iOS: `.iPhone15Pro`, `.iPhone15ProMax`, `.iPhoneSE`, `.iPadPro13`, `.iPadAir`
+- macOS: `.macOS`
+- visionOS: `.appleVisionPro`
+- watchOS: `.appleWatchSeries9_41mm`, `.appleWatchSeries9_45mm`, `.appleWatchUltra2`
+- tvOS: `.appleTV4K`
+
+**Extensiones de View:**
+- `.previewDevice(_:)` - Dispositivo especifico
+- `.previewAllColorSchemes()` - Modo claro y oscuro
+- `.previewSizeClasses(horizontal:vertical:)` - Size classes (iOS)
+- `.previewDynamicTypeSize(_:)` - Tamano de fuente
+- `.previewCommonLocales()` - Locales comunes
+
+**Ejemplo:**
+
 ```swift
-MyView().previewDevice(.iPhone15Pro)
-MyView().previewDevice(.iPadPro13)
-MyView().previewDevice(.macOS)
-```
-
-**Color Schemes:**
-```swift
-MyView().previewAllColorSchemes()
-```
-
-**Dynamic Type:**
-```swift
-MyView().previewDynamicTypeSize(.extraLarge)
-MyView().previewCommonDynamicTypeSizes()
-```
-
-**Locales:**
-```swift
-MyView().previewLocale("es_ES")
-MyView().previewCommonLocales()
-```
-
-**Containers:**
-```swift
-PreviewContainer {
+#Preview("All Platforms") {
     MyView()
+        .previewAllColorSchemes()
 }
 
-PreviewGrid(columns: 3) {
-    ForEach(items) { item in
-        ItemView(item)
-    }
+#Preview("Dynamic Type") {
+    MyView()
+        .previewCommonDynamicTypeSizes()
 }
 ```
-
-**Archivo:** `Sources/UI/Utilities/PreviewHelpers.swift`
 
 ---
 
 ### PreviewMocks
 
-Datos mock para previews.
+Datos mock y bindings para Previews.
+
+**Ubicacion:** `Sources/UI/Utilities/PreviewMocks.swift`
 
 **Datos disponibles:**
-- `PreviewMocks.shortText`
-- `PreviewMocks.mediumText`
-- `PreviewMocks.longText`
-- `PreviewMocks.userName`
-- `PreviewMocks.userEmail`
-- `PreviewMocks.shortList`
-- `PreviewMocks.mediumList`
-- `PreviewMocks.today`
-- `PreviewMocks.genericError`
+- Textos: `.shortText`, `.mediumText`, `.longText`, `.loremIpsum`
+- Usuario: `.userName`, `.userEmail`
+- Listas: `.shortList`, `.mediumList`, `.longList`, `.emptyList`
+- Numeros: `.smallNumber`, `.mediumNumber`, `.largeNumber`
+- Fechas: `.today`, `.yesterday`, `.tomorrow`, `.lastWeek`
+- Errores: `.genericError`, `.networkError`, `.validationError`
 
-**ViewModels mock:**
-- `MockLoadingViewModel`
-- `MockFormViewModel`
-- `MockListViewModel`
+**Mock ViewModels:**
+- `MockLoadingViewModel` - Para estados de carga
+- `MockFormViewModel` - Para formularios
+- `MockListViewModel` - Para listas con estados
 
 **Bindings mock:**
+
 ```swift
-@Previewable @State var text = PreviewMocks.userEmail
-TextField("Email", text: $text)
+@State var text = PreviewMocks.userName
+@State var isOn: Bool = .mock(true)
 ```
 
-**Archivo:** `Sources/UI/Utilities/PreviewMocks.swift`
-
 ---
 
-## Plataformas Soportadas
+## Mejores Practicas
 
-- iOS 26+
-- macOS 26+
+### 1. Usar estados consistentes
 
-Todos los componentes están diseñados para funcionar en ambas plataformas con adaptaciones automáticas según el contexto.
+```swift
+// Preferir ViewState para listas
+EduListView(state: viewModel.state) { item in
+    EduRow(title: item.name)
+}
+```
 
----
+### 2. Combinar componentes
 
-## Temas y Estilos
+```swift
+EduCard {
+    EduSection(title: "Informacion") {
+        EduTextField("Nombre", text: $name)
+        EduTextField("Email", text: $email)
+    }
+    EduButton.primary("Guardar") { save() }
+}
+```
 
-Los componentes utilizan el sistema de diseño EduGo definido en el módulo `Styling`, que incluye:
+### 3. Usar managers centralizados
 
-- Colores: `Color.eduPrimary`, `Color.eduTextPrimary`, etc.
-- Tipografía: `.eduFont(.h1)`, `.eduFont(.body, weight: .bold)`
-- Espaciado: `.eduSpacing(.sm)`, `.eduSpacing(.lg)`
-- Radios: `.eduRadius(.md)`
+```swift
+// En la vista raiz
+ContentView()
+    .eduOverlay()
 
----
+// En cualquier parte de la app
+ToastManager.shared.show("Exito", style: .success)
+EduAlertManager.shared.showConfirmation(title: "Confirmar", onConfirm: { })
+```
 
-## Accesibilidad
+### 4. Previews comprehensivos
 
-Todos los componentes incluyen:
-- Soporte para Dynamic Type
-- VoiceOver labels
-- Contraste adecuado
-- Tamaños táctiles mínimos de 44x44 pts
-
----
-
-## Testing
-
-Cada componente tiene:
-- Tests unitarios en `/Tests/UITests/`
-- Previews completos con múltiples estados
-- Cobertura de casos edge
-
----
-
-## Contribuir
-
-Ver `CONTRIBUTING.md` para guías de contribución.
+```swift
+#Preview("Normal") { MyComponent() }
+#Preview("Loading") { MyComponent(isLoading: true) }
+#Preview("Error") { MyComponent(error: "Error") }
+#Preview("Dark Mode") { MyComponent().preferredColorScheme(.dark) }
+```

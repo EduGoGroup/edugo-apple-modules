@@ -54,6 +54,49 @@ public struct PreviewDevice {
         name: "Mac",
         displayName: "macOS"
     )
+
+    // MARK: - visionOS
+
+    public static let appleVisionPro = PreviewDevice(
+        name: "Apple Vision Pro",
+        displayName: "Apple Vision Pro"
+    )
+
+    // MARK: - watchOS
+
+    public static let appleWatchSeries9_41mm = PreviewDevice(
+        name: "Apple Watch Series 9 (41mm)",
+        displayName: "Watch 41mm"
+    )
+
+    public static let appleWatchSeries9_45mm = PreviewDevice(
+        name: "Apple Watch Series 9 (45mm)",
+        displayName: "Watch 45mm"
+    )
+
+    public static let appleWatchUltra2 = PreviewDevice(
+        name: "Apple Watch Ultra 2",
+        displayName: "Watch Ultra 2"
+    )
+
+    // MARK: - tvOS
+
+    public static let appleTV4K = PreviewDevice(
+        name: "Apple TV 4K (3rd generation)",
+        displayName: "Apple TV 4K"
+    )
+
+    // MARK: - All Platforms Collection
+
+    /// Colección de dispositivos representativos de cada plataforma
+    public static let allPlatforms: [PreviewDevice] = [
+        .iPhone15Pro,
+        .iPadPro13,
+        .macOS,
+        .appleVisionPro,
+        .appleWatchSeries9_45mm,
+        .appleTV4K
+    ]
 }
 
 extension View {
