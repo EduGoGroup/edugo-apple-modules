@@ -29,6 +29,23 @@ public struct EduTabItem: Identifiable, Sendable {
 // MARK: - Tab Bar
 
 /// TabBar customizado multi-plataforma
+///
+/// Implementa un TabBar adaptativo que se comporta de manera nativa en cada plataforma:
+///
+/// **iOS/visionOS:**
+/// - Utiliza `TabView` nativo con `tabItem` modifier
+/// - Soporta badges y selección de iconos
+/// - Aparece en la parte inferior de la pantalla (iOS HIG)
+/// - Requiere entre 2 y 5 tabs para óptima experiencia de usuario
+///
+/// **macOS:**
+/// - Utiliza `NavigationSplitView` con sidebar
+/// - Lista de items en la columna lateral izquierda
+/// - Contenido mostrado en el panel detail
+/// - Badges mostrados como capsulas en la lista
+/// - Mejor experiencia para navegación en escritorio
+///
+/// **Nota:** El comportamiento es automáticamente adaptado según la plataforma en compilación.
 @MainActor
 public struct EduTabBar<Content: View>: View {
     @Binding private var selection: String
@@ -40,6 +57,10 @@ public struct EduTabBar<Content: View>: View {
         items: [EduTabItem],
         @ViewBuilder content: @escaping (String) -> Content
     ) {
+        // Validación de cantidad de tabs según iOS Human Interface Guidelines
+        precondition(items.count >= 2 && items.count <= 5,
+                     "TabBar requires between 2 and 5 tabs. Received \(items.count) tabs. iOS HIG recommends a maximum of 5 tabs for optimal UX.")
+
         self._selection = selection
         self.items = items
         self.content = content
@@ -163,6 +184,10 @@ public struct EduCoordinatedTabBar<Content: View>: View {
         items: [EduTabItem],
         @ViewBuilder content: @escaping (String, EduTabBarCoordinator) -> Content
     ) {
+        // Validación de cantidad de tabs según iOS Human Interface Guidelines
+        precondition(items.count >= 2 && items.count <= 5,
+                     "TabBar requires between 2 and 5 tabs. Received \(items.count) tabs. iOS HIG recommends a maximum of 5 tabs for optimal UX.")
+
         self._coordinator = State(initialValue: EduTabBarCoordinator(initialTab: initialTab))
         self.items = items
         self.content = content

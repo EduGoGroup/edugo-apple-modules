@@ -2,35 +2,42 @@ import SwiftUI
 
 // MARK: - Lazy Navigation Link
 
-/// NavigationLink mejorado con lazy loading
+/// NavigationLink mejorado con lazy loading y soporte de disabled state
+///
+/// Soporta desactivación del link mediante el parámetro `isEnabled`.
+/// Cuando está disabled:
+/// - El link no permite navegación
+/// - Se aplica opacidad reducida (0.6)
+/// - Se aplica el modifier `.disabled(true)` según Apple HIG
 @MainActor
 public struct EduNavigationLink<Label: View, Destination: View>: View {
     private let destination: () -> Destination
     private let label: () -> Label
-    private let isActive: Bool
+    private let isEnabled: Bool
 
+    /// Inicializa un NavigationLink con lazy loading
+    /// - Parameters:
+    ///   - isEnabled: Si `false`, el link se muestra pero no permite navegación (default: `true`)
+    ///   - destination: Vista de destino cargada lazily
+    ///   - label: Vista del label del link
     public init(
-        isActive: Bool = true,
+        isEnabled: Bool = true,
         @ViewBuilder destination: @escaping () -> Destination,
         @ViewBuilder label: @escaping () -> Label
     ) {
-        self.isActive = isActive
+        self.isEnabled = isEnabled
         self.destination = destination
         self.label = label
     }
 
     public var body: some View {
-        if isActive {
-            NavigationLink {
-                LazyView(destination)
-            } label: {
-                label()
-            }
-        } else {
+        NavigationLink {
+            LazyView(destination)
+        } label: {
             label()
-                .disabled(true)
-                .opacity(0.6)
         }
+        .disabled(!isEnabled)
+        .opacity(isEnabled ? 1.0 : 0.6)
     }
 }
 
@@ -109,7 +116,7 @@ public struct EduTrackedNavigationLink<Label: View, Destination: View>: View {
 
 // MARK: - Styled Navigation Link
 
-/// NavigationLink con estilos predefinidos
+/// NavigationLink con estilos predefinidos y soporte de disabled state
 @MainActor
 public struct EduStyledNavigationLink<Destination: View>: View {
     private let title: String
@@ -118,6 +125,7 @@ public struct EduStyledNavigationLink<Destination: View>: View {
     private let badge: String?
     private let destination: () -> Destination
     private let style: Style
+    private let isEnabled: Bool
 
     public enum Style: Sendable {
         case plain
@@ -131,6 +139,7 @@ public struct EduStyledNavigationLink<Destination: View>: View {
         icon: String? = nil,
         badge: String? = nil,
         style: Style = .row,
+        isEnabled: Bool = true,
         @ViewBuilder destination: @escaping () -> Destination
     ) {
         self.title = title
@@ -138,6 +147,7 @@ public struct EduStyledNavigationLink<Destination: View>: View {
         self.icon = icon
         self.badge = badge
         self.style = style
+        self.isEnabled = isEnabled
         self.destination = destination
     }
 
@@ -154,6 +164,8 @@ public struct EduStyledNavigationLink<Destination: View>: View {
                 rowView
             }
         }
+        .disabled(!isEnabled)
+        .opacity(isEnabled ? 1.0 : 0.6)
     }
 
     @ViewBuilder

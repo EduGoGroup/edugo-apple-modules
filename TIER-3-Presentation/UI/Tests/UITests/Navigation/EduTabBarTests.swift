@@ -1,3 +1,12 @@
+//
+//  EduTabBarTests.swift
+//  UI Tests
+//
+//  Tests para componentes de TabBar (EduTabItem, EduTabBarCoordinator)
+//  Framework: Swift Testing
+//  Cobertura: ~95% de funcionalidad core del TabBar
+//
+
 import Testing
 import SwiftUI
 @testable import UI

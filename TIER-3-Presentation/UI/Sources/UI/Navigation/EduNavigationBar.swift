@@ -10,10 +10,18 @@ public struct EduNavigationBarConfiguration: Sendable {
     public let showsLeadingButton: Bool
     public let showsTrailingButton: Bool
 
+    /// Modo de visualización del título de navegación
+    ///
+    /// **Nota importante sobre compatibilidad de plataforma:**
+    /// - `.automatic`: Soportado en todas las plataformas (iOS, macOS, visionOS)
+    /// - `.inline`: Soportado en todas las plataformas
+    /// - `.large`: **Solo iOS/visionOS**. En macOS se fallback automático a `.inline`
+    ///
+    /// El sistema realiza fallback graceful en plataformas que no soportan `.large`.
     public enum DisplayMode: Sendable {
         case automatic
         case inline
-        case large
+        case large  // iOS/visionOS only - graceful fallback on other platforms
     }
 
     public init(
@@ -150,6 +158,12 @@ extension View {
     }
 
     /// Configura los botones de la barra de navegación
+    ///
+    /// **Límites recomendados:**
+    /// - iOS/visionOS: Máximo 1 item leading + 3 items trailing
+    /// - macOS: Más flexible, pero se recomienda máximo 4 items totales
+    ///
+    /// Para múltiples acciones, considere usar un menú o action sheet.
     public func eduNavigationBarItems(
         leading: EduNavigationBarItem? = nil,
         trailing: EduNavigationBarItem? = nil

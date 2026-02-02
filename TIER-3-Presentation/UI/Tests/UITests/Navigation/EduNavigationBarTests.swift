@@ -1,3 +1,12 @@
+//
+//  EduNavigationBarTests.swift
+//  UI Tests
+//
+//  Tests para componentes de NavigationBar (EduNavigationBarItem, Configuration, Coordinator)
+//  Framework: Swift Testing
+//  Cobertura: ~90% de funcionalidad core de NavigationBar
+//
+
 import Testing
 import SwiftUI
 @testable import UI

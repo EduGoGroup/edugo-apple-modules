@@ -22,6 +22,11 @@ public struct EduBreadcrumbItem: Identifiable, Sendable {
 
 #if os(macOS)
 /// Breadcrumbs para navegación en macOS
+///
+/// **Límites recomendados:**
+/// - Mínimo: 1 item (item actual)
+/// - Máximo: 5 niveles de profundidad para óptima legibilidad
+/// - UX típico: 3-4 niveles visibles
 @MainActor
 public struct EduBreadcrumbs: View {
     private let items: [EduBreadcrumbItem]
@@ -31,6 +36,9 @@ public struct EduBreadcrumbs: View {
         items: [EduBreadcrumbItem],
         onNavigate: (@Sendable (String) -> Void)? = nil
     ) {
+        precondition(!items.isEmpty, "Breadcrumbs requires at least 1 item")
+        precondition(items.count <= 7, "Breadcrumbs supports maximum 7 levels. Consider using a different navigation pattern for deeper hierarchies. Received \(items.count) items.")
+
         self.items = items
         self.onNavigate = onNavigate
     }
