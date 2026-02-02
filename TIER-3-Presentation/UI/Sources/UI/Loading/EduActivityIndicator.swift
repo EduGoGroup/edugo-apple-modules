@@ -1,0 +1,141 @@
+import SwiftUI
+
+// MARK: - Activity Indicator Style
+
+/// Estilos disponibles para el activity indicator
+public enum EduActivityIndicatorStyle: Sendable {
+    case small
+    case medium
+    case large
+    
+    #if os(iOS) || os(visionOS)
+    var uiStyle: UIActivityIndicatorView.Style {
+        switch self {
+        case .small: return .medium
+        case .medium: return .medium
+        case .large: return .large
+        }
+    }
+    #endif
+}
+
+// MARK: - Activity Indicator
+
+/// Activity Indicator adaptativo por plataforma
+@MainActor
+public struct EduActivityIndicator: View {
+    private let style: EduActivityIndicatorStyle
+    private let color: Color?
+    
+    public init(style: EduActivityIndicatorStyle = .medium, color: Color? = nil) {
+        self.style = style
+        self.color = color
+    }
+    
+    public var body: some View {
+        #if os(iOS) || os(visionOS)
+        ProgressView()
+            .progressViewStyle(.circular)
+            .scaleEffect(scaleForStyle)
+            .tint(color)
+        #elseif os(macOS)
+        ProgressView()
+            .progressViewStyle(.circular)
+            .controlSize(controlSizeForStyle)
+            .tint(color)
+        #endif
+    }
+    
+    private var scaleForStyle: CGFloat {
+        switch style {
+        case .small: return 0.8
+        case .medium: return 1.0
+        case .large: return 1.5
+        }
+    }
+    
+    #if os(macOS)
+    private var controlSizeForStyle: ControlSize {
+        switch style {
+        case .small: return .small
+        case .medium: return .regular
+        case .large: return .large
+        }
+    }
+    #endif
+}
+
+// MARK: - Loading Overlay Modifier
+
+/// Modifier para mostrar un loading overlay sobre una vista
+@MainActor
+public struct LoadingOverlayModifier: ViewModifier {
+    private let isLoading: Bool
+    private let message: String?
+    private let style: EduActivityIndicatorStyle
+    
+    public init(isLoading: Bool, message: String? = nil, style: EduActivityIndicatorStyle = .medium) {
+        self.isLoading = isLoading
+        self.message = message
+        self.style = style
+    }
+    
+    public func body(content: Content) -> some View {
+        ZStack {
+            content
+                .disabled(isLoading)
+            
+            if isLoading {
+                Color.black.opacity(0.3)
+                    .ignoresSafeArea()
+                
+                VStack(spacing: 16) {
+                    EduActivityIndicator(style: style, color: .white)
+                    
+                    if let message {
+                        Text(message)
+                            .font(.subheadline)
+                            .foregroundStyle(.white)
+                    }
+                }
+                .padding(24)
+                .background(Color.black.opacity(0.7))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+        }
+    }
+}
+
+extension View {
+    /// Aplica un loading overlay a la vista
+    public func loadingOverlay(isLoading: Bool, message: String? = nil, style: EduActivityIndicatorStyle = .medium) -> some View {
+        modifier(LoadingOverlayModifier(isLoading: isLoading, message: message, style: style))
+    }
+}
+
+// MARK: - Inline Loading
+
+/// Loading inline para uso dentro de botones u otros componentes
+@MainActor
+public struct EduInlineLoader: View {
+    private let style: EduActivityIndicatorStyle
+    private let tint: Color?
+    
+    public init(style: EduActivityIndicatorStyle = .small, tint: Color? = nil) {
+        self.style = style
+        self.tint = tint
+    }
+    
+    public var body: some View {
+        EduActivityIndicator(style: style, color: tint)
+            .frame(width: sizeForStyle, height: sizeForStyle)
+    }
+    
+    private var sizeForStyle: CGFloat {
+        switch style {
+        case .small: return 16
+        case .medium: return 24
+        case .large: return 32
+        }
+    }
+}
