@@ -12,11 +12,18 @@ public enum EduSkeletonShape: Sendable {
 
 // MARK: - Skeleton Loader
 
-/// Skeleton loader con efecto shimmer
+/// Skeleton loader con efecto shimmer optimizado
+///
+/// Usa animaciones energy-efficient y soporta accessibility.
 @MainActor
 public struct EduSkeletonLoader: View {
     private let shape: EduSkeletonShape
     @State private var opacity: Double = 0.3
+
+    // Constantes para animación
+    private let minOpacity: Double = 0.3
+    private let maxOpacity: Double = 0.6
+    private let animationDuration: Double = 0.8
 
     public init(shape: EduSkeletonShape = .roundedRectangle(8)) {
         self.shape = shape
@@ -37,9 +44,11 @@ public struct EduSkeletonLoader: View {
         }
         .foregroundStyle(Color(white: 0.85))
         .opacity(opacity)
+        .accessibilityLabel("Loading content")
+        .accessibilityAddTraits(.updatesFrequently)
         .onAppear {
-            withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {
-                opacity = 0.6
+            withAnimation(.easeInOut(duration: animationDuration).repeatForever(autoreverses: true)) {
+                opacity = maxOpacity
             }
         }
     }
@@ -184,10 +193,15 @@ public struct EduSkeletonListRow: View {
 
 // MARK: - Shimmer Effect
 
-/// Efecto shimmer para skeleton loaders
+/// Efecto shimmer para skeleton loaders con animación energy-efficient
 @MainActor
 public struct ShimmerEffect: ViewModifier {
     @State private var phase: CGFloat = 0
+
+    // Constantes para shimmer effect
+    private let shimmerDuration: Double = 1.5
+    private let shimmerDistance: CGFloat = 400
+    private let shimmerOpacity: Double = 0.3
 
     public func body(content: Content) -> some View {
         content
@@ -195,7 +209,7 @@ public struct ShimmerEffect: ViewModifier {
                 LinearGradient(
                     colors: [
                         Color.white.opacity(0),
-                        Color.white.opacity(0.3),
+                        Color.white.opacity(shimmerOpacity),
                         Color.white.opacity(0)
                     ],
                     startPoint: .leading,
@@ -205,8 +219,8 @@ public struct ShimmerEffect: ViewModifier {
                 .mask(content)
             )
             .onAppear {
-                withAnimation(.linear(duration: 1.5).repeatForever(autoreverses: false)) {
-                    phase = 400
+                withAnimation(.easeInOut(duration: shimmerDuration).repeatForever(autoreverses: false)) {
+                    phase = shimmerDistance
                 }
             }
     }

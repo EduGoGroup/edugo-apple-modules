@@ -2,14 +2,20 @@ import SwiftUI
 
 // MARK: - Progress Circle
 
-/// Indicador de progreso circular
+/// Indicador de progreso circular con accessibility y performance optimizado
 @MainActor
 public struct EduProgressCircle: View {
     private let progress: Double
     private let lineWidth: CGFloat
     private let tint: Color
     private let showPercentage: Bool
-    
+
+    // Constantes
+    private let startAngle: Double = -90
+
+    // Progreso normalizado y cacheado
+    @State private var normalizedProgress: Double
+
     public init(
         progress: Double,
         lineWidth: CGFloat = 8,
@@ -20,27 +26,36 @@ public struct EduProgressCircle: View {
         self.lineWidth = lineWidth
         self.tint = tint
         self.showPercentage = showPercentage
+        // Inicializar progreso normalizado
+        self._normalizedProgress = State(initialValue: min(max(progress, 0), 1))
     }
-    
+
     public var body: some View {
         ZStack {
             // Background circle
             Circle()
                 .stroke(Color(white: 0.9), lineWidth: lineWidth)
-            
+
             // Progress circle
             Circle()
-                .trim(from: 0, to: min(max(progress, 0), 1))
+                .trim(from: 0, to: normalizedProgress)
                 .stroke(tint, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-                .animation(.easeInOut, value: progress)
-            
+                .rotationEffect(.degrees(startAngle))
+                .animation(.easeInOut, value: normalizedProgress)
+
             // Percentage label
             if showPercentage {
-                Text("\(Int(progress * 100))%")
+                Text("\(Int(normalizedProgress * 100))%")
                     .font(.system(.body, design: .rounded, weight: .medium))
                     .monospacedDigit()
             }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Progress")
+        .accessibilityValue("\(Int(normalizedProgress * 100)) percent")
+        .accessibilityAddTraits(.updatesFrequently)
+        .onChange(of: progress) { _, newValue in
+            normalizedProgress = min(max(newValue, 0), 1)
         }
     }
 }
@@ -51,15 +66,15 @@ public struct EduProgressCircle: View {
 @MainActor
 public struct EduIndeterminateCircle: View {
     @State private var isAnimating = false
-    
+
     private let lineWidth: CGFloat
     private let tint: Color
-    
+
     public init(lineWidth: CGFloat = 8, tint: Color = .accentColor) {
         self.lineWidth = lineWidth
         self.tint = tint
     }
-    
+
     public var body: some View {
         Circle()
             .trim(from: 0, to: 0.7)
@@ -82,7 +97,7 @@ public struct EduCircularProgressWithIcon: View {
     private let icon: String
     private let lineWidth: CGFloat
     private let tint: Color
-    
+
     public init(
         progress: Double,
         icon: String,
@@ -94,11 +109,11 @@ public struct EduCircularProgressWithIcon: View {
         self.lineWidth = lineWidth
         self.tint = tint
     }
-    
+
     public var body: some View {
         ZStack {
             EduProgressCircle(progress: progress, lineWidth: lineWidth, tint: tint)
-            
+
             Image(systemName: icon)
                 .font(.title2)
                 .foregroundStyle(tint)
@@ -112,22 +127,22 @@ public struct EduCircularProgressWithIcon: View {
 @MainActor
 public struct EduMultiRingProgress: View {
     private let rings: [RingData]
-    
+
     public struct RingData: Identifiable, Sendable {
         public let id = UUID()
         public let progress: Double
         public let color: Color
-        
+
         public init(progress: Double, color: Color) {
             self.progress = progress
             self.color = color
         }
     }
-    
+
     public init(rings: [RingData]) {
         self.rings = rings
     }
-    
+
     public var body: some View {
         ZStack {
             ForEach(Array(rings.enumerated()), id: \.element.id) { index, ring in
@@ -151,7 +166,7 @@ public struct EduGaugeProgress: View {
     private let lineWidth: CGFloat
     private let tint: Color
     private let showValue: Bool
-    
+
     public init(
         progress: Double,
         lineWidth: CGFloat = 12,
@@ -163,7 +178,7 @@ public struct EduGaugeProgress: View {
         self.tint = tint
         self.showValue = showValue
     }
-    
+
     public var body: some View {
         ZStack {
             // Background arc
@@ -171,14 +186,14 @@ public struct EduGaugeProgress: View {
                 .trim(from: 0, to: 0.75)
                 .stroke(Color(white: 0.9), lineWidth: lineWidth)
                 .rotationEffect(.degrees(135))
-            
+
             // Progress arc
             Circle()
                 .trim(from: 0, to: 0.75 * min(max(progress, 0), 1))
                 .stroke(tint, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(135))
                 .animation(.easeInOut, value: progress)
-            
+
             // Value
             if showValue {
                 VStack(spacing: 4) {

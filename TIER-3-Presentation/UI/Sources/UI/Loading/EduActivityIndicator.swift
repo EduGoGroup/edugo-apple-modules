@@ -7,7 +7,7 @@ public enum EduActivityIndicatorStyle: Sendable {
     case small
     case medium
     case large
-    
+
     #if os(iOS) || os(visionOS)
     var uiStyle: UIActivityIndicatorView.Style {
         switch self {
@@ -21,31 +21,35 @@ public enum EduActivityIndicatorStyle: Sendable {
 
 // MARK: - Activity Indicator
 
-/// Activity Indicator adaptativo por plataforma
+/// Activity Indicator adaptativo por plataforma con accessibility
 @MainActor
 public struct EduActivityIndicator: View {
     private let style: EduActivityIndicatorStyle
     private let color: Color?
-    
+
     public init(style: EduActivityIndicatorStyle = .medium, color: Color? = nil) {
         self.style = style
         self.color = color
     }
-    
+
     public var body: some View {
         #if os(iOS) || os(visionOS)
         ProgressView()
             .progressViewStyle(.circular)
             .scaleEffect(scaleForStyle)
             .tint(color)
+            .accessibilityLabel("Loading")
+            .accessibilityAddTraits(.updatesFrequently)
         #elseif os(macOS)
         ProgressView()
             .progressViewStyle(.circular)
             .controlSize(controlSizeForStyle)
             .tint(color)
+            .accessibilityLabel("Loading")
+            .accessibilityAddTraits(.updatesFrequently)
         #endif
     }
-    
+
     private var scaleForStyle: CGFloat {
         switch style {
         case .small: return 0.8
@@ -53,7 +57,7 @@ public struct EduActivityIndicator: View {
         case .large: return 1.5
         }
     }
-    
+
     #if os(macOS)
     private var controlSizeForStyle: ControlSize {
         switch style {
@@ -73,25 +77,25 @@ public struct LoadingOverlayModifier: ViewModifier {
     private let isLoading: Bool
     private let message: String?
     private let style: EduActivityIndicatorStyle
-    
+
     public init(isLoading: Bool, message: String? = nil, style: EduActivityIndicatorStyle = .medium) {
         self.isLoading = isLoading
         self.message = message
         self.style = style
     }
-    
+
     public func body(content: Content) -> some View {
         ZStack {
             content
                 .disabled(isLoading)
-            
+
             if isLoading {
                 Color.black.opacity(0.3)
                     .ignoresSafeArea()
-                
+
                 VStack(spacing: 16) {
                     EduActivityIndicator(style: style, color: .white)
-                    
+
                     if let message {
                         Text(message)
                             .font(.subheadline)
@@ -120,17 +124,17 @@ extension View {
 public struct EduInlineLoader: View {
     private let style: EduActivityIndicatorStyle
     private let tint: Color?
-    
+
     public init(style: EduActivityIndicatorStyle = .small, tint: Color? = nil) {
         self.style = style
         self.tint = tint
     }
-    
+
     public var body: some View {
         EduActivityIndicator(style: style, color: tint)
             .frame(width: sizeForStyle, height: sizeForStyle)
     }
-    
+
     private var sizeForStyle: CGFloat {
         switch style {
         case .small: return 16

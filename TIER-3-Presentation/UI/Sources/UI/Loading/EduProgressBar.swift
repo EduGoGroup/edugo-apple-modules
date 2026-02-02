@@ -20,12 +20,17 @@ public enum EduProgressBarStyle: Sendable {
 // MARK: - Progress Bar
 
 /// Barra de progreso lineal con modo determinado e indeterminado
+///
+/// Incluye validación de progreso y soporte de accessibility.
 @MainActor
 public struct EduProgressBar: View {
     private let mode: EduProgressBarMode
     private let style: EduProgressBarStyle
     private let tint: Color
     private let backgroundColor: Color
+
+    // Constantes para animación
+    private let animationDuration: Double = 0.3
 
     public init(
         mode: EduProgressBarMode,
@@ -50,6 +55,8 @@ public struct EduProgressBar: View {
 
     @ViewBuilder
     private func determinateBar(progress: Double) -> some View {
+        let clampedProgress = min(max(progress, 0), 1)
+
         GeometryReader { geometry in
             ZStack(alignment: .leading) {
                 // Background
@@ -77,10 +84,15 @@ public struct EduProgressBar: View {
                     }
                 }
                 .foregroundStyle(tint)
-                .frame(width: geometry.size.width * min(max(progress, 0), 1))
+                .frame(width: geometry.size.width * clampedProgress)
+                .animation(.easeInOut(duration: animationDuration), value: clampedProgress)
             }
         }
         .frame(height: heightForStyle)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Progress bar")
+        .accessibilityValue("\(Int(clampedProgress * 100)) percent")
+        .accessibilityAddTraits(.updatesFrequently)
     }
 
     @ViewBuilder
