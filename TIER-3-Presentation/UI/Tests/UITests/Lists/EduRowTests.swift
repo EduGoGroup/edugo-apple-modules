@@ -4,39 +4,29 @@ import SwiftUI
 
 @MainActor
 struct EduRowTests {
+    // MARK: - Basic Tests
+
     @Test("EduRow inicializa correctamente")
     func testBasicInitialization() {
-        let row = EduRow("Test") {
-            EmptyView()
-        } trailing: {
-            EmptyView()
-        }
+        let row = EduRow("Test")
         #expect(row != nil)
     }
 
-    @Test("EduRow con subtitle")
-    func testWithSubtitle() {
-        let row = EduRow("Title", subtitle: "Subtitle")
+    @Test("EduRow con description")
+    func testWithDescription() {
+        let row = EduRow("Title", description: "Description")
         #expect(row != nil)
     }
 
     @Test("EduRow con leading content")
     func testWithLeading() {
-        let row = EduRow("Title") {
-            Image(systemName: "star")
-        } trailing: {
-            EmptyView()
-        }
+        let row = EduRow("Title", leading: Image(systemName: "star"))
         #expect(row != nil)
     }
 
     @Test("EduRow con trailing content")
     func testWithTrailing() {
-        let row = EduRow("Title") {
-            EmptyView()
-        } trailing: {
-            Image(systemName: "chevron.right")
-        }
+        let row = EduRow("Title", trailing: Image(systemName: "chevron.right"))
         #expect(row != nil)
     }
 
@@ -46,17 +36,10 @@ struct EduRowTests {
         #expect(row != nil)
     }
 
-    @Test("EduRow ejecuta onTap action")
+    @Test("EduRow con onTap action")
     func testOnTapExecution() {
-        @MainActor
-        class TestContext {
-            var tapped = false
-        }
-
-        let context = TestContext()
-
         let row = EduRow("Title", onTap: {
-            context.tapped = true
+            // Action defined
         })
 
         #expect(row != nil)
@@ -64,11 +47,11 @@ struct EduRowTests {
 
     @Test("EduRow con leading Y trailing")
     func testWithLeadingAndTrailing() {
-        let row = EduRow("Title") {
-            Image(systemName: "star")
-        } trailing: {
-            Image(systemName: "chevron.right")
-        }
+        let row = EduRow(
+            "Title",
+            leading: Image(systemName: "star"),
+            trailing: Image(systemName: "chevron.right")
+        )
         #expect(row != nil)
     }
 
@@ -76,5 +59,131 @@ struct EduRowTests {
     func testWithoutLeadingOrTrailing() {
         let row = EduRow("Simple Title")
         #expect(row != nil)
+    }
+
+    // MARK: - Swipe Actions Tests
+
+    @Test("SwipeAction inicializa correctamente con valores por defecto")
+    func testSwipeActionDefaultInit() {
+        let action = SwipeAction(title: "Delete") {
+            // Action
+        }
+        #expect(action.title == "Delete")
+        #expect(action.icon == nil)
+        #expect(action.role == .normal)
+    }
+
+    @Test("SwipeAction inicializa con todos los parámetros")
+    func testSwipeActionFullInit() {
+        let action = SwipeAction(title: "Delete", icon: "trash", role: .destructive) {
+            // Action
+        }
+        #expect(action.title == "Delete")
+        #expect(action.icon == "trash")
+        #expect(action.role == .destructive)
+    }
+
+    @Test("EduRow con trailing swipe actions")
+    func testWithTrailingSwipeActions() {
+        let actions = [
+            SwipeAction(title: "Delete", icon: "trash", role: .destructive) {
+                print("Deleted")
+            }
+        ]
+
+        let row = EduRow("Title", trailingSwipeActions: actions)
+        #expect(row != nil)
+        #expect(row.trailingSwipeActions.count == 1)
+    }
+
+    @Test("EduRow con leading swipe actions")
+    func testWithLeadingSwipeActions() {
+        let actions = [
+            SwipeAction(title: "Mark", icon: "flag") {
+                print("Marked")
+            }
+        ]
+
+        let row = EduRow("Title", leadingSwipeActions: actions)
+        #expect(row != nil)
+        #expect(row.leadingSwipeActions.count == 1)
+    }
+
+    @Test("EduRow con trailing y leading swipe actions")
+    func testWithBothSwipeActions() {
+        let trailingActions = [
+            SwipeAction(title: "Delete", icon: "trash", role: .destructive) {
+                print("Deleted")
+            }
+        ]
+
+        let leadingActions = [
+            SwipeAction(title: "Mark", icon: "flag") {
+                print("Marked")
+            }
+        ]
+
+        let row = EduRow(
+            "Title",
+            trailingSwipeActions: trailingActions,
+            leadingSwipeActions: leadingActions
+        )
+        #expect(row != nil)
+        #expect(row.trailingSwipeActions.count == 1)
+        #expect(row.leadingSwipeActions.count == 1)
+    }
+
+    @Test("EduRow con múltiples trailing swipe actions")
+    func testWithMultipleTrailingSwipeActions() {
+        let actions = [
+            SwipeAction(title: "Delete", icon: "trash", role: .destructive) {
+                print("Deleted")
+            },
+            SwipeAction(title: "Archive", icon: "archivebox") {
+                print("Archived")
+            },
+            SwipeAction(title: "Share", icon: "square.and.arrow.up") {
+                print("Shared")
+            }
+        ]
+
+        let row = EduRow("Title", trailingSwipeActions: actions)
+        #expect(row != nil)
+        #expect(row.trailingSwipeActions.count == 3)
+    }
+
+    @Test("EduRow allowsFullSwipe por defecto es true")
+    func testAllowsFullSwipeDefault() {
+        let row = EduRow("Title")
+        #expect(row.allowsFullSwipe == true)
+    }
+
+    @Test("EduRow allowsFullSwipe puede ser configurado")
+    func testAllowsFullSwipeConfiguration() {
+        let row = EduRow("Title", allowsFullSwipe: false)
+        #expect(row.allowsFullSwipe == false)
+    }
+
+    @Test("EduRow swipe actions con description y leading/trailing")
+    func testSwipeActionsWithFullConfiguration() {
+        let actions = [
+            SwipeAction(title: "Delete", icon: "trash", role: .destructive) {
+                print("Deleted")
+            }
+        ]
+
+        let row = EduRow(
+            "Title",
+            description: "Description",
+            leading: Image(systemName: "envelope"),
+            trailing: Image(systemName: "chevron.right"),
+            trailingSwipeActions: actions,
+            allowsFullSwipe: true
+        )
+
+        #expect(row != nil)
+        #expect(row.description == "Description")
+        #expect(row.trailingSwipeActions.count == 1)
+        #expect(row.allowsFullSwipe == true)
     }
 }
