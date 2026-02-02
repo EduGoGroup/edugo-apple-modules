@@ -1,0 +1,293 @@
+import SwiftUI
+
+// MARK: - Navigation Bar Configuration
+
+/// Configuración para la barra de navegación
+@MainActor
+public struct EduNavigationBarConfiguration: Sendable {
+    public let displayMode: DisplayMode
+    public let showsBackButton: Bool
+    public let showsLeadingButton: Bool
+    public let showsTrailingButton: Bool
+
+    public enum DisplayMode: Sendable {
+        case automatic
+        case inline
+        case large
+    }
+
+    public init(
+        displayMode: DisplayMode = .automatic,
+        showsBackButton: Bool = true,
+        showsLeadingButton: Bool = false,
+        showsTrailingButton: Bool = false
+    ) {
+        self.displayMode = displayMode
+        self.showsBackButton = showsBackButton
+        self.showsLeadingButton = showsLeadingButton
+        self.showsTrailingButton = showsTrailingButton
+    }
+}
+
+// MARK: - Navigation Bar Item
+
+/// Item personalizado para la barra de navegación
+@MainActor
+public struct EduNavigationBarItem: Sendable {
+    public let title: String?
+    public let icon: String?
+    public let action: @Sendable () -> Void
+
+    public init(
+        title: String? = nil,
+        icon: String? = nil,
+        action: @escaping @Sendable () -> Void
+    ) {
+        self.title = title
+        self.icon = icon
+        self.action = action
+    }
+}
+
+// MARK: - Custom Navigation Bar
+
+/// Barra de navegación personalizada
+@MainActor
+public struct EduNavigationBar<Content: View>: View {
+    private let title: String
+    private let leadingItem: EduNavigationBarItem?
+    private let trailingItem: EduNavigationBarItem?
+    private let content: () -> Content
+
+    public init(
+        title: String,
+        leadingItem: EduNavigationBarItem? = nil,
+        trailingItem: EduNavigationBarItem? = nil,
+        @ViewBuilder content: @escaping () -> Content
+    ) {
+        self.title = title
+        self.leadingItem = leadingItem
+        self.trailingItem = trailingItem
+        self.content = content
+    }
+
+    public var body: some View {
+        VStack(spacing: 0) {
+            // Custom Navigation Bar
+            HStack {
+                // Leading button
+                if let leading = leadingItem {
+                    Button(action: leading.action) {
+                        HStack(spacing: 4) {
+                            if let icon = leading.icon {
+                                Image(systemName: icon)
+                            }
+                            if let leadingTitle = leading.title {
+                                Text(leadingTitle)
+                            }
+                        }
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    Spacer()
+                        .frame(width: 44)
+                }
+
+                Spacer()
+
+                // Title
+                Text(title)
+                    .font(.headline)
+                    .lineLimit(1)
+
+                Spacer()
+
+                // Trailing button
+                if let trailing = trailingItem {
+                    Button(action: trailing.action) {
+                        HStack(spacing: 4) {
+                            if let trailingTitle = trailing.title {
+                                Text(trailingTitle)
+                            }
+                            if let icon = trailing.icon {
+                                Image(systemName: icon)
+                            }
+                        }
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    Spacer()
+                        .frame(width: 44)
+                }
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 12)
+            .background(Color(white: 0.98))
+
+            Divider()
+
+            // Content
+            content()
+        }
+    }
+}
+
+// MARK: - Native Navigation Bar Modifier
+
+extension View {
+    /// Configura la barra de navegación nativa
+    public func eduNavigationBar(
+        title: String,
+        displayMode: EduNavigationBarConfiguration.DisplayMode = .automatic
+    ) -> some View {
+        #if os(iOS) || os(visionOS)
+        self
+            .navigationTitle(title)
+            .navigationBarTitleDisplayMode(displayMode.toNative)
+        #else
+        self.navigationTitle(title)
+        #endif
+    }
+
+    /// Configura los botones de la barra de navegación
+    public func eduNavigationBarItems(
+        leading: EduNavigationBarItem? = nil,
+        trailing: EduNavigationBarItem? = nil
+    ) -> some View {
+        self.toolbar {
+            #if os(iOS) || os(visionOS)
+            if let leading {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: leading.action) {
+                        HStack(spacing: 4) {
+                            if let icon = leading.icon {
+                                Image(systemName: icon)
+                            }
+                            if let title = leading.title {
+                                Text(title)
+                            }
+                        }
+                    }
+                }
+            }
+
+            if let trailing {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: trailing.action) {
+                        HStack(spacing: 4) {
+                            if let title = trailing.title {
+                                Text(title)
+                            }
+                            if let icon = trailing.icon {
+                                Image(systemName: icon)
+                            }
+                        }
+                    }
+                }
+            }
+            #elseif os(macOS)
+            if let leading {
+                ToolbarItem(placement: .navigation) {
+                    Button(action: leading.action) {
+                        HStack(spacing: 4) {
+                            if let icon = leading.icon {
+                                Image(systemName: icon)
+                            }
+                            if let title = leading.title {
+                                Text(title)
+                            }
+                        }
+                    }
+                }
+            }
+
+            if let trailing {
+                ToolbarItem(placement: .automatic) {
+                    Button(action: trailing.action) {
+                        HStack(spacing: 4) {
+                            if let title = trailing.title {
+                                Text(title)
+                            }
+                            if let icon = trailing.icon {
+                                Image(systemName: icon)
+                            }
+                        }
+                    }
+                }
+            }
+            #endif
+        }
+    }
+}
+
+// MARK: - Display Mode Conversion
+
+extension EduNavigationBarConfiguration.DisplayMode {
+    #if os(iOS) || os(visionOS)
+    var toNative: NavigationBarItem.TitleDisplayMode {
+        switch self {
+        case .automatic: return .automatic
+        case .inline: return .inline
+        case .large: return .large
+        }
+    }
+    #endif
+}
+
+// MARK: - Navigation Stack Helper
+
+#if os(iOS) || os(visionOS)
+/// Wrapper para NavigationStack con configuración
+@MainActor
+public struct EduNavigationStack<Content: View>: View {
+    private let content: () -> Content
+
+    public init(@ViewBuilder content: @escaping () -> Content) {
+        self.content = content
+    }
+
+    public var body: some View {
+        NavigationStack {
+            content()
+        }
+    }
+}
+#endif
+
+// MARK: - Navigation Coordinator
+
+/// Coordinador para gestionar la navegación
+@MainActor
+@Observable
+public final class EduNavigationCoordinator: Sendable {
+    public private(set) var path: [String] = []
+    public private(set) var currentTitle: String = ""
+
+    public init() {}
+
+    /// Navega a una nueva pantalla
+    public func push(_ destination: String, title: String) {
+        path.append(destination)
+        currentTitle = title
+    }
+
+    /// Vuelve a la pantalla anterior
+    public func pop() {
+        if !path.isEmpty {
+            path.removeLast()
+            currentTitle = path.last ?? ""
+        }
+    }
+
+    /// Vuelve a la raíz
+    public func popToRoot() {
+        path.removeAll()
+        currentTitle = ""
+    }
+
+    /// Navega a una ruta específica
+    public func navigate(to route: [String]) {
+        path = route
+        currentTitle = route.last ?? ""
+    }
+}
