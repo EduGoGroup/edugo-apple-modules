@@ -4,38 +4,28 @@
 import PackageDescription
 
 let package = Package(
-    name: "UI",
+    name: "Theme",
     platforms: [
         .iOS(.v26),
         .macOS(.v26)
     ],
     products: [
         .library(
-            name: "UI",
-            targets: ["UI"]
+            name: "Theme",
+            targets: ["Theme"]
         )
-    ],
-    dependencies: [
-        .package(path: "../Binding"),
-        .package(path: "../Theme"),
-        .package(path: "../../TIER-2-Domain/StateManagement")
     ],
     targets: [
         .target(
-            name: "UI",
-            dependencies: [
-                .product(name: "Binding", package: "Binding"),
-                .product(name: "Theme", package: "Theme"),
-                .product(name: "StateManagement", package: "StateManagement")
-            ],
+            name: "Theme",
             swiftSettings: [
                 .swiftLanguageMode(.v6),
                 .enableExperimentalFeature("StrictConcurrency=complete")
             ]
         ),
         .testTarget(
-            name: "UITests",
-            dependencies: ["UI"],
+            name: "ThemeTests",
+            dependencies: ["Theme"],
             swiftSettings: [
                 .swiftLanguageMode(.v6),
                 .enableExperimentalFeature("StrictConcurrency=complete")

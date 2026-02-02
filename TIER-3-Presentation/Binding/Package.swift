@@ -15,9 +15,15 @@ let package = Package(
             targets: ["Binding"]
         )
     ],
+    dependencies: [
+        .package(path: "../Theme")
+    ],
     targets: [
         .target(
             name: "Binding",
+            dependencies: [
+                .product(name: "Theme", package: "Theme")
+            ],
             swiftSettings: [
                 .swiftLanguageMode(.v6),
                 .enableExperimentalFeature("StrictConcurrency=complete")
