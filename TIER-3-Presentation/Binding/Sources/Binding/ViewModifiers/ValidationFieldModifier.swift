@@ -1,4 +1,5 @@
 import SwiftUI
+import Theme
 
 /// A view modifier that provides visual feedback for validation states.
 ///
@@ -139,6 +140,23 @@ public struct ValidationFieldStyle: Sendable {
         borderWidth: 2,
         borderRadius: 8,
         iconPadding: 0,
+        iconFont: .body,
+        errorFont: .caption,
+        errorSpacing: 4,
+        animationDuration: 0.2
+    )
+
+    /// Themed style that uses semantic colors from the active theme.
+    @MainActor
+    public static let themed = ValidationFieldStyle(
+        showIcon: true,
+        validIconName: "checkmark.circle.fill",
+        invalidIconName: "xmark.circle.fill",
+        validColor: Color.theme.success,
+        errorColor: Color.theme.error,
+        borderWidth: 1,
+        borderRadius: 8,
+        iconPadding: 8,
         iconFont: .body,
         errorFont: .caption,
         errorSpacing: 4,

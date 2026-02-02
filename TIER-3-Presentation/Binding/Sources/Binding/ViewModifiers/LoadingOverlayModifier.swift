@@ -1,4 +1,5 @@
 import SwiftUI
+import Theme
 
 /// A view modifier that displays a loading overlay with optional message.
 ///
@@ -157,6 +158,24 @@ public struct LoadingOverlayStyle: Sendable {
         shadowRadius: 0,
         shadowY: 0,
         animationDuration: 0.3
+    )
+
+    /// Themed style that uses semantic colors from the active theme.
+    @MainActor
+    public static let themed = LoadingOverlayStyle(
+        blurRadius: 2,
+        spinnerScale: 1.5,
+        spinnerColor: Color.theme.interactive,
+        contentSpacing: 16,
+        messageFont: .subheadline,
+        messageColor: Color.theme.textSecondary,
+        containerPadding: 24,
+        containerCornerRadius: 12,
+        containerBackground: AnyShapeStyle(.ultraThinMaterial),
+        shadowColor: Color.black.opacity(0.12),
+        shadowRadius: 10,
+        shadowY: 4,
+        animationDuration: 0.2
     )
 
     /// Creates a custom loading overlay style.

@@ -1,4 +1,5 @@
 import SwiftUI
+import Theme
 
 /// A view modifier that displays a progress bar below the content.
 ///
@@ -115,6 +116,18 @@ public struct ProgressBarStyle: Sendable {
         labelColor: .secondary,
         progressColor: nil,
         animationDuration: 0.15
+    )
+
+    /// Themed style that uses semantic colors from the active theme.
+    @MainActor
+    public static let themed = ProgressBarStyle(
+        spacing: 8,
+        labelSpacing: 12,
+        labelWidth: 40,
+        labelFont: .caption,
+        labelColor: Color.theme.textSecondary,
+        progressColor: Color.theme.interactive,
+        animationDuration: 0.2
     )
 
     /// Creates a custom progress bar style.

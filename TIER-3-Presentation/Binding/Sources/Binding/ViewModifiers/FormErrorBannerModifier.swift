@@ -1,4 +1,5 @@
 import SwiftUI
+import Theme
 
 /// A view modifier that displays a banner for form-level errors.
 ///
@@ -133,6 +134,36 @@ public struct FormErrorBannerStyle: Sendable {
         messageFont: .subheadline,
         textColor: .black,
         backgroundColor: .yellow,
+        padding: EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16),
+        showDismissButton: true,
+        dismissButtonFont: .caption.weight(.semibold),
+        animationDuration: 0.3
+    )
+
+    /// Themed error style that uses semantic colors from the active theme.
+    @MainActor
+    public static let themed = FormErrorBannerStyle(
+        iconName: "exclamationmark.triangle.fill",
+        iconFont: .body,
+        iconSpacing: 12,
+        messageFont: .subheadline,
+        textColor: Color.theme.textOnError,
+        backgroundColor: Color.theme.error,
+        padding: EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16),
+        showDismissButton: true,
+        dismissButtonFont: .caption.weight(.semibold),
+        animationDuration: 0.3
+    )
+
+    /// Themed warning style that uses semantic colors from the active theme.
+    @MainActor
+    public static let themedWarning = FormErrorBannerStyle(
+        iconName: "exclamationmark.circle.fill",
+        iconFont: .body,
+        iconSpacing: 12,
+        messageFont: .subheadline,
+        textColor: Color.theme.textOnWarning,
+        backgroundColor: Color.theme.warning,
         padding: EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16),
         showDismissButton: true,
         dismissButtonFont: .caption.weight(.semibold),
