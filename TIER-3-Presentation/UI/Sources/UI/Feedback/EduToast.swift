@@ -1,0 +1,78 @@
+import SwiftUI
+
+public enum ToastStyle: Sendable {
+    case success, error, warning, info
+
+    var icon: String {
+        switch self {
+        case .success: return "checkmark.circle.fill"
+        case .error: return "xmark.circle.fill"
+        case .warning: return "exclamationmark.triangle.fill"
+        case .info: return "info.circle.fill"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .success: return .green
+        case .error: return .red
+        case .warning: return .orange
+        case .info: return .blue
+        }
+    }
+}
+
+@MainActor
+@Observable
+public final class ToastManager: Sendable {
+    public static let shared = ToastManager()
+    private(set) var toasts: [ToastItem] = []
+
+    private init() {}
+
+    public func show(_ message: String, style: ToastStyle = .info, duration: TimeInterval = 3.0) {
+        let toast = ToastItem(message: message, style: style, duration: duration)
+        toasts.append(toast)
+
+        Task {
+            try? await Task.sleep(for: .seconds(duration))
+            dismiss(toast)
+        }
+    }
+
+    public func dismiss(_ toast: ToastItem) {
+        toasts.removeAll { $0.id == toast.id }
+    }
+}
+
+public struct ToastItem: Identifiable, Sendable {
+    public let id = UUID()
+    let message: String
+    let style: ToastStyle
+    let duration: TimeInterval
+}
+
+public struct EduToast: View {
+    let item: ToastItem
+    let onDismiss: () -> Void
+
+    public var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: item.style.icon)
+                .foregroundStyle(item.style.color)
+            Text(item.message)
+                .font(.body)
+            Spacer()
+            Button(action: onDismiss) {
+                Image(systemName: "xmark")
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding()
+        .background(.regularMaterial)
+        .cornerRadius(12)
+        .shadow(radius: 4)
+        .padding(.horizontal)
+    }
+}

@@ -150,15 +150,6 @@ struct EduCardTests {
 
     // MARK: - Convenience Initializers Tests
 
-    @Test("EduCard.simple crea card correctamente")
-    func testSimpleCardConvenience() {
-        let card = EduCard.simple {
-            Text("Simple Card")
-        }
-
-        #expect(card != nil, "Simple card debe crearse")
-    }
-
     // Commented out - static convenience methods replaced with functions
     // @Test("EduCard.hero crea card correctamente")
     // func testHeroCardConvenience() {
