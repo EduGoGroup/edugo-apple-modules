@@ -18,6 +18,7 @@ let package = Package(
     dependencies: [
         .package(path: "../Binding"),
         .package(path: "../Theme"),
+        .package(path: "../Accessibility"),
         .package(path: "../../TIER-2-Domain/StateManagement")
     ],
     targets: [
@@ -26,6 +27,7 @@ let package = Package(
             dependencies: [
                 .product(name: "Binding", package: "Binding"),
                 .product(name: "Theme", package: "Theme"),
+                .product(name: "EduAccessibility", package: "Accessibility"),
                 .product(name: "StateManagement", package: "StateManagement")
             ],
             swiftSettings: [

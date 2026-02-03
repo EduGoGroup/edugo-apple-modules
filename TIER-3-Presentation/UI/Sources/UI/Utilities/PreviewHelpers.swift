@@ -1,4 +1,5 @@
 import SwiftUI
+import EduAccessibility
 
 // MARK: - Platform Wrappers
 
@@ -195,6 +196,45 @@ extension View {
             self.previewDynamicTypeSize(size)
         }
     }
+
+    /// Preview con una categoría de tamaño específica de ContentSizeCategory.
+    public func previewContentSizeCategory(_ category: ContentSizeCategory) -> some View {
+        self.environment(\.sizeCategory, category)
+            .previewDisplayName("Size Category: \(category.shortName)")
+    }
+
+    /// Preview con todas las categorías de tamaño de ContentSizeCategory.
+    public func previewAllContentSizeCategories() -> some View {
+        let allCases: [ContentSizeCategory] = ContentSizeCategory.allCases
+        return ForEach(allCases, id: \.self) { category in
+            self.previewContentSizeCategory(category)
+        }
+    }
+
+    /// Preview con categorías estándar (no accesibilidad) de ContentSizeCategory.
+    public func previewStandardSizeCategories() -> some View {
+        ForEach(ContentSizeCategory.eduStandardCases, id: \.self) { category in
+            self.previewContentSizeCategory(category)
+        }
+    }
+
+    /// Preview con categorías de accesibilidad de ContentSizeCategory.
+    public func previewAccessibilitySizeCategories() -> some View {
+        ForEach(ContentSizeCategory.eduAccessibilityCases, id: \.self) { category in
+            self.previewContentSizeCategory(category)
+        }
+    }
+
+    /// Preview comparando una vista en tamaño normal vs accesibilidad grande.
+    public func previewDynamicTypeComparison() -> some View {
+        Group {
+            self.environment(\.sizeCategory, .large)
+                .previewDisplayName("Normal (L)")
+
+            self.environment(\.sizeCategory, .accessibilityExtraExtraExtraLarge)
+                .previewDisplayName("Accessibility (AX-XXXL)")
+        }
+    }
 }
 
 extension DynamicTypeSize {
@@ -213,6 +253,72 @@ extension DynamicTypeSize {
         case .accessibility4: return "A4"
         case .accessibility5: return "A5"
         @unknown default: return "Unknown"
+        }
+    }
+}
+
+// MARK: - Adaptive Layout Preview Helpers
+
+extension View {
+    /// Preview demostrando layouts adaptativos en diferentes tamaños.
+    public func previewAdaptiveLayout() -> some View {
+        Group {
+            self.environment(\.sizeCategory, .large)
+                .previewDisplayName("Adaptive: Normal (Horizontal)")
+
+            self.environment(\.sizeCategory, .accessibilityMedium)
+                .previewDisplayName("Adaptive: Stacked (Vertical)")
+        }
+    }
+}
+
+// MARK: - Scaling Metrics Preview Helpers
+
+/// Container para visualizar métricas de escalado en previews.
+@MainActor
+public struct ScalingMetricsPreview: View {
+    let sizeCategory: ContentSizeCategory
+
+    public init(sizeCategory: ContentSizeCategory = .large) {
+        self.sizeCategory = sizeCategory
+    }
+
+    public var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            Text("Size Category: \(sizeCategory.name)")
+                .font(.headline)
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Scaling Level: \(sizeCategory.scalingLevel)")
+                Text("Is Accessibility: \(sizeCategory.isAccessibilityCategory ? "Yes" : "No")")
+                Text("Should Stack: \(sizeCategory.shouldStack() ? "Yes" : "No")")
+            }
+            .font(.caption)
+
+            Divider()
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Spacing SM: \(String(format: "%.1f", sizeCategory.scaledSpacing(ScalingMetrics.spacingSM)))")
+                Text("Padding MD: \(String(format: "%.1f", sizeCategory.scaledPadding(ScalingMetrics.paddingMD)))")
+                Text("Corner Radius LG: \(String(format: "%.1f", sizeCategory.scaledCornerRadius(ScalingMetrics.cornerRadiusLG)))")
+                Text("Icon Size MD: \(String(format: "%.1f", sizeCategory.scaledIconSize(ScalingMetrics.iconMD)))")
+                Text("Min Touch Target: \(String(format: "%.1f", sizeCategory.minimumTouchTarget))")
+            }
+            .font(.caption.monospaced())
+        }
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(.systemBackground))
+        .environment(\.sizeCategory, sizeCategory)
+    }
+}
+
+extension View {
+    /// Preview visualizando métricas de escalado para diferentes tamaños.
+    public func previewScalingMetrics() -> some View {
+        ForEach([ContentSizeCategory.small, .large, .extraExtraExtraLarge, .accessibilityMedium, .accessibilityExtraExtraExtraLarge], id: \.self) { category in
+            ScalingMetricsPreview(sizeCategory: category)
+                .previewDisplayName("Metrics: \(category.shortName)")
         }
     }
 }

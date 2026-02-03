@@ -1,0 +1,118 @@
+[0/1] Planning build
+Building for debugging...
+[0/4] Write sources
+[1/4] Write swift-version--58304C5D6DBC2206.txt
+[3/5] Emitting module EduAccessibility
+[4/10] Emitting module EduAccessibilityTests
+[5/10] Compiling EduAccessibilityTests AccessibilityTraitsTests.swift
+[6/10] Compiling EduAccessibilityTests ScalingTests.swift
+[7/10] Compiling EduAccessibilityTests AccessibilityLabelsTests.swift
+[8/10] Compiling EduAccessibilityTests DynamicTypeTests.swift
+/Users/jhoanmedina/source/EduGo/EduUI/Modules/Apple/TIER-3-Presentation/Accessibility/Tests/EduAccessibilityTests/DynamicTypeTests.swift:152:43: error: ambiguous use of 'isAccessibilityCategory'
+150 |     @Test("Is accessibility category property")
+151 |     func testIsAccessibilityCategoryProperty() {
+152 |         #expect(ContentSizeCategory.large.isAccessibilityCategory == false)
+    |                                           `- error: ambiguous use of 'isAccessibilityCategory'
+153 |         #expect(ContentSizeCategory.accessibilityMedium.isAccessibilityCategory == true)
+154 |     }
+
+SwiftUI.ContentSizeCategory.isAccessibilityCategory:3:14: note: found this candidate in module 'SwiftUI'
+1 | enum ContentSizeCategory {
+2 | @available(iOS 13.4, macOS 10.15.4, tvOS 13.4, watchOS 6.2, *)
+3 |   public var isAccessibilityCategory: Bool { get }}
+  |              `- note: found this candidate in module 'SwiftUI'
+4 | 
+
+/Users/jhoanmedina/source/EduGo/EduUI/Modules/Apple/TIER-3-Presentation/Accessibility/Sources/EduAccessibility/DynamicType/ContentSizeCategory+Extensions.swift:9:16: note: found this candidate in module 'EduAccessibility'
+  7 | 
+  8 |     /// Indica si esta categoría es de accesibilidad
+  9 |     public var isAccessibilityCategory: Bool {
+    |                `- note: found this candidate in module 'EduAccessibility'
+ 10 |         DynamicTypeSupport.isAccessibilityCategory(self)
+ 11 |     }
+
+/Users/jhoanmedina/source/EduGo/EduUI/Modules/Apple/TIER-3-Presentation/Accessibility/Tests/EduAccessibilityTests/DynamicTypeTests.swift:153:57: error: ambiguous use of 'isAccessibilityCategory'
+151 |     func testIsAccessibilityCategoryProperty() {
+152 |         #expect(ContentSizeCategory.large.isAccessibilityCategory == false)
+153 |         #expect(ContentSizeCategory.accessibilityMedium.isAccessibilityCategory == true)
+    |                                                         `- error: ambiguous use of 'isAccessibilityCategory'
+154 |     }
+155 | 
+
+SwiftUI.ContentSizeCategory.isAccessibilityCategory:3:14: note: found this candidate in module 'SwiftUI'
+1 | enum ContentSizeCategory {
+2 | @available(iOS 13.4, macOS 10.15.4, tvOS 13.4, watchOS 6.2, *)
+3 |   public var isAccessibilityCategory: Bool { get }}
+  |              `- note: found this candidate in module 'SwiftUI'
+4 | 
+
+/Users/jhoanmedina/source/EduGo/EduUI/Modules/Apple/TIER-3-Presentation/Accessibility/Sources/EduAccessibility/DynamicType/ContentSizeCategory+Extensions.swift:9:16: note: found this candidate in module 'EduAccessibility'
+  7 | 
+  8 |     /// Indica si esta categoría es de accesibilidad
+  9 |     public var isAccessibilityCategory: Bool {
+    |                `- note: found this candidate in module 'EduAccessibility'
+ 10 |         DynamicTypeSupport.isAccessibilityCategory(self)
+ 11 |     }
+
+/Users/jhoanmedina/source/EduGo/EduUI/Modules/Apple/TIER-3-Presentation/Accessibility/Tests/EduAccessibilityTests/DynamicTypeTests.swift:323:9: error: type of expression is ambiguous without a type annotation
+321 |     @Test("All cases count")
+322 |     func testAllCasesCount() {
+323 |         #expect(ContentSizeCategory.allCases.count == 12)
+    |         `- error: type of expression is ambiguous without a type annotation
+324 |     }
+325 | 
+
+/Users/jhoanmedina/source/EduGo/EduUI/Modules/Apple/TIER-3-Presentation/Accessibility/Tests/EduAccessibilityTests/DynamicTypeTests.swift:331:30: error: ambiguous use of 'isAccessibilityCategory'
+329 | 
+330 |         for category in ContentSizeCategory.standardCases {
+331 |             #expect(category.isAccessibilityCategory == false)
+    |                              `- error: ambiguous use of 'isAccessibilityCategory'
+332 |         }
+333 |     }
+
+SwiftUI.ContentSizeCategory.isAccessibilityCategory:3:14: note: found this candidate in module 'SwiftUI'
+1 | enum ContentSizeCategory {
+2 | @available(iOS 13.4, macOS 10.15.4, tvOS 13.4, watchOS 6.2, *)
+3 |   public var isAccessibilityCategory: Bool { get }}
+  |              `- note: found this candidate in module 'SwiftUI'
+4 | 
+
+/Users/jhoanmedina/source/EduGo/EduUI/Modules/Apple/TIER-3-Presentation/Accessibility/Sources/EduAccessibility/DynamicType/ContentSizeCategory+Extensions.swift:9:16: note: found this candidate in module 'EduAccessibility'
+  7 | 
+  8 |     /// Indica si esta categoría es de accesibilidad
+  9 |     public var isAccessibilityCategory: Bool {
+    |                `- note: found this candidate in module 'EduAccessibility'
+ 10 |         DynamicTypeSupport.isAccessibilityCategory(self)
+ 11 |     }
+
+/Users/jhoanmedina/source/EduGo/EduUI/Modules/Apple/TIER-3-Presentation/Accessibility/Tests/EduAccessibilityTests/DynamicTypeTests.swift:340:30: error: ambiguous use of 'isAccessibilityCategory'
+338 | 
+339 |         for category in ContentSizeCategory.accessibilityCases {
+340 |             #expect(category.isAccessibilityCategory == true)
+    |                              `- error: ambiguous use of 'isAccessibilityCategory'
+341 |         }
+342 |     }
+
+SwiftUI.ContentSizeCategory.isAccessibilityCategory:3:14: note: found this candidate in module 'SwiftUI'
+1 | enum ContentSizeCategory {
+2 | @available(iOS 13.4, macOS 10.15.4, tvOS 13.4, watchOS 6.2, *)
+3 |   public var isAccessibilityCategory: Bool { get }}
+  |              `- note: found this candidate in module 'SwiftUI'
+4 | 
+
+/Users/jhoanmedina/source/EduGo/EduUI/Modules/Apple/TIER-3-Presentation/Accessibility/Sources/EduAccessibility/DynamicType/ContentSizeCategory+Extensions.swift:9:16: note: found this candidate in module 'EduAccessibility'
+  7 | 
+  8 |     /// Indica si esta categoría es de accesibilidad
+  9 |     public var isAccessibilityCategory: Bool {
+    |                `- note: found this candidate in module 'EduAccessibility'
+ 10 |         DynamicTypeSupport.isAccessibilityCategory(self)
+ 11 |     }
+
+/Users/jhoanmedina/source/EduGo/EduUI/Modules/Apple/TIER-3-Presentation/Accessibility/Tests/EduAccessibilityTests/DynamicTypeTests.swift:346:53: error: type of expression is ambiguous without a type annotation
+344 |     @Test("All cases contains all standard and accessibility")
+345 |     func testAllCasesCompleteness() {
+346 |         let allCount = ContentSizeCategory.allCases.count
+    |                                                     `- error: type of expression is ambiguous without a type annotation
+347 |         let standardCount = ContentSizeCategory.standardCases.count
+348 |         let accessibilityCount = ContentSizeCategory.accessibilityCases.count
+error: fatalError
