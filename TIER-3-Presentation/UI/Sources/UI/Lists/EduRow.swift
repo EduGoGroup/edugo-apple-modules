@@ -157,7 +157,7 @@ public struct EduRow<Leading: View, Trailing: View>: View {
         Button(action: {
             onTap?()
         }) {
-            HStack(spacing: 12) {
+            HStack(spacing: DesignTokens.Spacing.medium) {
                 // Vista leading opcional
                 if let _leading {
                     _leading
@@ -165,7 +165,7 @@ public struct EduRow<Leading: View, Trailing: View>: View {
                 }
 
                 // Contenido principal
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
                     Text(title)
                         .font(.body)
                         .foregroundStyle(.primary)
@@ -185,8 +185,8 @@ public struct EduRow<Leading: View, Trailing: View>: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            .padding(.vertical, 12)
-            .padding(.horizontal, 16)
+            .padding(.vertical, DesignTokens.Spacing.medium)
+            .padding(.horizontal, DesignTokens.Spacing.large)
         }
         .buttonStyle(.plain)
     }

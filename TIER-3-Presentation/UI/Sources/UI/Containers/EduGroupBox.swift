@@ -45,7 +45,7 @@ public struct EduGroupBox<Label: View, Content: View>: View {
 
     @ViewBuilder
     private var iosStyle: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
             if let label = label {
                 label
                     .font(.headline)
@@ -53,10 +53,10 @@ public struct EduGroupBox<Label: View, Content: View>: View {
             }
 
             content
-                .padding(16)
+                .padding(DesignTokens.Spacing.large)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(Color.groupBoxBackground)
-                .cornerRadius(12)
+                .cornerRadius(DesignTokens.CornerRadius.xl)
         }
     }
 
@@ -64,7 +64,7 @@ public struct EduGroupBox<Label: View, Content: View>: View {
     private var macOSStyle: some View {
         GroupBox {
             content
-                .padding(8)
+                .padding(DesignTokens.Spacing.small)
         } label: {
             if let label = label {
                 label
@@ -74,16 +74,16 @@ public struct EduGroupBox<Label: View, Content: View>: View {
 
     @ViewBuilder
     private var genericStyle: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
             if let label = label {
                 label
                     .font(.headline)
             }
 
             content
-                .padding(16)
+                .padding(DesignTokens.Spacing.large)
                 .background(Color.groupBoxBackground)
-                .cornerRadius(8)
+                .cornerRadius(DesignTokens.CornerRadius.medium)
         }
     }
 }
@@ -140,7 +140,7 @@ public struct EduGroupBoxLabel: View {
     }
 
     public var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: DesignTokens.Spacing.small) {
             if let icon = icon {
                 Image(systemName: icon)
                     .foregroundStyle(Color.accentColor)

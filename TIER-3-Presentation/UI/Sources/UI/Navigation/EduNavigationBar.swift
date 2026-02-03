@@ -86,7 +86,7 @@ public struct EduNavigationBar<Content: View>: View {
                 // Leading button
                 if let leading = leadingItem {
                     Button(action: leading.action) {
-                        HStack(spacing: 4) {
+                        HStack(spacing: DesignTokens.Spacing.xs) {
                             if let icon = leading.icon {
                                 Image(systemName: icon)
                             }
@@ -113,7 +113,7 @@ public struct EduNavigationBar<Content: View>: View {
                 // Trailing button
                 if let trailing = trailingItem {
                     Button(action: trailing.action) {
-                        HStack(spacing: 4) {
+                        HStack(spacing: DesignTokens.Spacing.xs) {
                             if let trailingTitle = trailing.title {
                                 Text(trailingTitle)
                             }
@@ -129,7 +129,7 @@ public struct EduNavigationBar<Content: View>: View {
                 }
             }
             .padding(.horizontal)
-            .padding(.vertical, 12)
+            .padding(.vertical, DesignTokens.Spacing.medium)
             .background(Color(white: 0.98))
 
             Divider()

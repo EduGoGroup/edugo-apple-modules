@@ -57,7 +57,7 @@ public struct EduToast: View {
     let onDismiss: () -> Void
 
     public var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DesignTokens.Spacing.medium) {
             Image(systemName: item.style.icon)
                 .foregroundStyle(item.style.color)
             Text(item.message)
@@ -71,8 +71,8 @@ public struct EduToast: View {
         }
         .padding()
         .background(.regularMaterial)
-        .cornerRadius(12)
-        .shadow(radius: 4)
+        .cornerRadius(DesignTokens.CornerRadius.xl)
+        .shadow(radius: DesignTokens.Shadow.medium)
         .padding(.horizontal)
     }
 }

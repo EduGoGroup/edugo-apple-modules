@@ -30,9 +30,9 @@ public struct EduPrimaryButtonStyle: ButtonStyle {
 
     private var cornerRadius: CGFloat {
         switch size {
-        case .small: return 6
-        case .medium: return 8
-        case .large: return 10
+        case .small: return DesignTokens.CornerRadius.small
+        case .medium: return DesignTokens.CornerRadius.medium
+        case .large: return DesignTokens.CornerRadius.large
         }
     }
 }
@@ -56,7 +56,7 @@ public struct EduSecondaryButtonStyle: ButtonStyle {
             .cornerRadius(cornerRadius)
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius)
-                    .stroke(Color.accentColor, lineWidth: 2)
+                    .stroke(Color.accentColor, lineWidth: DesignTokens.BorderWidth.medium)
             )
             .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
             .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
@@ -64,9 +64,9 @@ public struct EduSecondaryButtonStyle: ButtonStyle {
 
     private var cornerRadius: CGFloat {
         switch size {
-        case .small: return 6
-        case .medium: return 8
-        case .large: return 10
+        case .small: return DesignTokens.CornerRadius.small
+        case .medium: return DesignTokens.CornerRadius.medium
+        case .large: return DesignTokens.CornerRadius.large
         }
     }
 }
@@ -90,7 +90,7 @@ public struct EduDestructiveButtonStyle: ButtonStyle {
             .cornerRadius(cornerRadius)
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius)
-                    .stroke(Color.red, lineWidth: 2)
+                    .stroke(Color.red, lineWidth: DesignTokens.BorderWidth.medium)
             )
             .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
             .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
@@ -98,9 +98,9 @@ public struct EduDestructiveButtonStyle: ButtonStyle {
 
     private var cornerRadius: CGFloat {
         switch size {
-        case .small: return 6
-        case .medium: return 8
-        case .large: return 10
+        case .small: return DesignTokens.CornerRadius.small
+        case .medium: return DesignTokens.CornerRadius.medium
+        case .large: return DesignTokens.CornerRadius.large
         }
     }
 }

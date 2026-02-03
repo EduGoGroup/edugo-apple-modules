@@ -25,7 +25,7 @@ public struct EduSkeletonLoader: View {
     private let maxOpacity: Double = 0.6
     private let animationDuration: Double = 0.8
 
-    public init(shape: EduSkeletonShape = .roundedRectangle(8)) {
+    public init(shape: EduSkeletonShape = .roundedRectangle(DesignTokens.CornerRadius.medium)) {
         self.shape = shape
     }
 
@@ -62,7 +62,7 @@ public struct EduSkeletonText: View {
     private let lines: Int
     private let spacing: CGFloat
 
-    public init(lines: Int = 1, spacing: CGFloat = 8) {
+    public init(lines: Int = 1, spacing: CGFloat = DesignTokens.Spacing.small) {
         self.lines = lines
         self.spacing = spacing
     }
@@ -93,7 +93,7 @@ public struct EduSkeletonImage: View {
     private let aspectRatio: CGFloat?
     private let shape: EduSkeletonShape
 
-    public init(aspectRatio: CGFloat? = 1.0, shape: EduSkeletonShape = .roundedRectangle(12)) {
+    public init(aspectRatio: CGFloat? = 1.0, shape: EduSkeletonShape = .roundedRectangle(DesignTokens.CornerRadius.xl)) {
         self.aspectRatio = aspectRatio
         self.shape = shape
     }
@@ -118,13 +118,13 @@ public struct EduSkeletonCard: View {
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
             if showImage {
                 EduSkeletonImage(aspectRatio: 16/9)
                     .frame(height: 180)
             }
 
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
                 // Title
                 EduSkeletonLoader(shape: .capsule)
                     .frame(height: 20)
@@ -133,11 +133,11 @@ public struct EduSkeletonCard: View {
                 // Description lines
                 EduSkeletonText(lines: lines, spacing: 6)
             }
-            .padding(showImage ? 12 : 0)
+            .padding(showImage ? DesignTokens.Spacing.medium : 0)
         }
-        .padding(16)
+        .padding(DesignTokens.Spacing.large)
         .background(Color(white: 0.98))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.xl))
     }
 }
 
@@ -153,7 +153,7 @@ public struct EduSkeletonList: View {
     }
 
     public var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: DesignTokens.Spacing.medium) {
             ForEach(0..<count, id: \.self) { _ in
                 EduSkeletonListRow()
             }
@@ -169,7 +169,7 @@ public struct EduSkeletonListRow: View {
     public init() {}
 
     public var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DesignTokens.Spacing.medium) {
             EduSkeletonLoader(shape: .circle)
                 .frame(width: 44, height: 44)
 
@@ -187,7 +187,7 @@ public struct EduSkeletonListRow: View {
         }
         .padding()
         .background(Color(white: 0.98))
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.medium))
     }
 }
 

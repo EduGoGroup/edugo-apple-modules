@@ -70,7 +70,7 @@ public struct EduSection<Header: View, Content: View, Footer: View>: View {
 
                 if showDivider {
                     Divider()
-                        .padding(.vertical, 8)
+                        .padding(.vertical, DesignTokens.Spacing.small)
                 }
             }
 
@@ -83,7 +83,7 @@ public struct EduSection<Header: View, Content: View, Footer: View>: View {
             if let footer = footer, isExpanded {
                 if showDivider {
                     Divider()
-                        .padding(.vertical, 8)
+                        .padding(.vertical, DesignTokens.Spacing.small)
                 }
                 footer
             }
@@ -154,7 +154,7 @@ public struct EduSectionHeader: View {
     }
 
     public var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DesignTokens.Spacing.medium) {
             if let icon = icon {
                 Image(systemName: icon)
                     .font(.title3)
@@ -175,7 +175,7 @@ public struct EduSectionHeader: View {
 
             Spacer()
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, DesignTokens.Spacing.small)
     }
 }
 
@@ -192,7 +192,7 @@ public struct EduSectionFooter: View {
         Text(text)
             .font(.caption)
             .foregroundStyle(.secondary)
-            .padding(.vertical, 8)
+            .padding(.vertical, DesignTokens.Spacing.small)
     }
 }
 

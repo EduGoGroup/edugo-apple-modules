@@ -196,7 +196,7 @@ public struct EduGaugeProgress: View {
 
             // Value
             if showValue {
-                VStack(spacing: 4) {
+                VStack(spacing: DesignTokens.Spacing.xs) {
                     Text("\(Int(progress * 100))")
                         .font(.system(.largeTitle, design: .rounded, weight: .bold))
                         .monospacedDigit()

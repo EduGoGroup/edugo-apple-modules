@@ -44,7 +44,7 @@ public struct EduBreadcrumbs: View {
     }
 
     public var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: DesignTokens.Spacing.xs) {
             ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
                 // Item
                 Group {
@@ -70,15 +70,15 @@ public struct EduBreadcrumbs: View {
                 }
             }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
+        .padding(.horizontal, DesignTokens.Spacing.medium)
+        .padding(.vertical, DesignTokens.Spacing.small)
         .background(Color(nsColor: .controlBackgroundColor))
-        .clipShape(RoundedRectangle(cornerRadius: 6))
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.small))
     }
 
     @ViewBuilder
     private func breadcrumbItemView(item: EduBreadcrumbItem) -> some View {
-        HStack(spacing: 4) {
+        HStack(spacing: DesignTokens.Spacing.xs) {
             if let icon = item.icon {
                 Image(systemName: icon)
                     .font(.caption)

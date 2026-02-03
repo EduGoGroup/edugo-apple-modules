@@ -21,10 +21,10 @@ public struct EduCard<Content: View>: View {
 
         var shadowRadius: CGFloat {
             switch self {
-            case .none: return 0
-            case .low: return 2
-            case .medium: return 4
-            case .high: return 8
+            case .none: return DesignTokens.Shadow.none
+            case .low: return DesignTokens.Shadow.small
+            case .medium: return DesignTokens.Shadow.medium
+            case .high: return DesignTokens.Shadow.large
             }
         }
 
@@ -63,8 +63,8 @@ public struct EduCard<Content: View>: View {
     ///   - onTap: Closure opcional que se ejecuta al tocar el card
     ///   - content: Contenido del card
     public init(
-        padding: EdgeInsets = EdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16),
-        cornerRadius: CGFloat = 12,
+        padding: EdgeInsets = DesignTokens.Insets.cardDefault,
+        cornerRadius: CGFloat = DesignTokens.CornerRadius.xl,
         elevation: Elevation = .medium,
         backgroundColor: Color = .cardBackground,
         isHighlighted: Bool = false,
@@ -112,7 +112,7 @@ public struct EduCard<Content: View>: View {
             .opacity(isDisabled ? 0.6 : 1.0)
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius)
-                    .stroke(borderColor, lineWidth: isHighlighted ? 2 : 0)
+                    .stroke(borderColor, lineWidth: isHighlighted ? DesignTokens.BorderWidth.medium : 0)
             )
     }
 
@@ -142,7 +142,7 @@ public struct EduCard<Content: View>: View {
 @MainActor
 public func EduHeroCardFunction<C: View>(@ViewBuilder content: () -> C) -> EduCard<C> {
     EduCard(
-        padding: EdgeInsets(top: 24, leading: 24, bottom: 24, trailing: 24),
+        padding: DesignTokens.Insets.cardHero,
         elevation: .high,
         content: content
     )
@@ -152,7 +152,7 @@ public func EduHeroCardFunction<C: View>(@ViewBuilder content: () -> C) -> EduCa
 @MainActor
 public func EduListCardFunction<C: View>(@ViewBuilder content: () -> C) -> EduCard<C> {
     EduCard(
-        padding: EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16),
+        padding: DesignTokens.Insets.cardList,
         elevation: .low,
         content: content
     )

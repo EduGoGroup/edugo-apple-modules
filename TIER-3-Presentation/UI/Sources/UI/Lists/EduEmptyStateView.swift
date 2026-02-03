@@ -23,12 +23,12 @@ public struct EduEmptyStateView: View {
     }
 
     public var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: DesignTokens.Spacing.xl) {
             Image(systemName: icon)
                 .font(.system(size: 60))
                 .foregroundStyle(.secondary)
 
-            VStack(spacing: 8) {
+            VStack(spacing: DesignTokens.Spacing.small) {
                 Text(title)
                     .font(.title2)
                     .fontWeight(.semibold)

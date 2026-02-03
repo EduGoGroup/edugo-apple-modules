@@ -75,7 +75,7 @@ public struct EduTextField: View {
     // MARK: - Body
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
             // Label
             Text(title)
                 .font(.subheadline)
@@ -100,8 +100,8 @@ public struct EduTextField: View {
                 isFocused = focused
             }
             .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(borderColor, lineWidth: isFocused ? 2 : 1)
+                RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.medium)
+                    .stroke(borderColor, lineWidth: isFocused ? DesignTokens.BorderWidth.medium : DesignTokens.BorderWidth.thin)
             )
 
             // Helper text o error message

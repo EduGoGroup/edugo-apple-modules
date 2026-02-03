@@ -55,7 +55,7 @@ public struct EduSearchField: View {
     // MARK: - Body
 
     public var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: DesignTokens.Spacing.small) {
             // Icono de búsqueda
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(.secondary)
@@ -97,15 +97,15 @@ public struct EduSearchField: View {
                 .accessibilityLabel("Limpiar búsqueda")
             }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
+        .padding(.horizontal, DesignTokens.Spacing.medium)
+        .padding(.vertical, DesignTokens.Spacing.small)
         .background(
-            RoundedRectangle(cornerRadius: 10)
+            RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.large)
                 .fill(Color(white: 0.98))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(borderColor, lineWidth: isFocused ? 2 : 1)
+            RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.large)
+                .stroke(borderColor, lineWidth: isFocused ? DesignTokens.BorderWidth.medium : DesignTokens.BorderWidth.thin)
         )
         .opacity(isDisabled ? 0.6 : 1.0)
         .animation(.easeInOut(duration: 0.2), value: isFocused)

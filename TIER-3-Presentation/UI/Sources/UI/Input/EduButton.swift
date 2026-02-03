@@ -27,11 +27,11 @@ public struct EduButton: View {
         var padding: EdgeInsets {
             switch self {
             case .small:
-                return EdgeInsets(top: 6, leading: 12, bottom: 6, trailing: 12)
+                return DesignTokens.Insets.buttonSmall
             case .medium:
-                return EdgeInsets(top: 10, leading: 16, bottom: 10, trailing: 16)
+                return DesignTokens.Insets.buttonMedium
             case .large:
-                return EdgeInsets(top: 14, leading: 20, bottom: 14, trailing: 20)
+                return DesignTokens.Insets.buttonLarge
             }
         }
 
@@ -100,7 +100,7 @@ public struct EduButton: View {
 
     public var body: some View {
         Button(action: action) {
-            HStack(spacing: 8) {
+            HStack(spacing: DesignTokens.Spacing.small) {
                 // Leading icon o spinner
                 if isLoading {
                     ProgressView()
@@ -190,18 +190,18 @@ public struct EduButton: View {
         case .primary, .link:
             return 0
         case .secondary, .destructive:
-            return 2
+            return DesignTokens.BorderWidth.medium
         }
     }
 
     private var cornerRadius: CGFloat {
         switch size {
         case .small:
-            return 6
+            return DesignTokens.CornerRadius.small
         case .medium:
-            return 8
+            return DesignTokens.CornerRadius.medium
         case .large:
-            return 10
+            return DesignTokens.CornerRadius.large
         }
     }
 

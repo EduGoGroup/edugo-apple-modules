@@ -169,7 +169,7 @@ public struct EduSecureField: View {
     // MARK: - Body
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
             // Label
             Text(title)
                 .font(.subheadline)
@@ -177,7 +177,7 @@ public struct EduSecureField: View {
                 .foregroundStyle(isDisabled ? .secondary : .primary)
 
             // Campo de contraseña con toggle
-            HStack(spacing: 8) {
+            HStack(spacing: DesignTokens.Spacing.small) {
                 Group {
                     if isPasswordVisible {
                         TextField(placeholder, text: $text, onCommit: {
@@ -221,8 +221,8 @@ public struct EduSecureField: View {
                 #endif
             }
             .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(borderColor, lineWidth: isFocused ? 2 : 1)
+                RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.medium)
+                    .stroke(borderColor, lineWidth: isFocused ? DesignTokens.BorderWidth.medium : DesignTokens.BorderWidth.thin)
             )
 
             // Indicador de fortaleza

@@ -51,7 +51,7 @@ public struct EduModalContent<Content: View>: View {
         #if os(iOS) || os(visionOS)
         NavigationView {
             ScrollView {
-                VStack(spacing: 16) {
+                VStack(spacing: DesignTokens.Spacing.large) {
                     content()
                 }
                 .padding()
@@ -95,7 +95,7 @@ public struct EduModalContent<Content: View>: View {
 
             // Content
             ScrollView {
-                VStack(spacing: 16) {
+                VStack(spacing: DesignTokens.Spacing.large) {
                     content()
                 }
                 .padding()
