@@ -90,8 +90,8 @@ public struct EduTabBar<Content: View>: View {
                     if let badge = item.badge {
                         Text(badge)
                             .font(.caption2)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
+                            .padding(.horizontal, DesignTokens.Spacing.small)
+                            .padding(.vertical, DesignTokens.Spacing.xs)
                             .background(Color.accentColor)
                             .foregroundStyle(.white)
                             .clipShape(Capsule())

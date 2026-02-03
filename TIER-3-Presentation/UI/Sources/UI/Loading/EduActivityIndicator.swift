@@ -93,7 +93,7 @@ public struct LoadingOverlayModifier: ViewModifier {
                 Color.black.opacity(0.3)
                     .ignoresSafeArea()
 
-                VStack(spacing: 16) {
+                VStack(spacing: DesignTokens.Spacing.large) {
                     EduActivityIndicator(style: style, color: .white)
 
                     if let message {
@@ -102,9 +102,9 @@ public struct LoadingOverlayModifier: ViewModifier {
                             .foregroundStyle(.white)
                     }
                 }
-                .padding(24)
+                .padding(DesignTokens.Spacing.xxl)
                 .background(Color.black.opacity(0.7))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.xl))
             }
         }
     }
@@ -137,9 +137,9 @@ public struct EduInlineLoader: View {
 
     private var sizeForStyle: CGFloat {
         switch style {
-        case .small: return 16
-        case .medium: return 24
-        case .large: return 32
+        case .small: return DesignTokens.IconSize.small
+        case .medium: return DesignTokens.IconSize.medium
+        case .large: return DesignTokens.IconSize.large
         }
     }
 }

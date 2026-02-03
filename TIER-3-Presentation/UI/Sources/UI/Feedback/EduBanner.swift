@@ -13,7 +13,7 @@ public struct EduBanner: View {
     }
 
     public var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DesignTokens.Spacing.medium) {
             Image(systemName: style.icon)
                 .foregroundStyle(style.color)
             Text(message)

@@ -138,7 +138,7 @@ public struct EduLabeledProgressBar: View {
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
             HStack {
                 if let label {
                     Text(label)
@@ -181,11 +181,11 @@ public struct EduSegmentedProgressBar: View {
     }
 
     public var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: DesignTokens.Spacing.xs) {
             ForEach(0..<totalSteps, id: \.self) { index in
                 Capsule()
                     .fill(index < currentStep ? tint : Color(white: 0.9))
-                    .frame(height: 4)
+                    .frame(height: DesignTokens.Spacing.xs)
             }
         }
     }

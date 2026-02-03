@@ -179,8 +179,8 @@ public struct EduStyledNavigationLink<Destination: View>: View {
             if let badge {
                 Text(badge)
                     .font(.caption)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
+                    .padding(.horizontal, DesignTokens.Spacing.small)
+                    .padding(.vertical, DesignTokens.Spacing.xs)
                     .background(Color.accentColor)
                     .foregroundStyle(.white)
                     .clipShape(Capsule())
@@ -190,7 +190,7 @@ public struct EduStyledNavigationLink<Destination: View>: View {
 
     @ViewBuilder
     private var cardView: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
             HStack {
                 if let icon {
                     Image(systemName: icon)
@@ -198,7 +198,7 @@ public struct EduStyledNavigationLink<Destination: View>: View {
                         .foregroundStyle(Color.accentColor)
                 }
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
                     Text(title)
                         .font(.headline)
 
@@ -214,8 +214,8 @@ public struct EduStyledNavigationLink<Destination: View>: View {
                 if let badge {
                     Text(badge)
                         .font(.caption)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
+                        .padding(.horizontal, DesignTokens.Spacing.small)
+                        .padding(.vertical, DesignTokens.Spacing.xs)
                         .background(Color.accentColor)
                         .foregroundStyle(.white)
                         .clipShape(Capsule())
@@ -228,7 +228,7 @@ public struct EduStyledNavigationLink<Destination: View>: View {
         }
         .padding()
         .background(Color(white: 0.98))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.xl))
     }
 
     @ViewBuilder
@@ -236,7 +236,7 @@ public struct EduStyledNavigationLink<Destination: View>: View {
         HStack {
             if let icon {
                 Image(systemName: icon)
-                    .frame(width: 24)
+                    .frame(width: DesignTokens.IconSize.medium)
                     .foregroundStyle(Color.accentColor)
             }
 
@@ -256,8 +256,8 @@ public struct EduStyledNavigationLink<Destination: View>: View {
             if let badge {
                 Text(badge)
                     .font(.caption2)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
+                    .padding(.horizontal, DesignTokens.Spacing.small)
+                    .padding(.vertical, DesignTokens.Spacing.xs)
                     .background(Color.accentColor)
                     .foregroundStyle(.white)
                     .clipShape(Capsule())
@@ -267,7 +267,7 @@ public struct EduStyledNavigationLink<Destination: View>: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, DesignTokens.Spacing.small)
     }
 }
 
