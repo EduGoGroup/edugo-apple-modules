@@ -9,6 +9,92 @@ import Binding
 /// - Estados: normal, error, disabled, focused
 /// - Integración con FormState
 /// - Feedback visual de fortaleza de contraseña
+///
+/// ## ⚠️ CONSIDERACIONES DE SEGURIDAD
+///
+/// **Clipboard:**
+/// Cuando `showPasswordToggle` está activado y el usuario muestra la contraseña,
+/// el texto puede ser copiado al clipboard. Para contextos de alta seguridad,
+/// considera desactivar `showPasswordToggle`.
+///
+/// **Screen Recording y Screenshots:**
+/// iOS y macOS pueden capturar pantalla cuando la contraseña está visible.
+/// Para datos extremadamente sensibles, mantén `showPasswordToggle = false`.
+///
+/// **Almacenamiento Persistente:**
+/// `EduSecureField` NO almacena contraseñas automáticamente. Para persistencia
+/// segura, integra con Keychain (ver ejemplo más abajo).
+///
+/// **Mejores Prácticas por Contexto:**
+/// - Para login: `showPasswordToggle = true` (mejor UX)
+/// - Para confirmación de password: `showPasswordToggle = false`
+/// - Para cambio de password: `showPasswordToggle = true` con validación fuerte
+/// - Para transacciones financieras: considerar biometría en lugar de password
+///
+/// **Ejemplo de validación recomendada:**
+/// ```swift
+/// EduSecureField(
+///     "Contraseña",
+///     text: $password,
+///     validation: Validators.password(
+///         minLength: 12,
+///         requireUppercase: true,
+///         requireNumbers: true,
+///         requireSymbols: true
+///     ),
+///     showStrengthIndicator: true
+/// )
+/// ```
+///
+/// **Ejemplo de integración con Keychain:**
+/// ```swift
+/// import Security
+///
+/// // Guardar contraseña en Keychain
+/// func saveToKeychain(password: String, account: String) {
+///     let data = password.data(using: .utf8)!
+///     let query: [String: Any] = [
+///         kSecClass as String: kSecClassGenericPassword,
+///         kSecAttrAccount as String: account,
+///         kSecValueData as String: data,
+///         kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+///     ]
+///
+///     // Eliminar entrada anterior si existe
+///     SecItemDelete(query as CFDictionary)
+///
+///     // Agregar nueva entrada
+///     let status = SecItemAdd(query as CFDictionary, nil)
+///     if status != errSecSuccess {
+///         print("Error guardando en Keychain: \(status)")
+///     }
+/// }
+///
+/// // Recuperar contraseña de Keychain
+/// func retrieveFromKeychain(account: String) -> String? {
+///     let query: [String: Any] = [
+///         kSecClass as String: kSecClassGenericPassword,
+///         kSecAttrAccount as String: account,
+///         kSecReturnData as String: true,
+///         kSecMatchLimit as String: kSecMatchLimitOne
+///     ]
+///
+///     var result: AnyObject?
+///     let status = SecItemCopyMatching(query as CFDictionary, &result)
+///
+///     guard status == errSecSuccess,
+///           let data = result as? Data,
+///           let password = String(data: data, encoding: .utf8) else {
+///         return nil
+///     }
+///
+///     return password
+/// }
+/// ```
+///
+/// - SeeAlso: `Validators.password(minLength:requireUppercase:requireNumbers:requireSymbols:)`
+/// - SeeAlso: [OWASP Mobile Security Testing Guide](https://owasp.org/www-project-mobile-security-testing-guide/)
+/// - SeeAlso: [iOS Keychain Services](https://developer.apple.com/documentation/security/keychain_services)
 @MainActor
 public struct EduSecureField: View {
     // MARK: - Properties
@@ -316,6 +402,146 @@ private struct PasswordStrength {
 
         Text("Formulario válido: \(formState.isValid ? "Sí" : "No")")
             .foregroundStyle(formState.isValid ? .green : .red)
+    }
+    .padding()
+}
+
+// MARK: - Security Examples Previews
+
+#Preview("Seguridad Alta - Transacciones Financieras") {
+    @Previewable @State var password = ""
+
+    VStack(alignment: .leading, spacing: 16) {
+        Text("Contexto: Transacción financiera")
+            .font(.headline)
+
+        Text("showPasswordToggle = false para máxima seguridad")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+
+        EduSecureField(
+            "PIN de Seguridad",
+            text: $password,
+            placeholder: "Mínimo 12 caracteres",
+            validation: Validators.password(
+                minLength: 12,
+                requireUppercase: true,
+                requireNumbers: true,
+                requireSymbols: true
+            ),
+            showPasswordToggle: false,
+            showStrengthIndicator: true
+        )
+    }
+    .padding()
+}
+
+#Preview("Seguridad Media - Login Usuario") {
+    @Previewable @State var password = ""
+
+    VStack(alignment: .leading, spacing: 16) {
+        Text("Contexto: Login de usuario")
+            .font(.headline)
+
+        Text("showPasswordToggle = true para mejor UX")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+
+        EduSecureField(
+            "Contraseña",
+            text: $password,
+            placeholder: "Ingresa tu contraseña",
+            helperText: "Mínimo 8 caracteres, incluye mayúsculas y números",
+            validation: Validators.password(
+                minLength: 8,
+                requireUppercase: true,
+                requireNumbers: true
+            ),
+            showPasswordToggle: true,
+            showStrengthIndicator: true
+        )
+    }
+    .padding()
+}
+
+#Preview("Confirmación de Contraseña") {
+    @Previewable @State var password = "MyP@ssw0rd123"
+    @Previewable @State var confirmPassword = ""
+
+    VStack(alignment: .leading, spacing: 16) {
+        Text("Contexto: Confirmación de contraseña")
+            .font(.headline)
+
+        Text("showPasswordToggle = false para evitar errores visuales")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+
+        EduSecureField(
+            "Contraseña Nueva",
+            text: $password,
+            validation: Validators.password(
+                minLength: 12,
+                requireUppercase: true,
+                requireNumbers: true,
+                requireSymbols: true
+            ),
+            showPasswordToggle: false,
+            showStrengthIndicator: true
+        )
+
+        EduSecureField(
+            "Confirmar Contraseña",
+            text: $confirmPassword,
+            validation: { value in
+                if value != password {
+                    return .invalid("Las contraseñas no coinciden")
+                }
+                return .valid()
+            },
+            showPasswordToggle: false
+        )
+    }
+    .padding()
+}
+
+#Preview("Ejemplo Keychain - Flujo Completo") {
+    @Previewable @State var password = ""
+    @Previewable @State var savedMessage = ""
+
+    VStack(alignment: .leading, spacing: 16) {
+        Text("Ejemplo: Integración con Keychain")
+            .font(.headline)
+
+        EduSecureField(
+            "Contraseña",
+            text: $password,
+            placeholder: "Ingresa contraseña para guardar",
+            validation: Validators.password(
+                minLength: 8,
+                requireUppercase: true,
+                requireNumbers: true
+            ),
+            showPasswordToggle: true,
+            showStrengthIndicator: true
+        )
+
+        Button("Guardar en Keychain") {
+            // Simulación - en producción usar código Keychain real
+            if !password.isEmpty {
+                savedMessage = "Contraseña guardada de forma segura en Keychain"
+            }
+        }
+        .disabled(password.isEmpty)
+
+        if !savedMessage.isEmpty {
+            Text(savedMessage)
+                .font(.caption)
+                .foregroundStyle(.green)
+        }
+
+        Text("Nota: Este preview simula el guardado. Ver documentación para implementación real con Security framework.")
+            .font(.caption2)
+            .foregroundStyle(.secondary)
     }
     .padding()
 }

@@ -39,13 +39,54 @@ public enum Validators {
         }
     }
 
-    /// Creates a password validator.
+    /// Creates a password validator with configurable security requirements.
     ///
-    /// Validates that the password meets minimum length requirements.
+    /// Validates that the password meets specified security criteria including length
+    /// and optionally character types (uppercase, lowercase, numbers, symbols).
     ///
-    /// - Parameter minLength: Minimum required password length. Default is 8.
+    /// - Parameters:
+    ///   - minLength: Minimum required password length. Default is 8.
+    ///   - requireUppercase: Require at least one uppercase letter. Default is false.
+    ///   - requireLowercase: Require at least one lowercase letter. Default is false.
+    ///   - requireNumbers: Require at least one number. Default is false.
+    ///   - requireSymbols: Require at least one symbol. Default is false.
     /// - Returns: A validator closure for password validation.
-    public static func password(minLength: Int = 8) -> @Sendable (String) -> ValidationResult {
+    ///
+    /// ## Examples
+    ///
+    /// Basic validation (backward compatible):
+    /// ```swift
+    /// @BindableProperty(validation: Validators.password(minLength: 8))
+    /// var password: String = ""
+    /// ```
+    ///
+    /// Strong password for financial transactions:
+    /// ```swift
+    /// @BindableProperty(validation: Validators.password(
+    ///     minLength: 12,
+    ///     requireUppercase: true,
+    ///     requireNumbers: true,
+    ///     requireSymbols: true
+    /// ))
+    /// var securePassword: String = ""
+    /// ```
+    ///
+    /// Medium security for general login:
+    /// ```swift
+    /// @BindableProperty(validation: Validators.password(
+    ///     minLength: 8,
+    ///     requireUppercase: true,
+    ///     requireNumbers: true
+    /// ))
+    /// var loginPassword: String = ""
+    /// ```
+    public static func password(
+        minLength: Int = 8,
+        requireUppercase: Bool = false,
+        requireLowercase: Bool = false,
+        requireNumbers: Bool = false,
+        requireSymbols: Bool = false
+    ) -> @Sendable (String) -> ValidationResult {
         { value in
             if value.isEmpty {
                 return .invalid("La contraseña es requerida")
@@ -53,6 +94,25 @@ public enum Validators {
 
             if value.count < minLength {
                 return .invalid("La contraseña debe tener al menos \(minLength) caracteres")
+            }
+
+            if requireUppercase && value.rangeOfCharacter(from: .uppercaseLetters) == nil {
+                return .invalid("La contraseña debe contener al menos una mayúscula")
+            }
+
+            if requireLowercase && value.rangeOfCharacter(from: .lowercaseLetters) == nil {
+                return .invalid("La contraseña debe contener al menos una minúscula")
+            }
+
+            if requireNumbers && value.rangeOfCharacter(from: .decimalDigits) == nil {
+                return .invalid("La contraseña debe contener al menos un número")
+            }
+
+            if requireSymbols {
+                let symbolSet = CharacterSet(charactersIn: "!@#$%^&*()_+-=[]{}|;:,.<>?")
+                if value.rangeOfCharacter(from: symbolSet) == nil {
+                    return .invalid("La contraseña debe contener al menos un símbolo (!@#$%^&*...)")
+                }
             }
 
             return .valid()
