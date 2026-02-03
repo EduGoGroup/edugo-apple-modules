@@ -424,6 +424,87 @@ public struct PreviewGrid<Content: View>: View {
     }
 }
 
+// MARK: - Accessibility Preferences Helpers (Reduce Motion & High Contrast)
+
+extension View {
+    /// Preview con Reduce Motion habilitado
+    public func previewReducedMotion(_ isEnabled: Bool = true) -> some View {
+        self.environment(\.accessibilityReduceMotion, isEnabled)
+            .previewDisplayName(isEnabled ? "Reduce Motion: ON" : "Reduce Motion: OFF")
+    }
+
+    /// Preview comparando Reduce Motion ON vs OFF
+    public func previewReducedMotionComparison() -> some View {
+        Group {
+            self.environment(\.accessibilityReduceMotion, false)
+                .previewDisplayName("Motion: Normal")
+
+            self.environment(\.accessibilityReduceMotion, true)
+                .previewDisplayName("Motion: Reduced")
+        }
+    }
+
+    /// Preview con High Contrast habilitado
+    public func previewHighContrast(_ isEnabled: Bool = true) -> some View {
+        self.environment(\.accessibilityHighContrast, isEnabled)
+            .previewDisplayName(isEnabled ? "High Contrast: ON" : "High Contrast: OFF")
+    }
+
+    /// Preview comparando High Contrast ON vs OFF
+    public func previewHighContrastComparison() -> some View {
+        Group {
+            self.environment(\.accessibilityHighContrast, false)
+                .previewDisplayName("Contrast: Normal")
+
+            self.environment(\.accessibilityHighContrast, true)
+                .previewDisplayName("Contrast: High")
+        }
+    }
+
+    /// Preview con Differentiate Without Color habilitado
+    public func previewDifferentiateWithoutColor(_ isEnabled: Bool = true) -> some View {
+        self.environment(\.accessibilityDifferentiateWithoutColor, isEnabled)
+            .previewDisplayName(isEnabled ? "Differentiate Without Color: ON" : "Differentiate Without Color: OFF")
+    }
+
+    /// Preview con todas las combinaciones de accesibilidad importantes
+    public func previewAccessibilityCombinations() -> some View {
+        Group {
+            // Normal
+            self
+                .previewDisplayName("Normal")
+
+            // Reduce Motion only
+            self.environment(\.accessibilityReduceMotion, true)
+                .previewDisplayName("Reduce Motion")
+
+            // High Contrast only
+            self.environment(\.accessibilityHighContrast, true)
+                .previewDisplayName("High Contrast")
+
+            // Large Text only
+            self.environment(\.sizeCategory, .accessibilityExtraExtraExtraLarge)
+                .previewDisplayName("Large Text (XXXL)")
+
+            // All combined
+            self.environment(\.accessibilityReduceMotion, true)
+                .environment(\.accessibilityHighContrast, true)
+                .environment(\.sizeCategory, .accessibilityExtraExtraExtraLarge)
+                .previewDisplayName("All Accessibility ON")
+        }
+    }
+
+    /// Preview con estado completo de accesibilidad
+    public func previewAccessibilityState(_ state: AccessibilityState) -> some View {
+        self.environment(\.accessibilityReduceMotion, state.reduceMotion)
+            .environment(\.accessibilityHighContrast, state.highContrast)
+            .environment(\.accessibilityIncreaseContrast, state.increaseContrast)
+            .environment(\.accessibilityDifferentiateWithoutColor, state.differentiateWithoutColor)
+            .environment(\.sizeCategory, state.contentSizeCategory)
+            .previewDisplayName("Custom Accessibility State")
+    }
+}
+
 // MARK: - Example Usage in Comments
 
 /*
@@ -486,6 +567,45 @@ public struct PreviewGrid<Content: View>: View {
              MyButton(style: style)
          }
      }
+ }
+ ```
+
+ 8. Preview con Reduce Motion:
+ ```swift
+ #Preview("Reduce Motion Comparison") {
+     MyAnimatedView()
+         .previewReducedMotionComparison()
+ }
+ ```
+
+ 9. Preview con High Contrast:
+ ```swift
+ #Preview("High Contrast") {
+     MyView()
+         .previewHighContrast(true)
+ }
+ ```
+
+ 10. Preview con todas las combinaciones de accesibilidad:
+ ```swift
+ #Preview("Accessibility Combinations") {
+     MyView()
+         .previewAccessibilityCombinations()
+ }
+ ```
+
+ 11. Preview con estado personalizado de accesibilidad:
+ ```swift
+ #Preview("Custom Accessibility") {
+     let state = AccessibilityState(
+         reduceMotion: true,
+         highContrast: true,
+         increaseContrast: true,
+         differentiateWithoutColor: false,
+         contentSizeCategory: .accessibilityLarge
+     )
+     MyView()
+         .previewAccessibilityState(state)
  }
  ```
  */
