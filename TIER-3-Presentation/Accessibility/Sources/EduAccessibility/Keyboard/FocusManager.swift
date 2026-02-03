@@ -152,23 +152,23 @@ public struct FocusContext: Sendable {
     public let name: String
 
     /// ID del elemento que debe recibir focus inicialmente
-    public let initialFocusID: AnyHashable?
+    public let initialFocusID: String?
 
     /// ID del elemento al que debe volver el focus al cerrar este contexto
-    public let restorationFocusID: AnyHashable?
+    public let restorationFocusID: String?
 
     /// Indica si este contexto atrapa el focus (focus trap)
     public let trapsFocus: Bool
 
     /// IDs de elementos permitidos dentro de este contexto (para focus trap)
-    public let allowedFocusIDs: Set<AnyHashable>?
+    public let allowedFocusIDs: Set<String>?
 
     public init(
         name: String,
-        initialFocusID: AnyHashable? = nil,
-        restorationFocusID: AnyHashable? = nil,
+        initialFocusID: String? = nil,
+        restorationFocusID: String? = nil,
         trapsFocus: Bool = false,
-        allowedFocusIDs: Set<AnyHashable>? = nil
+        allowedFocusIDs: Set<String>? = nil
     ) {
         self.name = name
         self.initialFocusID = initialFocusID
@@ -178,7 +178,7 @@ public struct FocusContext: Sendable {
     }
 
     /// Verifica si un ID de focus está permitido en este contexto
-    public func isAllowed(_ focusID: AnyHashable) -> Bool {
+    public func isAllowed(_ focusID: String) -> Bool {
         guard trapsFocus else { return true }
         guard let allowedFocusIDs = allowedFocusIDs else { return true }
         return allowedFocusIDs.contains(focusID)
@@ -188,8 +188,12 @@ public struct FocusContext: Sendable {
 // MARK: - Environment Integration
 
 /// Environment key para el FocusManager
-public struct FocusManagerKey: EnvironmentKey {
-    public static let defaultValue = FocusManager.shared
+extension FocusManagerKey: @preconcurrency EnvironmentKey {}
+public struct FocusManagerKey {
+    @MainActor
+    public static var defaultValue: FocusManager {
+        .shared
+    }
 }
 
 extension EnvironmentValues {

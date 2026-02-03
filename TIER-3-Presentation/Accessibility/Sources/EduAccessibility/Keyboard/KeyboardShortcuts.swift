@@ -133,7 +133,7 @@ public final class KeyboardShortcutRegistry {
             // Navigation
             .init(
                 id: "nav.back",
-                key: .leftBracket,
+                key: KeyEquivalent("["),
                 modifiers: [.command],
                 platforms: [.macOS],
                 category: .navigation,
@@ -141,7 +141,7 @@ public final class KeyboardShortcutRegistry {
             ),
             .init(
                 id: "nav.forward",
-                key: .rightBracket,
+                key: KeyEquivalent("]"),
                 modifiers: [.command],
                 platforms: [.macOS],
                 category: .navigation,
@@ -169,7 +169,7 @@ public final class KeyboardShortcutRegistry {
             // General
             .init(
                 id: "general.help",
-                key: .slash,
+                key: KeyEquivalent("/"),
                 modifiers: [.command, .shift],
                 platforms: [.macOS, .iOS],
                 category: .general,
@@ -177,7 +177,7 @@ public final class KeyboardShortcutRegistry {
             ),
             .init(
                 id: "general.close",
-                key: .w,
+                key: KeyEquivalent("w"),
                 modifiers: [.command],
                 platforms: [.macOS],
                 category: .general,
@@ -294,6 +294,15 @@ public enum Platform: String, Sendable, Hashable {
 private struct ShortcutKey: Hashable, Sendable {
     let key: KeyEquivalent
     let modifiers: EventModifiers
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(key.character)
+        hasher.combine(modifiers.rawValue)
+    }
+
+    static func == (lhs: ShortcutKey, rhs: ShortcutKey) -> Bool {
+        lhs.key.character == rhs.key.character && lhs.modifiers.rawValue == rhs.modifiers.rawValue
+    }
 }
 
 /// Errores de keyboard shortcuts
@@ -340,8 +349,12 @@ extension KeyEquivalent {
 
 // MARK: - Environment Integration
 
-public struct KeyboardShortcutRegistryKey: EnvironmentKey {
-    public static let defaultValue = KeyboardShortcutRegistry.shared
+extension KeyboardShortcutRegistryKey: @preconcurrency EnvironmentKey {}
+public struct KeyboardShortcutRegistryKey {
+    @MainActor
+    public static var defaultValue: KeyboardShortcutRegistry {
+        .shared
+    }
 }
 
 extension EnvironmentValues {
