@@ -1,3 +1,28 @@
+//
+//  HighContrastSupport.swift
+//  EduAccessibility
+//
+//  System support for High Contrast mode detection and handling.
+//
+//  Features:
+//  - High Contrast / Increase Contrast detection
+//  - Differentiate Without Color detection
+//  - Cross-platform support (iOS, macOS, tvOS, watchOS, visionOS)
+//  - Environment key integration
+//
+//  Use Cases:
+//  - Adjust colors for better contrast
+//  - Increase border thickness
+//  - Add visual indicators beyond color
+//
+//  Architecture:
+//  - Pure functions reading directly from system APIs
+//  - All functions are @MainActor
+//  - Swift 6.2 strict concurrency compliant
+//
+//  Swift 6.2 strict concurrency compliant
+//
+
 import SwiftUI
 
 /// Sistema de soporte para High Contrast mode del sistema.

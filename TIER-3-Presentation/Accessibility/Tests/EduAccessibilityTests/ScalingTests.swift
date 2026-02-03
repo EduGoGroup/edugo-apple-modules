@@ -1,3 +1,18 @@
+//
+//  ScalingTests.swift
+//  EduAccessibilityTests
+//
+//  Test suite for ScalingMetrics functionality.
+//
+//  Test Coverage:
+//  - Constant definitions (spacing, padding, corner radius, icons, borders, touch targets)
+//  - Scaling functions (spacing, padding, corner radius, icon size, border width)
+//  - Minimum touch target calculations
+//  - Environment integration
+//
+//  Swift 6.2 strict concurrency compliant
+//
+
 import Testing
 import SwiftUI
 @testable import EduAccessibility

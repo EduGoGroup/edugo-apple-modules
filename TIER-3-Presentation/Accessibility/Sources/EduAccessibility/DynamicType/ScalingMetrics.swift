@@ -1,3 +1,25 @@
+//
+//  ScalingMetrics.swift
+//  EduAccessibility
+//
+//  Provides adaptive metrics that scale with Dynamic Type to maintain
+//  consistent visual proportions across all size categories.
+//
+//  Features:
+//  - Predefined spacing, padding, corner radius, icon sizes, and border widths
+//  - Automatic scaling with appropriate curves for each metric type
+//  - Environment integration for reactive updates
+//  - Minimum touch target calculations (44pt standard, 48pt accessibility)
+//
+//  Scaling strategies:
+//  - Spacing/Padding: Logarithmic curve (moderate growth)
+//  - Corner Radius: Clamped curve (limited growth)
+//  - Icon Sizes: Linear curve (proportional growth)
+//  - Border Width: Stepped curve (discrete increments)
+//
+//  Swift 6.2 strict concurrency compliant
+//
+
 import SwiftUI
 
 /// Proporciona métricas adaptativas que escalan con Dynamic Type

@@ -1,3 +1,21 @@
+//
+//  ContentSizeCategory+Extensions.swift
+//  EduAccessibility
+//
+//  Extensions for ContentSizeCategory to simplify working with Dynamic Type.
+//
+//  Features:
+//  - Scaling level property (0-11, where 3 is large/base)
+//  - Convenience scaling methods for all metric types
+//  - Layout direction and stacking recommendations
+//  - Grid column, line limit, and truncation helpers
+//  - Category comparison methods
+//  - Human-readable names (full and short forms)
+//  - Categorized lists (standard vs accessibility)
+//
+//  Swift 6.2 strict concurrency compliant
+//
+
 import SwiftUI
 
 /// Extensiones para ContentSizeCategory que facilitan el trabajo con Dynamic Type

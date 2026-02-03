@@ -1,3 +1,19 @@
+//
+//  DynamicTypeTests.swift
+//  EduAccessibilityTests
+//
+//  Test suite for DynamicTypeSupport functionality.
+//
+//  Test Coverage:
+//  - Base size mapping for all text styles
+//  - Linear, logarithmic, exponential, stepped, and clamped scaling curves
+//  - Size category classification (standard vs accessibility)
+//  - Scaling level calculation
+//  - Alternative layout detection
+//
+//  Swift 6.2 strict concurrency compliant
+//
+
 import Testing
 import SwiftUI
 @testable import EduAccessibility

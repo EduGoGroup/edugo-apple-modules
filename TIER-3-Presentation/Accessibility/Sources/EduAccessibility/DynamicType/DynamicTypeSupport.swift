@@ -1,3 +1,21 @@
+//
+//  DynamicTypeSupport.swift
+//  EduAccessibility
+//
+//  Provides comprehensive Dynamic Type support with adaptive scaling curves.
+//  Enables text and UI elements to scale automatically based on user preferences,
+//  with multiple scaling strategies (linear, logarithmic, exponential, stepped, clamped).
+//
+//  Features:
+//  - Text style to base size mapping
+//  - Scaled font creation (system and custom)
+//  - Multiple scaling curves for different use cases
+//  - Size category detection and classification
+//  - Alternative layout recommendations
+//
+//  Swift 6.2 strict concurrency compliant
+//
+
 import SwiftUI
 
 /// Proporciona soporte completo para Dynamic Type con escalado adaptativo

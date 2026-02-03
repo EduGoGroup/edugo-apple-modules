@@ -1,3 +1,29 @@
+//
+//  Animation+Accessibility.swift
+//  EduAccessibility
+//
+//  Animation extensions for accessibility support with automatic adaptation
+//  based on Reduce Motion preference.
+//
+//  Adaptation Strategy:
+//  - Long animations → Short (duration * 0.25)
+//  - Scale/rotation → Fade
+//  - Spring → Fast easeOut
+//  - Slide → Fade
+//
+//  Features:
+//  - .accessible() wrapper for automatic adaptation
+//  - Accessible variants of common animations (spring, easeOut, easeIn)
+//  - Transition extensions with automatic fallbacks
+//
+//  Architecture:
+//  - All functions are @MainActor (access UIAccessibility)
+//  - No singletons, reads directly from system
+//  - Swift 6.2 strict concurrency compliant
+//
+//  Swift 6.2 strict concurrency compliant
+//
+
 import SwiftUI
 
 /// Extensiones de Animation para soporte de accesibilidad.

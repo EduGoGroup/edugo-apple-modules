@@ -1,3 +1,26 @@
+//
+//  ContrastAdjustment.swift
+//  EduAccessibility
+//
+//  Color contrast adjustment algorithms following WCAG 2.1 AAA standards.
+//
+//  Features:
+//  - Contrast ratio calculation (WCAG 2.1 formula)
+//  - Automatic color adjustment to meet minimum ratios
+//  - WCAG compliance levels (AAA, AA for normal and large text)
+//  - Enhanced contrast mode (10:1 ratio)
+//  - Border thickness adjustment for High Contrast
+//
+//  WCAG 2.1 Ratios:
+//  - AAA Normal Text: 7:1
+//  - AAA Large Text: 4.5:1
+//  - AA Normal Text: 4.5:1
+//  - AA Large Text: 3:1
+//  - Enhanced: 10:1
+//
+//  Swift 6.2 strict concurrency compliant
+//
+
 import SwiftUI
 
 /// Algoritmos para ajustar contraste de colores según WCAG 2.1 AAA.

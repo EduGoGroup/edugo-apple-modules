@@ -1,3 +1,23 @@
+//
+//  ReducedMotionSupport.swift
+//  EduAccessibility
+//
+//  System support for Reduce Motion preference detection and handling.
+//
+//  Features:
+//  - Cross-platform detection (iOS, macOS, tvOS, watchOS, visionOS)
+//  - Pure functions that read directly from system APIs
+//  - Conditional execution helpers (ifMotionAllowed, ifMotionReduced)
+//  - Value selection based on motion preference
+//
+//  Architecture:
+//  - No singletons with mutable state
+//  - All functions are @MainActor (access UIAccessibility/NSWorkspace)
+//  - Swift 6.2 strict concurrency compliant
+//
+//  Swift 6.2 strict concurrency compliant
+//
+
 import SwiftUI
 
 /// Sistema de soporte para Reduce Motion preference del sistema.

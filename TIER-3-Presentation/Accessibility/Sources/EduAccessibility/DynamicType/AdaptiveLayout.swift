@@ -1,3 +1,26 @@
+//
+//  AdaptiveLayout.swift
+//  EduAccessibility
+//
+//  Provides adaptive layouts that automatically adjust based on size category
+//  to optimize readability and usability at all text sizes.
+//
+//  Features:
+//  - Automatic HStack ↔ VStack switching for accessibility sizes
+//  - Dynamic grid column calculation (reduces columns for large text)
+//  - Adaptive line limits (unlimited for accessibility sizes)
+//  - Smart truncation modes (middle for accessibility, tail for standard)
+//  - Minimum scale factor recommendations
+//  - Minimum touch target enforcement
+//
+//  Layout Strategy:
+//  - Standard sizes (XS-XXXL): Horizontal layouts preferred
+//  - Accessibility sizes (AX-M and above): Vertical layouts preferred
+//  - Grid columns reduce progressively as text size increases
+//
+//  Swift 6.2 strict concurrency compliant
+//
+
 import SwiftUI
 
 /// Proporciona layouts adaptativos que cambian automáticamente

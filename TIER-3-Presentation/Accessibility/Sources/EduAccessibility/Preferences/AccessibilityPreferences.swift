@@ -1,3 +1,30 @@
+//
+//  AccessibilityPreferences.swift
+//  EduAccessibility
+//
+//  Centralized observer for all system accessibility preferences.
+//
+//  Features:
+//  - Unified access to all accessibility settings
+//  - Computed properties that read current system state
+//  - Notification-based updates (optional)
+//  - SwiftUI Environment integration
+//
+//  Tracked Preferences:
+//  - Reduce Motion
+//  - High Contrast / Increase Contrast
+//  - Differentiate Without Color
+//  - Content Size Category
+//
+//  Architecture:
+//  - @Observable for reactive updates
+//  - @MainActor isolated for thread safety
+//  - Computed properties read directly from system
+//  - No unnecessary mutable state
+//
+//  Swift 6.2 strict concurrency compliant
+//
+
 import SwiftUI
 import Observation
 
