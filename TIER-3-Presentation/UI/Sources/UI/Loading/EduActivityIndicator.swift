@@ -146,7 +146,7 @@ public struct EduInlineLoader: View {
 
 // MARK: - Previews
 
-#Preview("Tama\u00f1os") {
+#Preview("Tamaños") {
     VStack(spacing: 32) {
         EduActivityIndicator(style: .small)
         EduActivityIndicator(style: .medium)
@@ -168,16 +168,16 @@ public struct EduInlineLoader: View {
     VStack {
         Text("Contenido de la vista")
             .font(.title)
-        Text("Este contenido est\u00e1 detr\u00e1s del overlay")
+        Text("Este contenido está detrás del overlay")
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .loadingOverlay(isLoading: true, message: "Cargando...")
+    .modifier(LoadingOverlayModifier(isLoading: true, message: "Cargando...", style: .medium))
 }
 
 #Preview("Loading Overlay sin mensaje") {
     Text("Contenido")
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .loadingOverlay(isLoading: true)
+        .modifier(LoadingOverlayModifier(isLoading: true, message: nil, style: .medium))
 }
 
 #Preview("Inline Loader") {

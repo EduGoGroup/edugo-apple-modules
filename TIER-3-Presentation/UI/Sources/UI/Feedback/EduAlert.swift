@@ -162,8 +162,8 @@ extension View {
     .eduAlert(
         isPresented: $showAlert,
         content: EduAlertContent(
-            title: "Confirmar acci\u00f3n",
-            message: "\u00bfEst\u00e1s seguro de que deseas continuar?",
+            title: "Confirmar acción",
+            message: "¿Estás seguro de que deseas continuar?",
             actions: [
                 EduAlertAction(title: "Cancelar", role: .cancel) {},
                 EduAlertAction(title: "Confirmar") { print("Confirmado") }
@@ -182,7 +182,7 @@ extension View {
         isPresented: $showAlert,
         content: EduAlertContent(
             title: "Eliminar elemento",
-            message: "Esta acci\u00f3n no se puede deshacer. \u00bfDeseas continuar?",
+            message: "Esta acción no se puede deshacer. ¿Deseas continuar?",
             actions: [
                 EduAlertAction(title: "Cancelar", role: .cancel) {},
                 EduAlertAction(title: "Eliminar", role: .destructive) { print("Eliminado") }
@@ -200,10 +200,10 @@ extension View {
     .eduAlert(
         isPresented: $showAlert,
         content: EduAlertContent(
-            title: "Actualizaci\u00f3n disponible",
-            message: "Hay una nueva versi\u00f3n de la aplicaci\u00f3n disponible.",
+            title: "Actualización disponible",
+            message: "Hay una nueva versión de la aplicación disponible.",
             actions: [
-                EduAlertAction(title: "M\u00e1s tarde", role: .cancel) {},
+                EduAlertAction(title: "Más tarde", role: .cancel) {},
                 EduAlertAction(title: "Actualizar") { print("Actualizando") }
             ]
         )

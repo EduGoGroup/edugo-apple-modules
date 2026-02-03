@@ -81,7 +81,7 @@ public struct EduToast: View {
 
 #Preview("Toast Info") {
     EduToast(
-        item: ToastItem(message: "Informaci\u00f3n actualizada", style: .info, duration: 3),
+        item: ToastItem(message: "Información actualizada", style: .info, duration: 3),
         onDismiss: {}
     )
     .padding(.top, 50)
@@ -97,7 +97,7 @@ public struct EduToast: View {
 
 #Preview("Toast Warning") {
     EduToast(
-        item: ToastItem(message: "Conexi\u00f3n inestable", style: .warning, duration: 3),
+        item: ToastItem(message: "Conexión inestable", style: .warning, duration: 3),
         onDismiss: {}
     )
     .padding(.top, 50)

@@ -308,7 +308,7 @@ public struct ScalingMetricsPreview: View {
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.systemBackground))
+        .background(Color(white: 1.0).opacity(0.001)) // Transparent background for preview
         .environment(\.sizeCategory, sizeCategory)
     }
 }

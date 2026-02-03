@@ -37,21 +37,21 @@ public struct EduBanner: View {
 
 #Preview("Info Banner") {
     EduBanner(
-        message: "Esta es una notificaci\u00f3n informativa",
+        message: "Esta es una notificación informativa",
         style: .info
     )
 }
 
 #Preview("Success Banner") {
     EduBanner(
-        message: "Operaci\u00f3n completada exitosamente",
+        message: "Operación completada exitosamente",
         style: .success
     )
 }
 
 #Preview("Warning Banner") {
     EduBanner(
-        message: "Atenci\u00f3n: Tu sesi\u00f3n expira pronto",
+        message: "Atención: Tu sesión expira pronto",
         style: .warning
     )
 }
@@ -63,7 +63,7 @@ public struct EduBanner: View {
     )
 }
 
-#Preview("Con bot\u00f3n de cerrar") {
+#Preview("Con botón de cerrar") {
     EduBanner(
         message: "Puedes cerrar este banner",
         style: .info

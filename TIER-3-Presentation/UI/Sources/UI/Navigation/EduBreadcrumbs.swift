@@ -182,7 +182,7 @@ public final class EduBreadcrumbCoordinator: Sendable {
 // MARK: - Previews
 
 #if os(macOS)
-#Preview("Breadcrumbs b\u00e1sico") {
+#Preview("Breadcrumbs básico") {
     EduBreadcrumbs(
         items: [
             EduBreadcrumbItem(id: "home", title: "Inicio", icon: "house", destination: "home"),
@@ -198,7 +198,7 @@ public final class EduBreadcrumbCoordinator: Sendable {
 #Preview("Breadcrumbs largo") {
     EduBreadcrumbs(
         items: [
-            EduBreadcrumbItem(id: "1", title: "Ra\u00edz", destination: "1"),
+            EduBreadcrumbItem(id: "1", title: "Raíz", destination: "1"),
             EduBreadcrumbItem(id: "2", title: "Carpeta A", destination: "2"),
             EduBreadcrumbItem(id: "3", title: "Subcarpeta", destination: "3"),
             EduBreadcrumbItem(id: "4", title: "Proyecto", destination: "4"),
@@ -214,7 +214,7 @@ public final class EduBreadcrumbCoordinator: Sendable {
     EduBreadcrumbs(
         items: [
             EduBreadcrumbItem(id: "home", title: "Inicio", icon: "house", destination: "home"),
-            EduBreadcrumbItem(id: "settings", title: "Configuraci\u00f3n", icon: "gear")
+            EduBreadcrumbItem(id: "settings", title: "Configuración", icon: "gear")
         ]
     )
     .padding()
@@ -226,8 +226,8 @@ public final class EduBreadcrumbCoordinator: Sendable {
     EduPlatformBreadcrumbs(
         items: [
             EduBreadcrumbItem(id: "home", title: "Inicio"),
-            EduBreadcrumbItem(id: "section", title: "Secci\u00f3n"),
-            EduBreadcrumbItem(id: "current", title: "P\u00e1gina actual")
+            EduBreadcrumbItem(id: "section", title: "Sección"),
+            EduBreadcrumbItem(id: "current", title: "Página actual")
         ]
     )
     .padding()

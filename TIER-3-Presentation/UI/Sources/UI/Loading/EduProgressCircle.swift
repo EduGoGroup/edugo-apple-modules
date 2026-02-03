@@ -212,7 +212,7 @@ public struct EduGaugeProgress: View {
 
 // MARK: - Previews
 
-#Preview("Progress Circle b\u00e1sico") {
+#Preview("Progress Circle básico") {
     VStack(spacing: 32) {
         EduProgressCircle(progress: 0.25)
             .frame(width: 80, height: 80)

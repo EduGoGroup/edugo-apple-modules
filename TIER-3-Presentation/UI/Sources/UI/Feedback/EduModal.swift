@@ -257,25 +257,25 @@ extension View {
 
 #Preview("Modal Content") {
     EduModalContent(
-        title: "Configuraci\u00f3n",
+        title: "Configuración",
         size: .medium,
         onDismiss: { print("Cerrado") }
     ) {
         VStack(spacing: 16) {
             Text("Contenido del modal")
-            Text("Puedes agregar cualquier vista aqu\u00ed")
+            Text("Puedes agregar cualquier vista aquí")
             Spacer()
         }
     }
 }
 
-#Preview("Modal peque\u00f1o") {
+#Preview("Modal pequeño") {
     EduModalContent(
         title: "Alerta",
         size: .small,
         onDismiss: { print("Cerrado") }
     ) {
-        Text("Este es un modal peque\u00f1o")
+        Text("Este es un modal pequeño")
     }
 }
 
@@ -297,7 +297,7 @@ extension View {
     }
 }
 
-#Preview("Modal sin bot\u00f3n cerrar") {
+#Preview("Modal sin botón cerrar") {
     EduModalContent(
         title: "Proceso en curso",
         size: .small,

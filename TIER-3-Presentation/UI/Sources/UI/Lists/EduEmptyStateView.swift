@@ -50,7 +50,7 @@ public struct EduEmptyStateView: View {
 
 // MARK: - Previews
 
-#Preview("Estado vac\u00edo b\u00e1sico") {
+#Preview("Estado vacío básico") {
     EduEmptyStateView(
         title: "Sin resultados",
         description: "No hay elementos para mostrar"
@@ -60,26 +60,26 @@ public struct EduEmptyStateView: View {
 #Preview("Con icono personalizado") {
     EduEmptyStateView(
         icon: "magnifyingglass",
-        title: "Sin resultados de b\u00fasqueda",
-        description: "Intenta con otros t\u00e9rminos de b\u00fasqueda"
+        title: "Sin resultados de búsqueda",
+        description: "Intenta con otros términos de búsqueda"
     )
 }
 
-#Preview("Con acci\u00f3n") {
+#Preview("Con acción") {
     EduEmptyStateView(
         icon: "plus.circle",
         title: "Sin elementos",
         description: "Comienza agregando tu primer elemento",
         actionTitle: "Agregar elemento"
     ) {
-        print("Acci\u00f3n ejecutada")
+        print("Acción ejecutada")
     }
 }
 
 #Preview("Dark Mode") {
     EduEmptyStateView(
         icon: "folder",
-        title: "Carpeta vac\u00eda",
+        title: "Carpeta vacía",
         description: "Esta carpeta no contiene archivos"
     )
     .preferredColorScheme(.dark)

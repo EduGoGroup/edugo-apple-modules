@@ -148,25 +148,6 @@ struct EduCardTests {
         #expect(card != nil, "Card interactivo debe crearse")
     }
 
-    // MARK: - Convenience Initializers Tests
-
-    // Commented out - static convenience methods replaced with functions
-    // @Test("EduCard.hero crea card correctamente")
-    // func testHeroCardConvenience() {
-    //     let card = EduCard.hero {
-    //         Text("Hero Card")
-    //     }
-    //     #expect(card != nil, "Hero card debe crearse")
-    // }
-
-    // @Test("EduCard.list crea card correctamente")
-    // func testListCardConvenience() {
-    //     let card = EduCard.list {
-    //         Text("List Card")
-    //     }
-    //     #expect(card != nil, "List card debe crearse")
-    // }
-
     // MARK: - Specialized Cards Tests
 
     @Test("EduHeroCard inicializa correctamente")

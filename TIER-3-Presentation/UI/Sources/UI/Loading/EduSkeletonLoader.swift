@@ -252,7 +252,7 @@ public struct EduSkeletonGroup<Content: View>: View {
 
 // MARK: - Previews
 
-#Preview("Formas b\u00e1sicas") {
+#Preview("Formas básicas") {
     VStack(spacing: 24) {
         EduSkeletonLoader(shape: .rectangle)
             .frame(height: 40)

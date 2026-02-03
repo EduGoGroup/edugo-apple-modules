@@ -310,8 +310,8 @@ public final class EduNavigationCoordinator: Sendable {
 
 #Preview("Navigation Bar personalizada") {
     EduNavigationBar(
-        title: "Configuraci\u00f3n",
-        leadingItem: EduNavigationBarItem(icon: "chevron.left") { print("Atr\u00e1s") },
+        title: "Configuración",
+        leadingItem: EduNavigationBarItem(icon: "chevron.left") { print("Atrás") },
         trailingItem: EduNavigationBarItem(icon: "gear") { print("Opciones") }
     ) {
         Text("Contenido de la pantalla")
@@ -326,7 +326,7 @@ public final class EduNavigationCoordinator: Sendable {
         trailingItem: EduNavigationBarItem(title: "Guardar") { print("Guardar") }
     ) {
         VStack(spacing: 16) {
-            Text("Nombre: Juan P\u00e9rez")
+            Text("Nombre: Juan Pérez")
             Text("Email: juan@email.com")
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -336,10 +336,10 @@ public final class EduNavigationCoordinator: Sendable {
 #Preview("Native Navigation Bar") {
     NavigationStack {
         Text("Contenido")
-            .eduNavigationBar(title: "T\u00edtulo", displayMode: .large)
+            .eduNavigationBar(title: "Título", displayMode: .large)
             .eduNavigationBarItems(
-                leading: EduNavigationBarItem(icon: "chevron.left") { print("Atr\u00e1s") },
-                trailing: EduNavigationBarItem(icon: "plus") { print("A\u00f1adir") }
+                leading: EduNavigationBarItem(icon: "chevron.left") { print("Atrás") },
+                trailing: EduNavigationBarItem(icon: "plus") { print("Añadir") }
             )
     }
 }

@@ -208,7 +208,7 @@ public struct EduCoordinatedTabBar<Content: View>: View {
 
 // MARK: - Previews
 
-#Preview("TabBar b\u00e1sico") {
+#Preview("TabBar básico") {
     @Previewable @State var selection = "home"
 
     let items = [

@@ -313,7 +313,7 @@ public final class EduNavigationRouter: Sendable {
 
 // MARK: - Previews
 
-#Preview("NavigationLink b\u00e1sico") {
+#Preview("NavigationLink básico") {
     NavigationStack {
         VStack(spacing: 16) {
             EduNavigationLink {
@@ -351,12 +351,12 @@ public final class EduNavigationRouter: Sendable {
     NavigationStack {
         VStack(spacing: 8) {
             EduStyledNavigationLink(
-                title: "Configuraci\u00f3n",
-                subtitle: "Ajustes de la aplicaci\u00f3n",
+                title: "Configuración",
+                subtitle: "Ajustes de la aplicación",
                 icon: "gear",
                 style: .row
             ) {
-                Text("Vista de configuraci\u00f3n")
+                Text("Vista de configuración")
             }
 
             EduStyledNavigationLink(
@@ -431,7 +431,7 @@ public final class EduNavigationRouter: Sendable {
             }
         }
         .padding()
-        .navigationTitle("Men\u00fa")
+        .navigationTitle("Menú")
     }
     .preferredColorScheme(.dark)
 }

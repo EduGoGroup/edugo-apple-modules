@@ -332,7 +332,7 @@ extension View {
 
 // MARK: - Previews
 
-#Preview("Action Sheet b\u00e1sico") {
+#Preview("Action Sheet básico") {
     @Previewable @State var showActionSheet = false
 
     Button("Mostrar opciones") {

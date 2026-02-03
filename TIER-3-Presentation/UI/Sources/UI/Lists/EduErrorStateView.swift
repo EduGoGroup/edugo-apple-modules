@@ -45,9 +45,9 @@ public struct EduErrorStateView: View {
 
 // MARK: - Previews
 
-#Preview("Error b\u00e1sico") {
+#Preview("Error básico") {
     EduErrorStateView(
-        message: "No se pudo cargar la informaci\u00f3n"
+        message: "No se pudo cargar la información"
     ) {
         print("Reintentando...")
     }
@@ -55,27 +55,27 @@ public struct EduErrorStateView: View {
 
 #Preview("Error de red") {
     EduErrorStateView(
-        title: "Sin conexi\u00f3n",
-        message: "Verifica tu conexi\u00f3n a internet e intenta nuevamente",
-        retryTitle: "Reintentar conexi\u00f3n"
+        title: "Sin conexión",
+        message: "Verifica tu conexión a internet e intenta nuevamente",
+        retryTitle: "Reintentar conexión"
     ) {
-        print("Reintentando conexi\u00f3n...")
+        print("Reintentando conexión...")
     }
 }
 
 #Preview("Error personalizado") {
     EduErrorStateView(
-        title: "Sesi\u00f3n expirada",
-        message: "Tu sesi\u00f3n ha expirado. Por favor, inicia sesi\u00f3n nuevamente.",
-        retryTitle: "Iniciar sesi\u00f3n"
+        title: "Sesión expirada",
+        message: "Tu sesión ha expirado. Por favor, inicia sesión nuevamente.",
+        retryTitle: "Iniciar sesión"
     ) {
-        print("Iniciando sesi\u00f3n...")
+        print("Iniciando sesión...")
     }
 }
 
 #Preview("Dark Mode") {
     EduErrorStateView(
-        message: "Ocurri\u00f3 un error inesperado"
+        message: "Ocurrió un error inesperado"
     ) {
         print("Reintentando...")
     }
