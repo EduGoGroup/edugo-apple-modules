@@ -16,133 +16,115 @@ struct EduProgressCircleTests {
 
     @Test("EduProgressCircle inicializa con progreso")
     func testProgressCircleInitialization() {
-        let circle = EduProgressCircle(progress: 0.5)
-        #expect(circle != nil)
+        let _ = EduProgressCircle(progress: 0.5)
     }
 
     @Test("EduProgressCircle inicializa con valores default")
     func testProgressCircleDefaultValues() {
-        let circle = EduProgressCircle(progress: 0.7)
-        #expect(circle != nil)
+        let _ = EduProgressCircle(progress: 0.7)
     }
 
     // MARK: - Progress Value Tests
 
     @Test("EduProgressCircle con progreso 0")
     func testProgressCircleZeroProgress() {
-        let circle = EduProgressCircle(progress: 0.0)
-        #expect(circle != nil)
+        let _ = EduProgressCircle(progress: 0.0)
     }
 
     @Test("EduProgressCircle con progreso 1 (completo)")
     func testProgressCircleFullProgress() {
-        let circle = EduProgressCircle(progress: 1.0)
-        #expect(circle != nil)
+        let _ = EduProgressCircle(progress: 1.0)
     }
 
     @Test("EduProgressCircle con progreso 0.5 (mitad)")
     func testProgressCircleHalfProgress() {
-        let circle = EduProgressCircle(progress: 0.5)
-        #expect(circle != nil)
+        let _ = EduProgressCircle(progress: 0.5)
     }
 
     // MARK: - Progress Clamping Tests
 
     @Test("EduProgressCircle clampea progreso < 0")
     func testProgressCircleClampingAtZero() {
-        let circle = EduProgressCircle(progress: -0.3)
-        #expect(circle != nil)
+        let _ = EduProgressCircle(progress: -0.3)
     }
 
     @Test("EduProgressCircle clampea progreso > 1")
     func testProgressCircleClampingAtOne() {
-        let circle = EduProgressCircle(progress: 1.2)
-        #expect(circle != nil)
+        let _ = EduProgressCircle(progress: 1.2)
     }
 
     // MARK: - Customization Tests
 
     @Test("EduProgressCircle con lineWidth custom")
     func testProgressCircleCustomLineWidth() {
-        let circle = EduProgressCircle(progress: 0.4, lineWidth: 12)
-        #expect(circle != nil)
+        let _ = EduProgressCircle(progress: 0.4, lineWidth: 12)
     }
 
     @Test("EduProgressCircle con tint color custom")
     func testProgressCircleCustomTint() {
-        let circle = EduProgressCircle(progress: 0.6, tint: .blue)
-        #expect(circle != nil)
+        let _ = EduProgressCircle(progress: 0.6, tint: .blue)
     }
 
     @Test("EduProgressCircle muestra porcentaje")
     func testProgressCircleWithPercentage() {
-        let circle = EduProgressCircle(progress: 0.75, showPercentage: true)
-        #expect(circle != nil)
+        let _ = EduProgressCircle(progress: 0.75, showPercentage: true)
     }
 
     @Test("EduProgressCircle oculta porcentaje (default)")
     func testProgressCircleHidesPercentage() {
-        let circle = EduProgressCircle(progress: 0.8, showPercentage: false)
-        #expect(circle != nil)
+        let _ = EduProgressCircle(progress: 0.8, showPercentage: false)
     }
 
     @Test("EduProgressCircle con todas las opciones custom")
     func testProgressCircleFullyCustomized() {
-        let circle = EduProgressCircle(
+        let _ = EduProgressCircle(
             progress: 0.65,
             lineWidth: 10,
             tint: .green,
             showPercentage: true
         )
-        #expect(circle != nil)
     }
 
     // MARK: - Indeterminate Circle Tests
 
     @Test("EduIndeterminateCircle inicializa correctamente")
     func testIndeterminateCircleInitialization() {
-        let circle = EduIndeterminateCircle()
-        #expect(circle != nil)
+        let _ = EduIndeterminateCircle()
     }
 
     @Test("EduIndeterminateCircle con lineWidth custom")
     func testIndeterminateCircleCustomLineWidth() {
-        let circle = EduIndeterminateCircle(lineWidth: 10)
-        #expect(circle != nil)
+        let _ = EduIndeterminateCircle(lineWidth: 10)
     }
 
     @Test("EduIndeterminateCircle con tint custom")
     func testIndeterminateCircleCustomTint() {
-        let circle = EduIndeterminateCircle(tint: .red)
-        #expect(circle != nil)
+        let _ = EduIndeterminateCircle(tint: .red)
     }
 
     // MARK: - Circular Progress with Icon Tests
 
     @Test("EduCircularProgressWithIcon inicializa con icono")
     func testCircularProgressWithIcon() {
-        let circle = EduCircularProgressWithIcon(progress: 0.8, icon: "checkmark")
-        #expect(circle != nil)
+        let _ = EduCircularProgressWithIcon(progress: 0.8, icon: "checkmark")
     }
 
     @Test("EduCircularProgressWithIcon con lineWidth custom")
     func testCircularProgressWithIconCustomLineWidth() {
-        let circle = EduCircularProgressWithIcon(
+        let _ = EduCircularProgressWithIcon(
             progress: 0.5,
             icon: "star.fill",
             lineWidth: 6
         )
-        #expect(circle != nil)
     }
 
     @Test("EduCircularProgressWithIcon con tint custom")
     func testCircularProgressWithIconCustomTint() {
-        let circle = EduCircularProgressWithIcon(
+        let _ = EduCircularProgressWithIcon(
             progress: 0.7,
             icon: "heart.fill",
             tint: .pink
         )
-        #expect(circle != nil)
     }
 
     // MARK: - Multi-Ring Progress Tests
@@ -153,8 +135,7 @@ struct EduProgressCircleTests {
             EduMultiRingProgress.RingData(progress: 0.7, color: .blue),
             EduMultiRingProgress.RingData(progress: 0.5, color: .green)
         ]
-        let multiRing = EduMultiRingProgress(rings: rings)
-        #expect(multiRing != nil)
+        let _ = EduMultiRingProgress(rings: rings)
     }
 
     @Test("EduMultiRingProgress con un solo ring")
@@ -162,8 +143,7 @@ struct EduProgressCircleTests {
         let rings = [
             EduMultiRingProgress.RingData(progress: 0.8, color: .red)
         ]
-        let multiRing = EduMultiRingProgress(rings: rings)
-        #expect(multiRing != nil)
+        let _ = EduMultiRingProgress(rings: rings)
     }
 
     @Test("EduMultiRingProgress con tres rings")
@@ -173,8 +153,7 @@ struct EduProgressCircleTests {
             EduMultiRingProgress.RingData(progress: 0.6, color: .green),
             EduMultiRingProgress.RingData(progress: 0.3, color: .orange)
         ]
-        let multiRing = EduMultiRingProgress(rings: rings)
-        #expect(multiRing != nil)
+        let _ = EduMultiRingProgress(rings: rings)
     }
 
     @Test("RingData inicializa con valores correctos")
@@ -188,42 +167,36 @@ struct EduProgressCircleTests {
 
     @Test("EduGaugeProgress inicializa correctamente")
     func testGaugeProgressInitialization() {
-        let gauge = EduGaugeProgress(progress: 0.65)
-        #expect(gauge != nil)
+        let _ = EduGaugeProgress(progress: 0.65)
     }
 
     @Test("EduGaugeProgress muestra valor (default)")
     func testGaugeProgressShowsValue() {
-        let gauge = EduGaugeProgress(progress: 0.5, showValue: true)
-        #expect(gauge != nil)
+        let _ = EduGaugeProgress(progress: 0.5, showValue: true)
     }
 
     @Test("EduGaugeProgress oculta valor")
     func testGaugeProgressHidesValue() {
-        let gauge = EduGaugeProgress(progress: 0.4, showValue: false)
-        #expect(gauge != nil)
+        let _ = EduGaugeProgress(progress: 0.4, showValue: false)
     }
 
     @Test("EduGaugeProgress con lineWidth custom")
     func testGaugeProgressCustomLineWidth() {
-        let gauge = EduGaugeProgress(progress: 0.7, lineWidth: 15)
-        #expect(gauge != nil)
+        let _ = EduGaugeProgress(progress: 0.7, lineWidth: 15)
     }
 
     @Test("EduGaugeProgress con tint custom")
     func testGaugeProgressCustomTint() {
-        let gauge = EduGaugeProgress(progress: 0.85, tint: .orange)
-        #expect(gauge != nil)
+        let _ = EduGaugeProgress(progress: 0.85, tint: .orange)
     }
 
     @Test("EduGaugeProgress totalmente customizado")
     func testGaugeProgressFullyCustomized() {
-        let gauge = EduGaugeProgress(
+        let _ = EduGaugeProgress(
             progress: 0.6,
             lineWidth: 14,
             tint: .cyan,
             showValue: true
         )
-        #expect(gauge != nil)
     }
 }

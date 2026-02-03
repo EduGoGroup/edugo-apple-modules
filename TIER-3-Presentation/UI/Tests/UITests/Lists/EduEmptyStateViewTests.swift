@@ -7,12 +7,12 @@ struct EduEmptyStateViewTests {
 
     @Test("EduEmptyStateView muestra icono, título y descripción")
     func testBasicDisplay() {
-        let view = EduEmptyStateView(
+        let _ = EduEmptyStateView(
             icon: "tray",
             title: "Sin elementos",
             description: "No hay datos para mostrar"
         )
-        #expect(view != nil)
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduEmptyStateView con action button")
@@ -24,7 +24,7 @@ struct EduEmptyStateViewTests {
 
         let context = TestContext()
 
-        let view = EduEmptyStateView(
+        let _ = EduEmptyStateView(
             title: "Sin datos",
             description: "Crea uno nuevo",
             actionTitle: "Crear",
@@ -32,16 +32,15 @@ struct EduEmptyStateViewTests {
                 context.actionCalled = true
             }
         )
-
-        #expect(view != nil)
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduEmptyStateView sin action button")
     func testWithoutAction() {
-        let view = EduEmptyStateView(
+        let _ = EduEmptyStateView(
             title: "Vacío",
             description: "Sin acción"
         )
-        #expect(view != nil)
+        // La inicialización exitosa del struct es suficiente validación
     }
 }

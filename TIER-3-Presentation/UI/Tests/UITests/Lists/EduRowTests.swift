@@ -8,57 +8,56 @@ struct EduRowTests {
 
     @Test("EduRow inicializa correctamente")
     func testBasicInitialization() {
-        let row = EduRow("Test")
-        #expect(row != nil)
+        let _ = EduRow("Test")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduRow con description")
     func testWithDescription() {
-        let row = EduRow("Title", description: "Description")
-        #expect(row != nil)
+        let _ = EduRow("Title", description: "Description")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduRow con leading content")
     func testWithLeading() {
-        let row = EduRow("Title", leading: Image(systemName: "star"))
-        #expect(row != nil)
+        let _ = EduRow("Title", leading: Image(systemName: "star"))
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduRow con trailing content")
     func testWithTrailing() {
-        let row = EduRow("Title", trailing: Image(systemName: "chevron.right"))
-        #expect(row != nil)
+        let _ = EduRow("Title", trailing: Image(systemName: "chevron.right"))
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduRow con divider desactivado")
     func testWithoutDivider() {
-        let row = EduRow("Title", showDivider: false)
-        #expect(row != nil)
+        let _ = EduRow("Title", showDivider: false)
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduRow con onTap action")
     func testOnTapExecution() {
-        let row = EduRow("Title", onTap: {
+        let _ = EduRow("Title", onTap: {
             // Action defined
         })
-
-        #expect(row != nil)
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduRow con leading Y trailing")
     func testWithLeadingAndTrailing() {
-        let row = EduRow(
+        let _ = EduRow(
             "Title",
             leading: Image(systemName: "star"),
             trailing: Image(systemName: "chevron.right")
         )
-        #expect(row != nil)
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduRow sin leading ni trailing")
     func testWithoutLeadingOrTrailing() {
-        let row = EduRow("Simple Title")
-        #expect(row != nil)
+        let _ = EduRow("Simple Title")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     // MARK: - Swipe Actions Tests
@@ -92,7 +91,6 @@ struct EduRowTests {
         ]
 
         let row = EduRow("Title", trailingSwipeActions: actions)
-        #expect(row != nil)
         #expect(row.trailingSwipeActions.count == 1)
     }
 
@@ -105,7 +103,6 @@ struct EduRowTests {
         ]
 
         let row = EduRow("Title", leadingSwipeActions: actions)
-        #expect(row != nil)
         #expect(row.leadingSwipeActions.count == 1)
     }
 
@@ -128,7 +125,6 @@ struct EduRowTests {
             trailingSwipeActions: trailingActions,
             leadingSwipeActions: leadingActions
         )
-        #expect(row != nil)
         #expect(row.trailingSwipeActions.count == 1)
         #expect(row.leadingSwipeActions.count == 1)
     }
@@ -148,7 +144,6 @@ struct EduRowTests {
         ]
 
         let row = EduRow("Title", trailingSwipeActions: actions)
-        #expect(row != nil)
         #expect(row.trailingSwipeActions.count == 3)
     }
 
@@ -181,7 +176,6 @@ struct EduRowTests {
             allowsFullSwipe: true
         )
 
-        #expect(row != nil)
         #expect(row.description == "Description")
         #expect(row.trailingSwipeActions.count == 1)
         #expect(row.allowsFullSwipe == true)

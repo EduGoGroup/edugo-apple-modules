@@ -8,68 +8,70 @@ struct EduBannerTests {
 
     @Test("EduBanner inicializa con valores mínimos")
     func testBannerMinimal() {
-        let banner = EduBanner(message: "Test message")
-        #expect(banner != nil)
+        let _ = EduBanner(message: "Test message")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduBanner inicializa con estilo")
     func testBannerWithStyle() {
-        let banner = EduBanner(message: "Success", style: .success)
-        #expect(banner != nil)
+        let _ = EduBanner(message: "Success", style: .success)
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduBanner inicializa con onDismiss")
     func testBannerWithDismiss() {
         var dismissed = false
-        let banner = EduBanner(
+        let _ = EduBanner(
             message: "Test",
             onDismiss: { dismissed = true }
         )
-        #expect(banner != nil)
+        _ = dismissed // Evitar warning de variable no usada
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduBanner con todos los parámetros")
     func testBannerFull() {
         var dismissed = false
-        let banner = EduBanner(
+        let _ = EduBanner(
             message: "Warning message",
             style: .warning,
             onDismiss: { dismissed = true }
         )
-        #expect(banner != nil)
+        _ = dismissed // Evitar warning de variable no usada
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduBanner sin onDismiss")
     func testBannerNoDismiss() {
-        let banner = EduBanner(
+        let _ = EduBanner(
             message: "Info message",
             style: .info,
             onDismiss: nil
         )
-        #expect(banner != nil)
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduBanner con estilo success")
     func testBannerSuccess() {
-        let banner = EduBanner(message: "Success!", style: .success)
-        #expect(banner != nil)
+        let _ = EduBanner(message: "Success!", style: .success)
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduBanner con estilo error")
     func testBannerError() {
-        let banner = EduBanner(message: "Error!", style: .error)
-        #expect(banner != nil)
+        let _ = EduBanner(message: "Error!", style: .error)
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduBanner con estilo warning")
     func testBannerWarning() {
-        let banner = EduBanner(message: "Warning!", style: .warning)
-        #expect(banner != nil)
+        let _ = EduBanner(message: "Warning!", style: .warning)
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduBanner con estilo info")
     func testBannerInfo() {
-        let banner = EduBanner(message: "Info", style: .info)
-        #expect(banner != nil)
+        let _ = EduBanner(message: "Info", style: .info)
+        // La inicialización exitosa del struct es suficiente validación
     }
 }

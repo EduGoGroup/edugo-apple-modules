@@ -9,69 +9,62 @@ struct EduCardTests {
 
     @Test("EduCard inicializa correctamente con parámetros por defecto")
     func testDefaultInitialization() {
-        let card = EduCard {
+        let _ = EduCard {
             Text("Test Content")
         }
-
-        #expect(card != nil, "Card debe inicializarse correctamente")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduCard inicializa con padding custom")
     func testCustomPaddingInitialization() {
-        let card = EduCard(
+        let _ = EduCard(
             padding: EdgeInsets(top: 20, leading: 20, bottom: 20, trailing: 20)
         ) {
             Text("Test Content")
         }
-
-        #expect(card != nil, "Card con padding custom debe inicializarse")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduCard inicializa con corner radius custom")
     func testCustomCornerRadius() {
-        let card = EduCard(cornerRadius: 16) {
+        let _ = EduCard(cornerRadius: 16) {
             Text("Test Content")
         }
-
-        #expect(card != nil, "Card con corner radius custom debe inicializarse")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     // MARK: - Elevation Tests
 
     @Test("EduCard con elevación none")
     func testElevationNone() {
-        let card = EduCard(elevation: .none) {
+        let _ = EduCard(elevation: .none) {
             Text("No Shadow")
         }
-
-        #expect(card != nil, "Card con elevación none debe crearse")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduCard con elevación low")
     func testElevationLow() {
-        let card = EduCard(elevation: .low) {
+        let _ = EduCard(elevation: .low) {
             Text("Low Shadow")
         }
-
-        #expect(card != nil, "Card con elevación low debe crearse")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduCard con elevación medium")
     func testElevationMedium() {
-        let card = EduCard(elevation: .medium) {
+        let _ = EduCard(elevation: .medium) {
             Text("Medium Shadow")
         }
-
-        #expect(card != nil, "Card con elevación medium debe crearse")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduCard con elevación high")
     func testElevationHigh() {
-        let card = EduCard(elevation: .high) {
+        let _ = EduCard(elevation: .high) {
             Text("High Shadow")
         }
-
-        #expect(card != nil, "Card con elevación high debe crearse")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     // MARK: - Elevation Values Tests
@@ -112,20 +105,18 @@ struct EduCardTests {
 
     @Test("EduCard con estado highlighted")
     func testHighlightedState() {
-        let card = EduCard(isHighlighted: true) {
+        let _ = EduCard(isHighlighted: true) {
             Text("Highlighted")
         }
-
-        #expect(card != nil, "Card destacado debe crearse")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduCard con estado disabled")
     func testDisabledState() {
-        let card = EduCard(isDisabled: true) {
+        let _ = EduCard(isDisabled: true) {
             Text("Disabled")
         }
-
-        #expect(card != nil, "Card deshabilitado debe crearse")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     // MARK: - Interaction Tests
@@ -139,69 +130,62 @@ struct EduCardTests {
 
         let context = TestContext()
 
-        let card = EduCard(onTap: {
+        let _ = EduCard(onTap: {
             context.tapped = true
         }) {
             Text("Tap Me")
         }
-
-        #expect(card != nil, "Card interactivo debe crearse")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     // MARK: - Specialized Cards Tests
 
     @Test("EduHeroCard inicializa correctamente")
     func testHeroCardInitialization() {
-        let heroCard = EduHeroCard {
+        let _ = EduHeroCard {
             Text("Hero Content")
         }
-
-        #expect(heroCard != nil, "Hero card debe inicializarse")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduHeroCard con onTap")
     func testHeroCardWithTap() {
-        let heroCard = EduHeroCard(onTap: {}) {
+        let _ = EduHeroCard(onTap: {}) {
             Text("Interactive Hero")
         }
-
-        #expect(heroCard != nil, "Hero card interactivo debe crearse")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduListCard inicializa correctamente")
     func testListCardInitialization() {
-        let listCard = EduListCard {
+        let _ = EduListCard {
             Text("List Item")
         }
-
-        #expect(listCard != nil, "List card debe inicializarse")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduListCard con onTap")
     func testListCardWithTap() {
-        let listCard = EduListCard(onTap: {}) {
+        let _ = EduListCard(onTap: {}) {
             Text("Interactive List Item")
         }
-
-        #expect(listCard != nil, "List card interactivo debe crearse")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     // MARK: - Background Color Tests
 
     @Test("EduCard con background color custom")
     func testCustomBackgroundColor() {
-        let card = EduCard(backgroundColor: .blue) {
+        let _ = EduCard(backgroundColor: .blue) {
             Text("Blue Background")
         }
-
-        #expect(card != nil, "Card con background custom debe crearse")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("Color.cardBackground existe")
     func testCardBackgroundColor() {
-        let color = Color.cardBackground
-
-        #expect(color != nil, "cardBackground color debe estar definido")
+        let _ = Color.cardBackground
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     // MARK: - Complex Scenarios Tests
@@ -215,7 +199,7 @@ struct EduCardTests {
 
         let context = TestContext()
 
-        let card = EduCard(
+        let _ = EduCard(
             padding: EdgeInsets(top: 20, leading: 20, bottom: 20, trailing: 20),
             cornerRadius: 16,
             elevation: .high,
@@ -231,13 +215,12 @@ struct EduCardTests {
                 Text("Subtitle")
             }
         }
-
-        #expect(card != nil, "Card completo debe crearse correctamente")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("Card con contenido complejo")
     func testCardWithComplexContent() {
-        let card = EduCard {
+        let _ = EduCard {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Header")
                     .font(.headline)
@@ -251,7 +234,6 @@ struct EduCardTests {
                 }
             }
         }
-
-        #expect(card != nil, "Card con contenido complejo debe crearse")
+        // La inicialización exitosa del struct es suficiente validación
     }
 }

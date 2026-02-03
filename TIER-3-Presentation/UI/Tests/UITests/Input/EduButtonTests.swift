@@ -9,117 +9,106 @@ struct EduButtonTests {
 
     @Test("EduButton inicializa correctamente con parámetros básicos")
     func testBasicInitialization() {
-        let button = EduButton("Test Button") { }
-
-        #expect(button != nil, "Button debe inicializarse correctamente")
+        let _ = EduButton("Test Button") { }
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduButton inicializa con icono leading")
     func testInitializationWithLeadingIcon() {
-        let button = EduButton(
+        let _ = EduButton(
             "Save",
             icon: "checkmark",
             iconPosition: .leading
         ) { }
-
-        #expect(button != nil, "Button con icono leading debe inicializarse")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduButton inicializa con icono trailing")
     func testInitializationWithTrailingIcon() {
-        let button = EduButton(
+        let _ = EduButton(
             "Next",
             icon: "arrow.right",
             iconPosition: .trailing
         ) { }
-
-        #expect(button != nil, "Button con icono trailing debe inicializarse")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     // MARK: - Style Tests
 
     @Test("EduButton con estilo primary se crea correctamente")
     func testPrimaryStyle() {
-        let button = EduButton(
+        let _ = EduButton(
             "Primary",
             style: .primary
         ) { }
-
-        #expect(button != nil, "Button primary debe crearse")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduButton con estilo secondary se crea correctamente")
     func testSecondaryStyle() {
-        let button = EduButton(
+        let _ = EduButton(
             "Secondary",
             style: .secondary
         ) { }
-
-        #expect(button != nil, "Button secondary debe crearse")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduButton con estilo destructive se crea correctamente")
     func testDestructiveStyle() {
-        let button = EduButton(
+        let _ = EduButton(
             "Delete",
             style: .destructive
         ) { }
-
-        #expect(button != nil, "Button destructive debe crearse")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduButton con estilo link se crea correctamente")
     func testLinkStyle() {
-        let button = EduButton(
+        let _ = EduButton(
             "Learn More",
             style: .link
         ) { }
-
-        #expect(button != nil, "Button link debe crearse")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     // MARK: - Size Tests
 
     @Test("EduButton con tamaño small se crea correctamente")
     func testSmallSize() {
-        let button = EduButton(
+        let _ = EduButton(
             "Small",
             size: .small
         ) { }
-
-        #expect(button != nil, "Button small debe crearse")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduButton con tamaño medium se crea correctamente")
     func testMediumSize() {
-        let button = EduButton(
+        let _ = EduButton(
             "Medium",
             size: .medium
         ) { }
-
-        #expect(button != nil, "Button medium debe crearse")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduButton con tamaño large se crea correctamente")
     func testLargeSize() {
-        let button = EduButton(
+        let _ = EduButton(
             "Large",
             size: .large
         ) { }
-
-        #expect(button != nil, "Button large debe crearse")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     // MARK: - Loading State Tests
 
     @Test("EduButton en estado loading se crea correctamente")
     func testLoadingState() {
-        let button = EduButton(
+        let _ = EduButton(
             "Loading...",
             isLoading: true
         ) { }
-
-        #expect(button != nil, "Button en estado loading debe crearse")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduButton cambia de normal a loading")
@@ -131,26 +120,24 @@ struct EduButtonTests {
 
         let context = TestContext()
 
-        let button = EduButton(
+        let _ = EduButton(
             "Process",
             isLoading: context.isLoading
         ) {
             context.isLoading = true
         }
-
-        #expect(button != nil, "Button debe manejar cambios de loading state")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     // MARK: - Disabled State Tests
 
     @Test("EduButton deshabilitado se crea correctamente")
     func testDisabledState() {
-        let button = EduButton(
+        let _ = EduButton(
             "Disabled",
             isDisabled: true
         ) { }
-
-        #expect(button != nil, "Button deshabilitado debe crearse")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     // MARK: - Action Tests
@@ -164,11 +151,10 @@ struct EduButtonTests {
 
         let context = TestContext()
 
-        let button = EduButton("Test") {
+        let _ = EduButton("Test") {
             context.actionCalled = true
         }
-
-        #expect(button != nil, "Button con acción debe crearse")
+        // La inicialización exitosa del struct es suficiente validación
         // Nota: La ejecución real de la acción requeriría ViewInspector o similar
     }
 
@@ -176,30 +162,26 @@ struct EduButtonTests {
 
     @Test("Método estático primary crea button correctamente")
     func testPrimaryConvenience() {
-        let button = EduButton.primary("Primary Button") { }
-
-        #expect(button != nil, "Convenience primary debe crear button")
+        let _ = EduButton.primary("Primary Button") { }
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("Método estático secondary crea button correctamente")
     func testSecondaryConvenience() {
-        let button = EduButton.secondary("Secondary Button") { }
-
-        #expect(button != nil, "Convenience secondary debe crear button")
+        let _ = EduButton.secondary("Secondary Button") { }
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("Método estático destructive crea button correctamente")
     func testDestructiveConvenience() {
-        let button = EduButton.destructive("Delete") { }
-
-        #expect(button != nil, "Convenience destructive debe crear button")
+        let _ = EduButton.destructive("Delete") { }
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("Método estático link crea button correctamente")
     func testLinkConvenience() {
-        let button = EduButton.link("Learn More") { }
-
-        #expect(button != nil, "Convenience link debe crear button")
+        let _ = EduButton.link("Learn More") { }
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     // MARK: - Size Padding Tests
@@ -270,7 +252,7 @@ struct EduButtonTests {
 
         let context = TestContext()
 
-        let button = EduButton(
+        let _ = EduButton(
             "Complete Action",
             icon: "checkmark.circle",
             iconPosition: .leading,
@@ -281,8 +263,7 @@ struct EduButtonTests {
         ) {
             context.actionCalled = true
         }
-
-        #expect(button != nil, "Button completo debe crearse correctamente")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("Button simula flujo async con loading")
@@ -295,7 +276,7 @@ struct EduButtonTests {
 
         let context = TestContext()
 
-        let button = EduButton(
+        let _ = EduButton(
             "Submit",
             isLoading: context.isLoading
         ) {
@@ -307,8 +288,7 @@ struct EduButtonTests {
                 context.completed = true
             }
         }
-
-        #expect(button != nil, "Button con flujo async debe crearse")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     // MARK: - ButtonStyle Tests
@@ -343,8 +323,7 @@ struct EduButtonTests {
 
     @Test("EduLinkButtonStyle inicializa correctamente")
     func testEduLinkButtonStyleInitialization() {
-        let style = EduLinkButtonStyle()
-
-        #expect(style != nil, "Link style debe inicializarse")
+        let _ = EduLinkButtonStyle()
+        // La inicialización exitosa del struct es suficiente validación
     }
 }

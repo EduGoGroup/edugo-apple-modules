@@ -13,13 +13,12 @@ struct EduTextFieldTests {
         let text = ""
         let textBinding = Binding.constant(text)
 
-        let textField = EduTextField(
+        let _ = EduTextField(
             "Email",
             text: textBinding,
             placeholder: "tu@email.com"
         )
-
-        #expect(textField != nil, "TextField debe inicializarse correctamente")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduTextField inicializa con validación")
@@ -27,13 +26,12 @@ struct EduTextFieldTests {
         let text = ""
         let textBinding = Binding.constant(text)
 
-        let textField = EduTextField(
+        let _ = EduTextField(
             "Email",
             text: textBinding,
             validation: Validators.email()
         )
-
-        #expect(textField != nil, "TextField con validación debe inicializarse")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduTextField inicializa con FormState")
@@ -42,15 +40,14 @@ struct EduTextFieldTests {
         let textBinding = Binding.constant(text)
         let formState = FormState()
 
-        let textField = EduTextField(
+        let _ = EduTextField(
             "Email",
             text: textBinding,
             validation: Validators.email(),
             formState: formState,
             fieldKey: "email"
         )
-
-        #expect(textField != nil, "TextField con FormState debe inicializarse")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     // MARK: - Validation Tests
@@ -141,13 +138,12 @@ struct EduTextFieldTests {
         let text = ""
         let textBinding = Binding.constant(text)
 
-        let textField = EduTextField(
+        let _ = EduTextField(
             "Campo Bloqueado",
             text: textBinding,
             isDisabled: true
         )
-
-        #expect(textField != nil, "TextField deshabilitado debe crearse")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     // MARK: - Helper Text Tests
@@ -157,13 +153,12 @@ struct EduTextFieldTests {
         let text = ""
         let textBinding = Binding.constant(text)
 
-        let textField = EduTextField(
+        let _ = EduTextField(
             "Email",
             text: textBinding,
             helperText: "Ingresa tu correo electrónico"
         )
-
-        #expect(textField != nil, "TextField con helper text debe crearse")
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     // MARK: - onCommit Tests
@@ -182,18 +177,15 @@ struct EduTextFieldTests {
             set: { context.text = $0 }
         )
 
-        let textField = EduTextField(
+        let _ = EduTextField(
             "Nombre",
             text: textBinding,
             onCommit: {
                 context.commitCalled = true
             }
         )
-
-        // Simular commit (normalmente lo haría el TextField al presionar return)
+        // La inicialización exitosa del struct es suficiente validación
         // Nota: En tests reales de UI, esto se verificaría con ViewInspector o similar
-
-        #expect(textField != nil, "TextField con onCommit debe crearse")
     }
 
     // MARK: - Email Validation Tests
@@ -238,7 +230,7 @@ struct EduTextFieldTests {
             set: { context.text = $0 }
         )
 
-        let textField = EduTextField(
+        let _ = EduTextField(
             "Email Completo",
             text: textBinding,
             placeholder: "email@ejemplo.com",
@@ -251,8 +243,7 @@ struct EduTextFieldTests {
                 context.commitCalled = true
             }
         )
-
-        #expect(textField != nil, "TextField completo debe crearse correctamente")
+        // La inicialización exitosa del struct es suficiente validación
 
         // Validar estado inicial
         context.formState.validate()

@@ -16,88 +16,75 @@ struct EduActivityIndicatorTests {
 
     @Test("EduActivityIndicator inicializa con estilo small")
     func testActivityIndicatorStyleSmall() {
-        let indicator = EduActivityIndicator(style: .small)
-        #expect(indicator != nil)
+        let _ = EduActivityIndicator(style: .small)
     }
 
     @Test("EduActivityIndicator inicializa con estilo medium (default)")
     func testActivityIndicatorStyleMedium() {
-        let indicator = EduActivityIndicator(style: .medium)
-        #expect(indicator != nil)
+        let _ = EduActivityIndicator(style: .medium)
     }
 
     @Test("EduActivityIndicator inicializa con estilo large")
     func testActivityIndicatorStyleLarge() {
-        let indicator = EduActivityIndicator(style: .large)
-        #expect(indicator != nil)
+        let _ = EduActivityIndicator(style: .large)
     }
 
     @Test("EduActivityIndicator inicializa sin color (default)")
     func testActivityIndicatorDefaultColor() {
-        let indicator = EduActivityIndicator()
-        #expect(indicator != nil)
+        let _ = EduActivityIndicator()
     }
 
     @Test("EduActivityIndicator inicializa con color custom")
     func testActivityIndicatorWithCustomColor() {
-        let indicator = EduActivityIndicator(style: .medium, color: .blue)
-        #expect(indicator != nil)
+        let _ = EduActivityIndicator(style: .medium, color: .blue)
     }
 
     // MARK: - Inline Loader Tests
 
     @Test("EduInlineLoader inicializa con estilo small (default)")
     func testInlineLoaderInitialization() {
-        let loader = EduInlineLoader(style: .small)
-        #expect(loader != nil)
+        let _ = EduInlineLoader(style: .small)
     }
 
     @Test("EduInlineLoader inicializa con estilo medium")
     func testInlineLoaderMediumStyle() {
-        let loader = EduInlineLoader(style: .medium)
-        #expect(loader != nil)
+        let _ = EduInlineLoader(style: .medium)
     }
 
     @Test("EduInlineLoader inicializa con color tint")
     func testInlineLoaderWithTint() {
-        let loader = EduInlineLoader(style: .small, tint: .red)
-        #expect(loader != nil)
+        let _ = EduInlineLoader(style: .small, tint: .red)
     }
 
     // MARK: - Loading Overlay Modifier Tests
 
     @Test("LoadingOverlayModifier cuando isLoading es false")
     func testLoadingOverlayNotLoading() {
-        let modifier = LoadingOverlayModifier(isLoading: false)
-        #expect(modifier != nil)
+        let _ = LoadingOverlayModifier(isLoading: false)
     }
 
     @Test("LoadingOverlayModifier cuando isLoading es true")
     func testLoadingOverlayLoading() {
-        let modifier = LoadingOverlayModifier(isLoading: true)
-        #expect(modifier != nil)
+        let _ = LoadingOverlayModifier(isLoading: true)
     }
 
     @Test("LoadingOverlayModifier con mensaje custom")
     func testLoadingOverlayWithMessage() {
-        let modifier = LoadingOverlayModifier(isLoading: true, message: "Loading data...")
-        #expect(modifier != nil)
+        let _ = LoadingOverlayModifier(isLoading: true, message: "Loading data...")
     }
 
     @Test("LoadingOverlayModifier con estilo large")
     func testLoadingOverlayWithLargeStyle() {
-        let modifier = LoadingOverlayModifier(isLoading: true, style: .large)
-        #expect(modifier != nil)
+        let _ = LoadingOverlayModifier(isLoading: true, style: .large)
     }
 
     @Test("LoadingOverlayModifier con mensaje y estilo")
     func testLoadingOverlayWithMessageAndStyle() {
-        let modifier = LoadingOverlayModifier(
+        let _ = LoadingOverlayModifier(
             isLoading: true,
             message: "Processing...",
             style: .medium
         )
-        #expect(modifier != nil)
     }
 
     // MARK: - Style Enum Tests
@@ -112,13 +99,11 @@ struct EduActivityIndicatorTests {
 
     @Test("EduActivityIndicator maneja color nil correctamente")
     func testActivityIndicatorNilColor() {
-        let indicator = EduActivityIndicator(style: .large, color: nil)
-        #expect(indicator != nil)
+        let _ = EduActivityIndicator(style: .large, color: nil)
     }
 
     @Test("EduInlineLoader maneja tint nil correctamente")
     func testInlineLoaderNilTint() {
-        let loader = EduInlineLoader(style: .medium, tint: nil)
-        #expect(loader != nil)
+        let _ = EduInlineLoader(style: .medium, tint: nil)
     }
 }

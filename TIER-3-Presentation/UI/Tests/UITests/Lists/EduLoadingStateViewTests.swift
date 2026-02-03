@@ -7,14 +7,14 @@ struct EduLoadingStateViewTests {
 
     @Test("EduLoadingStateView inicializa correctamente")
     func testInitialization() {
-        let view = EduLoadingStateView()
-        #expect(view != nil)
+        let _ = EduLoadingStateView()
+        // La inicialización exitosa del struct es suficiente validación
     }
 
     @Test("EduLoadingStateView muestra skeleton rows")
     func testShowsSkeletonRows() {
-        let view = EduLoadingStateView()
+        let _ = EduLoadingStateView()
         // El view muestra 3 skeleton rows con shimmer effect
-        #expect(view != nil)
+        // La inicialización exitosa del struct es suficiente validación
     }
 }
