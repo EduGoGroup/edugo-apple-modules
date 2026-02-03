@@ -9,7 +9,7 @@ struct ThemeEnvironmentKey: EnvironmentKey {
 
 /// EnvironmentKey para el ThemeManager
 struct ThemeManagerEnvironmentKey: EnvironmentKey {
-    nonisolated(unsafe) static let defaultValue: ThemeManager = ThemeManager()
+    static let defaultValue: ThemeManager = MainActor.assumeIsolated { ThemeManager.shared }
 }
 
 // MARK: - EnvironmentValues Extension

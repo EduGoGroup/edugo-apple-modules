@@ -3,12 +3,11 @@ import Observation
 
 /// Gestor centralizado del tema de la aplicación.
 ///
-/// ThemeManager es un actor observable que gestiona el tema activo,
+/// ThemeManager es un gestor observable que gestiona el tema activo,
 /// las preferencias del usuario y la sincronización con el esquema de color del sistema.
 ///
 /// ## Thread Safety
-/// ThemeManager es un actor, garantizando acceso thread-safe a todas sus propiedades
-/// y métodos desde cualquier contexto.
+/// ThemeManager usa @MainActor para garantizar acceso thread-safe desde el main thread.
 ///
 /// ## Observation
 /// Marcado con @Observable, permitiendo que las vistas SwiftUI se actualicen
@@ -17,22 +16,19 @@ import Observation
 /// ## Uso
 /// ```swift
 /// let manager = ThemeManager.shared
-/// await manager.setTheme(.dark)
-/// await manager.setColorScheme(.auto)
+/// manager.setTheme(.dark)
+/// manager.setColorScheme(.auto)
 /// ```
 @Observable
+@MainActor
 public final class ThemeManager {
 
     // MARK: - Singleton
 
     /// Instancia compartida del ThemeManager
-    ///
-    /// Nota: La carga de preferencias se debe llamar explícitamente con `loadInitialPreferences()`
-    /// después de obtener la instancia shared.
-    @MainActor
     public static let shared: ThemeManager = ThemeManager()
 
-    // MARK: - Published Properties
+    // MARK: - Properties
 
     /// Tema actual de la aplicación
     public private(set) var currentTheme: Theme
@@ -45,108 +41,78 @@ public final class ThemeManager {
 
     // MARK: - Private Properties
 
-    private let storage: ThemeStorage
+    private let userDefaults: UserDefaults
     private var systemColorScheme: ColorScheme = .light
+
+    // MARK: - Keys
+
+    private enum Keys {
+        static let themeId = "com.edugo.theme.selectedThemeId"
+        static let colorScheme = "com.edugo.theme.colorScheme"
+    }
 
     // MARK: - Initializer
 
     /// Inicializa el ThemeManager
-    /// - Parameter storage: Storage para persistencia (inyectable para testing)
-    public init(storage: ThemeStorage = ThemeStorage()) {
-        self.storage = storage
-        self.currentTheme = .default
-        self.colorSchemePreference = .auto
-        self.effectiveColorScheme = .light
-    }
+    /// - Parameter userDefaults: UserDefaults para persistencia (inyectable para testing)
+    public init(userDefaults: UserDefaults = .standard) {
+        self.userDefaults = userDefaults
 
-    /// Carga las preferencias iniciales desde el storage
-    @MainActor
-    public func loadInitialPreferences() async {
-        let preference = await storage.loadThemePreference()
-        applyPreference(preference)
+        // Cargar preferencias guardadas
+        let savedThemeId = userDefaults.string(forKey: Keys.themeId) ?? "default"
+        let savedColorSchemeRaw = userDefaults.string(forKey: Keys.colorScheme) ?? "auto"
+        let savedColorScheme = ColorSchemePreference(rawValue: savedColorSchemeRaw) ?? .auto
+
+        self.currentTheme = Self.themeForId(savedThemeId)
+        self.colorSchemePreference = savedColorScheme
+        self.effectiveColorScheme = .light
+
+        updateEffectiveColorScheme()
     }
 
     // MARK: - Public Methods
 
     /// Cambia el tema activo
     /// - Parameter theme: Nuevo tema a aplicar
-    @MainActor
     public func setTheme(_ theme: Theme) {
         currentTheme = theme
-
-        // Persistir cambio
-        Task {
-            await storage.saveThemePreference(
-                id: theme.id,
-                colorScheme: colorSchemePreference
-            )
-        }
+        userDefaults.set(theme.id, forKey: Keys.themeId)
     }
 
     /// Cambia la preferencia de esquema de color
     /// - Parameter preference: Nueva preferencia (.light, .dark, .auto)
-    @MainActor
     public func setColorScheme(_ preference: ColorSchemePreference) {
         colorSchemePreference = preference
+        userDefaults.set(preference.rawValue, forKey: Keys.colorScheme)
         updateEffectiveColorScheme()
-
-        // Persistir cambio
-        Task {
-            await storage.saveThemePreference(
-                id: currentTheme.id,
-                colorScheme: preference
-            )
-        }
     }
 
     /// Actualiza el esquema de color del sistema
     /// - Parameter systemScheme: Esquema detectado del sistema
-    @MainActor
     public func updateSystemColorScheme(_ systemScheme: ColorScheme) {
         systemColorScheme = systemScheme
         updateEffectiveColorScheme()
     }
 
     /// Restaura la configuración a valores por defecto
-    @MainActor
     public func reset() {
         currentTheme = .default
         colorSchemePreference = .auto
         effectiveColorScheme = systemColorScheme
 
-        // Limpiar persistencia
-        Task {
-            await storage.clearAll()
-        }
+        userDefaults.removeObject(forKey: Keys.themeId)
+        userDefaults.removeObject(forKey: Keys.colorScheme)
     }
 
     /// Carga un tema personalizado
     /// - Parameter theme: Tema custom a cargar
-    @MainActor
     public func loadCustomTheme(_ theme: Theme) {
         currentTheme = theme
-
-        // Persistir tema custom
-        Task {
-            await storage.saveThemePreference(
-                id: theme.id,
-                colorScheme: colorSchemePreference
-            )
-        }
+        userDefaults.set(theme.id, forKey: Keys.themeId)
     }
 
     // MARK: - Private Methods
 
-    @MainActor
-    private func applyPreference(_ preference: ThemePreference) {
-        // Buscar tema por ID
-        let theme = themeForId(preference.themeId)
-        currentTheme = theme
-        colorSchemePreference = preference.colorScheme
-        updateEffectiveColorScheme()
-    }
-
-    @MainActor
     private func updateEffectiveColorScheme() {
         switch colorSchemePreference {
         case .light:
@@ -158,7 +124,7 @@ public final class ThemeManager {
         }
     }
 
-    private func themeForId(_ id: String) -> Theme {
+    private static func themeForId(_ id: String) -> Theme {
         switch id {
         case "default":
             return .default
@@ -191,5 +157,32 @@ extension ThemeManager {
     /// Temas predefinidos disponibles
     public var availableThemes: [Theme] {
         [.default, .dark, .highContrast, .grayscale]
+    }
+}
+
+// MARK: - ColorSchemePreference
+
+/// Preferencia de esquema de color
+public enum ColorSchemePreference: String, Sendable, CaseIterable {
+
+    /// Modo claro forzado
+    case light = "light"
+
+    /// Modo oscuro forzado
+    case dark = "dark"
+
+    /// Automático según configuración del sistema
+    case auto = "auto"
+
+    /// Nombre legible para UI
+    public var displayName: String {
+        switch self {
+        case .light:
+            return "Light"
+        case .dark:
+            return "Dark"
+        case .auto:
+            return "Auto"
+        }
     }
 }

@@ -17,11 +17,8 @@ struct ThemeManagerTests {
     // MARK: - Initialization Tests
 
     @Test("ThemeManager se inicializa con theme por defecto")
-    func testInitialization() async {
-        let manager = ThemeManager(storage: ThemeStorage(userDefaults: .ephemeral))
-
-        // Dar tiempo para que se carguen las preferencias
-        try? await Task.sleep(for: .milliseconds(100))
+    func testInitialization() {
+        let manager = ThemeManager(userDefaults: .ephemeral)
 
         #expect(manager.currentTheme.id == "default")
         #expect(manager.colorSchemePreference == .auto)
@@ -35,12 +32,23 @@ struct ThemeManagerTests {
         #expect(manager1 === manager2)
     }
 
+    @Test("ThemeManager carga preferencias guardadas en init")
+    func testInitializationLoadsPreferences() {
+        let userDefaults = UserDefaults.ephemeral
+        userDefaults.set("dark", forKey: "com.edugo.theme.selectedThemeId")
+        userDefaults.set("dark", forKey: "com.edugo.theme.colorScheme")
+
+        let manager = ThemeManager(userDefaults: userDefaults)
+
+        #expect(manager.currentTheme.id == "dark")
+        #expect(manager.colorSchemePreference == .dark)
+    }
+
     // MARK: - Theme Switching Tests
 
     @Test("setTheme cambia el theme actual")
     func testSetTheme() {
-        let storage = ThemeStorage(userDefaults: .ephemeral)
-        let manager = ThemeManager(storage: storage)
+        let manager = ThemeManager(userDefaults: .ephemeral)
 
         manager.setTheme(.dark)
 
@@ -48,27 +56,22 @@ struct ThemeManagerTests {
         #expect(manager.currentTheme.name == "Dark")
     }
 
-    @Test("setTheme persiste la preferencia")
-    func testSetThemePersistence() async {
+    @Test("setTheme persiste la preferencia en UserDefaults")
+    func testSetThemePersistence() {
         let userDefaults = UserDefaults.ephemeral
-        let storage = ThemeStorage(userDefaults: userDefaults)
-        let manager = ThemeManager(storage: storage)
+        let manager = ThemeManager(userDefaults: userDefaults)
 
         manager.setTheme(.highContrast)
 
-        // Dar tiempo para que se persista
-        try? await Task.sleep(for: .milliseconds(100))
-
-        // Verificar que se guardó
-        let preference = await storage.loadThemePreference()
-        #expect(preference.themeId == "highContrast")
+        let savedThemeId = userDefaults.string(forKey: "com.edugo.theme.selectedThemeId")
+        #expect(savedThemeId == "highContrast")
     }
 
     // MARK: - Color Scheme Tests
 
     @Test("setColorScheme cambia la preferencia")
     func testSetColorScheme() {
-        let manager = ThemeManager(storage: ThemeStorage(userDefaults: .ephemeral))
+        let manager = ThemeManager(userDefaults: .ephemeral)
 
         manager.setColorScheme(.dark)
 
@@ -76,9 +79,20 @@ struct ThemeManagerTests {
         #expect(manager.effectiveColorScheme == .dark)
     }
 
+    @Test("setColorScheme persiste la preferencia en UserDefaults")
+    func testSetColorSchemePersistence() {
+        let userDefaults = UserDefaults.ephemeral
+        let manager = ThemeManager(userDefaults: userDefaults)
+
+        manager.setColorScheme(.light)
+
+        let savedScheme = userDefaults.string(forKey: "com.edugo.theme.colorScheme")
+        #expect(savedScheme == "light")
+    }
+
     @Test("colorScheme auto respeta el sistema")
     func testColorSchemeAuto() {
-        let manager = ThemeManager(storage: ThemeStorage(userDefaults: .ephemeral))
+        let manager = ThemeManager(userDefaults: .ephemeral)
 
         manager.setColorScheme(.auto)
         manager.updateSystemColorScheme(.dark)
@@ -92,7 +106,7 @@ struct ThemeManagerTests {
 
     @Test("colorScheme light siempre es light")
     func testColorSchemeLight() {
-        let manager = ThemeManager(storage: ThemeStorage(userDefaults: .ephemeral))
+        let manager = ThemeManager(userDefaults: .ephemeral)
 
         manager.setColorScheme(.light)
         manager.updateSystemColorScheme(.dark)
@@ -102,7 +116,7 @@ struct ThemeManagerTests {
 
     @Test("colorScheme dark siempre es dark")
     func testColorSchemeDark() {
-        let manager = ThemeManager(storage: ThemeStorage(userDefaults: .ephemeral))
+        let manager = ThemeManager(userDefaults: .ephemeral)
 
         manager.setColorScheme(.dark)
         manager.updateSystemColorScheme(.light)
@@ -114,7 +128,7 @@ struct ThemeManagerTests {
 
     @Test("updateSystemColorScheme actualiza el effective scheme en modo auto")
     func testSystemColorSchemeUpdate() {
-        let manager = ThemeManager(storage: ThemeStorage(userDefaults: .ephemeral))
+        let manager = ThemeManager(userDefaults: .ephemeral)
 
         manager.setColorScheme(.auto)
 
@@ -128,9 +142,9 @@ struct ThemeManagerTests {
     // MARK: - Reset Tests
 
     @Test("reset restaura valores por defecto")
-    func testReset() async {
-        let storage = ThemeStorage(userDefaults: .ephemeral)
-        let manager = ThemeManager(storage: storage)
+    func testReset() {
+        let userDefaults = UserDefaults.ephemeral
+        let manager = ThemeManager(userDefaults: userDefaults)
 
         // Cambiar valores
         manager.setTheme(.highContrast)
@@ -142,17 +156,18 @@ struct ThemeManagerTests {
         #expect(manager.currentTheme.id == "default")
         #expect(manager.colorSchemePreference == .auto)
 
-        // Verificar que se limpia storage
-        try? await Task.sleep(for: .milliseconds(100))
-        let preference = await storage.loadThemePreference()
-        #expect(preference.themeId == "default")
+        // Verificar que se limpia UserDefaults
+        let savedThemeId = userDefaults.string(forKey: "com.edugo.theme.selectedThemeId")
+        let savedColorScheme = userDefaults.string(forKey: "com.edugo.theme.colorScheme")
+        #expect(savedThemeId == nil)
+        #expect(savedColorScheme == nil)
     }
 
     // MARK: - Custom Theme Tests
 
     @Test("loadCustomTheme carga un theme personalizado")
     func testLoadCustomTheme() {
-        let manager = ThemeManager(storage: ThemeStorage(userDefaults: .ephemeral))
+        let manager = ThemeManager(userDefaults: .ephemeral)
         let customTheme = Theme.custom(
             id: "custom1",
             name: "My Theme",
@@ -165,11 +180,27 @@ struct ThemeManagerTests {
         #expect(manager.currentTheme.name == "My Theme")
     }
 
+    @Test("loadCustomTheme persiste el theme custom")
+    func testLoadCustomThemePersistence() {
+        let userDefaults = UserDefaults.ephemeral
+        let manager = ThemeManager(userDefaults: userDefaults)
+        let customTheme = Theme.custom(
+            id: "custom1",
+            name: "My Theme",
+            palette: .grayscale
+        )
+
+        manager.loadCustomTheme(customTheme)
+
+        let savedThemeId = userDefaults.string(forKey: "com.edugo.theme.selectedThemeId")
+        #expect(savedThemeId == "custom1")
+    }
+
     // MARK: - Convenience Accessors Tests
 
     @Test("isDarkMode refleja el effective color scheme")
     func testIsDarkMode() {
-        let manager = ThemeManager(storage: ThemeStorage(userDefaults: .ephemeral))
+        let manager = ThemeManager(userDefaults: .ephemeral)
 
         manager.setColorScheme(.light)
         #expect(manager.isDarkMode == false)
@@ -180,7 +211,7 @@ struct ThemeManagerTests {
 
     @Test("isAutoMode refleja la preferencia")
     func testIsAutoMode() {
-        let manager = ThemeManager(storage: ThemeStorage(userDefaults: .ephemeral))
+        let manager = ThemeManager(userDefaults: .ephemeral)
 
         manager.setColorScheme(.auto)
         #expect(manager.isAutoMode == true)
@@ -191,7 +222,7 @@ struct ThemeManagerTests {
 
     @Test("availableThemes retorna todos los themes predefinidos")
     func testAvailableThemes() {
-        let manager = ThemeManager(storage: ThemeStorage(userDefaults: .ephemeral))
+        let manager = ThemeManager(userDefaults: .ephemeral)
         let themes = manager.availableThemes
 
         #expect(themes.count == 4)
@@ -199,5 +230,45 @@ struct ThemeManagerTests {
         #expect(themes.contains { $0.id == "dark" })
         #expect(themes.contains { $0.id == "highContrast" })
         #expect(themes.contains { $0.id == "grayscale" })
+    }
+}
+
+// MARK: - ColorSchemePreference Tests
+
+@Suite("ColorSchemePreference Tests")
+struct ColorSchemePreferenceTests {
+
+    @Test("ColorSchemePreference tiene display names correctos")
+    func testDisplayNames() {
+        #expect(ColorSchemePreference.light.displayName == "Light")
+        #expect(ColorSchemePreference.dark.displayName == "Dark")
+        #expect(ColorSchemePreference.auto.displayName == "Auto")
+    }
+
+    @Test("ColorSchemePreference.allCases contiene todos los valores")
+    func testAllCases() {
+        let allCases = ColorSchemePreference.allCases
+        #expect(allCases.count == 3)
+        #expect(allCases.contains(.light))
+        #expect(allCases.contains(.dark))
+        #expect(allCases.contains(.auto))
+    }
+
+    @Test("ColorSchemePreference es Sendable")
+    func testSendable() {
+        let preference: ColorSchemePreference = .auto
+        Task {
+            let _ = preference // Verifica que se puede usar en Task
+        }
+    }
+}
+
+// MARK: - UserDefaults Extension for Testing
+
+extension UserDefaults {
+    /// UserDefaults efímero para testing (no persiste entre ejecuciones)
+    nonisolated(unsafe) static var ephemeral: UserDefaults {
+        let defaults = UserDefaults(suiteName: "com.edugo.theme.tests.\(UUID().uuidString)")!
+        return defaults
     }
 }
