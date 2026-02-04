@@ -943,16 +943,16 @@ EOF
 
 ## METRICAS BASELINE
 
-**Completar durante TAREA 1.4:**
+**Completado durante TAREA 1.4:**
 
 | Metrica | Valor |
 |---------|-------|
-| Total archivos Swift | _____ |
-| Total carpetas .build | _____ |
-| Espacio total .build | _____ GB |
-| Total Package.swift | _____ |
-| Tiempo de build | _____ min |
-| Fecha medicion | _____ |
+| Total archivos Swift | 844 |
+| Total carpetas .build | 23 |
+| Espacio total .build | 7.7 GB |
+| Total Package.swift | 47 |
+| Tiempo de build | (pendiente) |
+| Fecha medicion | 2026-02-04 18:50 |
 
 ---
 
