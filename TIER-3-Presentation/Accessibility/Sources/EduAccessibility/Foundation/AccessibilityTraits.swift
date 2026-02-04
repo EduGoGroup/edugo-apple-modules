@@ -303,3 +303,31 @@ extension AccessibilityTraits {
         AccessibilityTraitsBuilder()
     }
 }
+
+// MARK: - SwiftUI Traits Conversion
+
+extension AccessibilityTraits {
+    /// Convierte AccessibilityTraits a SwiftUI.AccessibilityTraits
+    public var swiftUITraits: SwiftUI.AccessibilityTraits {
+        var traits: SwiftUI.AccessibilityTraits = []
+
+        if contains(.button) { _ = traits.insert(.isButton) }
+        if contains(.link) { _ = traits.insert(.isLink) }
+        if contains(.searchField) { _ = traits.insert(.isSearchField) }
+        if contains(.image) { _ = traits.insert(.isImage) }
+        if contains(.selected) { _ = traits.insert(.isSelected) }
+        if contains(.keyboardKey) { _ = traits.insert(.isKeyboardKey) }
+        if contains(.staticText) { _ = traits.insert(.isStaticText) }
+        if contains(.header) { _ = traits.insert(.isHeader) }
+        if contains(.playsSound) { _ = traits.insert(.playsSound) }
+        if contains(.updatesFrequently) { _ = traits.insert(.updatesFrequently) }
+        if contains(.startsMediaSession) { _ = traits.insert(.startsMediaSession) }
+        // SwiftUI no tiene adjustable directo
+        if contains(.allowsDirectInteraction) { _ = traits.insert(.allowsDirectInteraction) }
+        if contains(.causesPageTurn) { _ = traits.insert(.causesPageTurn) }
+        if contains(.summaryElement) { _ = traits.insert(.isSummaryElement) }
+        // notEnabled se maneja con .disabled() modifier en SwiftUI
+
+        return traits
+    }
+}
