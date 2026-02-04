@@ -111,6 +111,64 @@ public enum DesignTokens {
     }
 }
 
+// MARK: - Glass-Aware Spacing
+
+extension DesignTokens.Spacing {
+    /// 16pt - Espaciado para bordes de elementos glass
+    public static let glassEdge: CGFloat = 16
+
+    /// 20pt - Espaciado para flujo entre elementos glass
+    public static let glassFlow: CGFloat = 20
+
+    /// 16pt - Padding interno para contenedores glass
+    public static let glassInternalPadding: CGFloat = 16
+
+    /// 20pt - Margen externo para contenedores glass
+    public static let glassExternalMargin: CGFloat = 20
+}
+
+// MARK: - Touch Targets
+
+extension DesignTokens {
+    /// Valores de tamaño mínimo para targets táctiles (accesibilidad).
+    public enum TouchTarget {
+        /// 44pt - Tamaño mínimo recomendado por Apple
+        public static let minimum: CGFloat = 44
+
+        /// 48pt - Tamaño estándar para mejor usabilidad
+        public static let standard: CGFloat = 48
+
+        /// 56pt - Tamaño grande para acciones prominentes
+        public static let large: CGFloat = 56
+    }
+}
+
+// MARK: - Desktop Margins
+
+extension DesignTokens.Spacing {
+    /// 20pt - Margen de ventana en desktop
+    public static let desktopWindowMargin: CGFloat = 20
+
+    /// 24pt - Margen de contenido en desktop
+    public static let desktopContentMargin: CGFloat = 24
+
+    /// 32pt - Espaciado entre columnas en desktop
+    public static let desktopColumnGap: CGFloat = 32
+}
+
+// MARK: - Glass Corner Radius
+
+extension DesignTokens.CornerRadius {
+    /// 16pt - Radio para contenedores glass estándar
+    public static let glass: CGFloat = 16
+
+    /// 20pt - Radio para contenedores glass prominentes
+    public static let glassLarge: CGFloat = 20
+
+    /// 24pt - Radio para contenedores glass hero
+    public static let glassHero: CGFloat = 24
+}
+
 // MARK: - EdgeInsets Convenience
 
 extension DesignTokens {
@@ -162,6 +220,22 @@ extension DesignTokens {
             leading: Spacing.large,
             bottom: Spacing.medium,
             trailing: Spacing.large
+        )
+
+        /// EdgeInsets(16, 16, 16, 16) - Padding interno para glass containers
+        public static let glassInternal = EdgeInsets(
+            top: Spacing.glassInternalPadding,
+            leading: Spacing.glassInternalPadding,
+            bottom: Spacing.glassInternalPadding,
+            trailing: Spacing.glassInternalPadding
+        )
+
+        /// EdgeInsets(20, 20, 20, 20) - Margen externo para glass containers
+        public static let glassExternal = EdgeInsets(
+            top: Spacing.glassExternalMargin,
+            leading: Spacing.glassExternalMargin,
+            bottom: Spacing.glassExternalMargin,
+            trailing: Spacing.glassExternalMargin
         )
     }
 }

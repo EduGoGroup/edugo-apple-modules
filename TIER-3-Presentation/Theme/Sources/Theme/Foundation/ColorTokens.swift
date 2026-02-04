@@ -387,6 +387,71 @@ public enum ColorTokens: Sendable {
     )
 }
 
+// MARK: - Glass-Enhanced Colors
+
+extension ColorTokens {
+    /// Color base para efectos Glass subtle
+    public static let glassSubtle = Color.white.opacity(0.05)
+
+    /// Color base para efectos Glass standard
+    public static let glassStandard = Color.white.opacity(0.1)
+
+    /// Color base para efectos Glass prominent
+    public static let glassProminent = Color.white.opacity(0.15)
+
+    /// Color base para efectos Glass immersive
+    public static let glassImmersive = Color.white.opacity(0.2)
+
+    /// Color base para efectos Glass desktop (macOS específico)
+    public static let glassDesktop = Color.white.opacity(0.12)
+
+    /// Color de highlight para Glass effects
+    public static let glassHighlight = Color.white.opacity(0.25)
+
+    /// Color de shadow para Glass effects
+    public static let glassShadow = Color.black.opacity(0.15)
+
+    /// Color de overlay para Glass backgrounds
+    public static let glassOverlay = Color.white.opacity(0.06)
+
+    /// Color de refraction para Glass effects
+    public static let glassRefraction = Color.white.opacity(0.18)
+
+    /// Superficie con efecto Glass para cards
+    public static let surfaceGlass = Color.white.opacity(0.08)
+
+    /// Superficie con efecto Glass subtle para backgrounds
+    public static let surfaceGlassSubtle = Color.white.opacity(0.04)
+
+    /// Superficie con efecto Glass prominent para modales
+    public static let surfaceGlassProminent = Color.white.opacity(0.12)
+
+    /// Superficie con efecto Glass para overlays
+    public static let surfaceGlassOverlay = Color.black.opacity(0.3)
+
+    /// Color de Glass para modo oscuro (inverso)
+    public static let glassDark = Color.black.opacity(0.3)
+
+    /// Color de highlight para modo oscuro
+    public static let glassHighlightDark = Color.white.opacity(0.15)
+}
+
+// MARK: - Glass Status Containers
+
+extension ColorTokens {
+    /// Background para success con Glass
+    public static let successGlassBackground = Color.green.opacity(0.12)
+
+    /// Background para error con Glass
+    public static let errorGlassBackground = Color.red.opacity(0.12)
+
+    /// Background para warning con Glass
+    public static let warningGlassBackground = Color.orange.opacity(0.12)
+
+    /// Background para info con Glass
+    public static let infoGlassBackground = Color.blue.opacity(0.12)
+}
+
 // MARK: - ColorToken
 
 /// Representa un token de color con variantes para light y dark mode.
