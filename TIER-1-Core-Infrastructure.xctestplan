@@ -1,0 +1,93 @@
+{
+  "configurations" : [
+    {
+      "id" : "Default",
+      "name" : "Configuration 1",
+      "options" : {
+        "maximumTestRepetitions" : 3,
+        "testRepetitionMode" : "retryOnFailure"
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : {
+      "targets" : [
+        {
+          "containerPath" : "container:TIER-1-Core\/Logger",
+          "identifier" : "Logger",
+          "name" : "Logger"
+        },
+        {
+          "containerPath" : "container:TIER-1-Core\/Models",
+          "identifier" : "Models",
+          "name" : "Models"
+        },
+        {
+          "containerPath" : "container:TIER-1-Core\/Utilities",
+          "identifier" : "Utilities",
+          "name" : "Utilities"
+        },
+        {
+          "containerPath" : "container:TIER-2-Infrastructure\/Network",
+          "identifier" : "Network",
+          "name" : "Network"
+        },
+        {
+          "containerPath" : "container:TIER-2-Infrastructure\/Storage",
+          "identifier" : "Storage",
+          "name" : "Storage"
+        },
+        {
+          "containerPath" : "container:TIER-2-Infrastructure\/LocalPersistence",
+          "identifier" : "LocalPersistence",
+          "name" : "LocalPersistence"
+        }
+      ]
+    }
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:TIER-1-Core\/Logger",
+        "identifier" : "LoggerTests",
+        "name" : "LoggerTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:TIER-1-Core\/Models",
+        "identifier" : "ModelsTests",
+        "name" : "ModelsTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:TIER-1-Core\/Utilities",
+        "identifier" : "UtilitiesTests",
+        "name" : "UtilitiesTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:TIER-2-Infrastructure\/Network",
+        "identifier" : "NetworkTests",
+        "name" : "NetworkTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:TIER-2-Infrastructure\/Storage",
+        "identifier" : "StorageTests",
+        "name" : "StorageTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:TIER-2-Infrastructure\/LocalPersistence",
+        "identifier" : "LocalPersistenceTests",
+        "name" : "LocalPersistenceTests"
+      }
+    }
+  ],
+  "version" : 1
+}

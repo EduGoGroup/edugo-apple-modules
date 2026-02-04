@@ -1,0 +1,117 @@
+{
+  "configurations" : [
+    {
+      "id" : "Default",
+      "name" : "Configuration 1",
+      "options" : {
+        "maximumTestRepetitions" : 3,
+        "testRepetitionMode" : "retryOnFailure"
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : {
+      "targets" : [
+        {
+          "containerPath" : "container:TIER-3-Domain\/Auth",
+          "identifier" : "Auth",
+          "name" : "Auth"
+        },
+        {
+          "containerPath" : "container:TIER-3-Domain\/Roles",
+          "identifier" : "Roles",
+          "name" : "Roles"
+        },
+        {
+          "containerPath" : "container:TIER-3-Presentation\/Accessibility",
+          "identifier" : "Accessibility",
+          "name" : "Accessibility"
+        },
+        {
+          "containerPath" : "container:TIER-3-Presentation\/Binding",
+          "identifier" : "Binding",
+          "name" : "Binding"
+        },
+        {
+          "containerPath" : "container:TIER-3-Presentation\/Navigation",
+          "identifier" : "Navigation",
+          "name" : "Navigation"
+        },
+        {
+          "containerPath" : "container:TIER-3-Presentation\/Theme",
+          "identifier" : "Theme",
+          "name" : "Theme"
+        },
+        {
+          "containerPath" : "container:TIER-3-Presentation\/UI",
+          "identifier" : "UI",
+          "name" : "UI"
+        },
+        {
+          "containerPath" : "container:TIER-3-ViewModels\/ViewModels",
+          "identifier" : "ViewModels",
+          "name" : "ViewModels"
+        }
+      ]
+    }
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:TIER-3-Domain\/Auth",
+        "identifier" : "AuthTests",
+        "name" : "AuthTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:TIER-3-Domain\/Roles",
+        "identifier" : "RolesTests",
+        "name" : "RolesTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:TIER-3-Presentation\/Accessibility",
+        "identifier" : "AccessibilityTests",
+        "name" : "AccessibilityTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:TIER-3-Presentation\/Binding",
+        "identifier" : "BindingTests",
+        "name" : "BindingTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:TIER-3-Presentation\/Navigation",
+        "identifier" : "NavigationTests",
+        "name" : "NavigationTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:TIER-3-Presentation\/Theme",
+        "identifier" : "ThemeTests",
+        "name" : "ThemeTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:TIER-3-Presentation\/UI",
+        "identifier" : "UITests",
+        "name" : "UITests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:TIER-3-ViewModels\/ViewModels",
+        "identifier" : "ViewModelsTests",
+        "name" : "ViewModelsTests"
+      }
+    }
+  ],
+  "version" : 1
+}

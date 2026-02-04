@@ -1,0 +1,57 @@
+{
+  "configurations" : [
+    {
+      "id" : "Default",
+      "name" : "Configuration 1",
+      "options" : {
+        "maximumTestRepetitions" : 3,
+        "testRepetitionMode" : "retryOnFailure"
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : {
+      "targets" : [
+        {
+          "containerPath" : "container:TIER-2-Domain\/CQRS",
+          "identifier" : "CQRS",
+          "name" : "CQRS"
+        },
+        {
+          "containerPath" : "container:TIER-2-Domain\/StateManagement",
+          "identifier" : "StateManagement",
+          "name" : "StateManagement"
+        },
+        {
+          "containerPath" : "container:TIER-2-Domain\/UseCases",
+          "identifier" : "UseCases",
+          "name" : "UseCases"
+        }
+      ]
+    }
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:TIER-2-Domain\/CQRS",
+        "identifier" : "CQRSTests",
+        "name" : "CQRSTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:TIER-2-Domain\/StateManagement",
+        "identifier" : "StateManagementTests",
+        "name" : "StateManagementTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:TIER-2-Domain\/UseCases",
+        "identifier" : "UseCasesTests",
+        "name" : "UseCasesTests"
+      }
+    }
+  ],
+  "version" : 1
+}

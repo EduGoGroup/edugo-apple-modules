@@ -1,0 +1,38 @@
+{
+  "configurations" : [
+    {
+      "id" : "Default",
+      "name" : "Configuration 1",
+      "options" : {
+        "maximumTestRepetitions" : 3,
+        "testRepetitionMode" : "retryOnFailure"
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : {
+      "targets" : [
+        {
+          "containerPath" : "container:TIER-0-Foundation\/EduGoCommon",
+          "identifier" : "EduGoCommon",
+          "name" : "EduGoCommon"
+        }
+      ]
+    },
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:TIER-0-Foundation\/EduGoCommon",
+      "identifier" : "EduGoCommon",
+      "name" : "EduGoCommon"
+    }
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:TIER-0-Foundation\/EduGoCommon",
+        "identifier" : "EduGoCommonTests",
+        "name" : "EduGoCommonTests"
+      }
+    }
+  ],
+  "version" : 1
+}

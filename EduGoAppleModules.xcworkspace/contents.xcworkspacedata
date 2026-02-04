@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Workspace
    version = "1.0">
+   <!-- TIER-0: Foundation Layer -->
    <Group
       location = "container:"
       name = "TIER-0-Foundation">
@@ -8,6 +9,7 @@
          location = "group:TIER-0-Foundation/EduGoCommon">
       </FileRef>
    </Group>
+   <!-- TIER-1: Core Layer -->
    <Group
       location = "container:"
       name = "TIER-1-Core">
@@ -17,7 +19,11 @@
       <FileRef
          location = "group:TIER-1-Core/Models">
       </FileRef>
+      <FileRef
+         location = "group:TIER-1-Core/Utilities">
+      </FileRef>
    </Group>
+   <!-- TIER-2: Infrastructure -->
    <Group
       location = "container:"
       name = "TIER-2-Infrastructure">
@@ -27,7 +33,25 @@
       <FileRef
          location = "group:TIER-2-Infrastructure/Storage">
       </FileRef>
+      <FileRef
+         location = "group:TIER-2-Infrastructure/LocalPersistence">
+      </FileRef>
    </Group>
+   <!-- TIER-2: Domain -->
+   <Group
+      location = "container:"
+      name = "TIER-2-Domain">
+      <FileRef
+         location = "group:TIER-2-Domain/CQRS">
+      </FileRef>
+      <FileRef
+         location = "group:TIER-2-Domain/StateManagement">
+      </FileRef>
+      <FileRef
+         location = "group:TIER-2-Domain/UseCases">
+      </FileRef>
+   </Group>
+   <!-- TIER-3: Domain -->
    <Group
       location = "container:"
       name = "TIER-3-Domain">
@@ -38,17 +62,46 @@
          location = "group:TIER-3-Domain/Roles">
       </FileRef>
    </Group>
+   <!-- TIER-3: Presentation -->
+   <Group
+      location = "container:"
+      name = "TIER-3-Presentation">
+      <FileRef
+         location = "group:TIER-3-Presentation/Accessibility">
+      </FileRef>
+      <FileRef
+         location = "group:TIER-3-Presentation/Binding">
+      </FileRef>
+      <FileRef
+         location = "group:TIER-3-Presentation/Navigation">
+      </FileRef>
+      <FileRef
+         location = "group:TIER-3-Presentation/Theme">
+      </FileRef>
+      <FileRef
+         location = "group:TIER-3-Presentation/UI">
+      </FileRef>
+   </Group>
+   <!-- TIER-3: ViewModels -->
+   <Group
+      location = "container:"
+      name = "TIER-3-ViewModels">
+      <FileRef
+         location = "group:TIER-3-ViewModels/ViewModels">
+      </FileRef>
+   </Group>
+   <!-- TIER-4: Features -->
    <Group
       location = "container:"
       name = "TIER-4-Features">
       <FileRef
-         location = "group:TIER-4-Features/API">
+         location = "group:TIER-4-Features/AI">
       </FileRef>
       <FileRef
          location = "group:TIER-4-Features/Analytics">
       </FileRef>
       <FileRef
-         location = "group:TIER-4-Features/AI">
+         location = "group:TIER-4-Features/API">
       </FileRef>
    </Group>
 </Workspace>

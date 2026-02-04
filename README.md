@@ -137,8 +137,8 @@ EduUI/Modules/Apple/
 git clone https://github.com/edugo/eduui-modules-apple.git
 cd eduui-modules-apple
 
-# 2. Abrir en Xcode
-open Package.swift
+# 2. Abrir workspace en Xcode
+open EduGoAppleModules.xcworkspace
 
 # 3. Resolver dependencias (automático en Xcode)
 # Product → Build (⌘B)
@@ -154,6 +154,114 @@ open Package.swift
 open DemoApp/DemoApp.xcodeproj
 # Product → Run (⌘R)
 ```
+
+---
+
+## 🔧 Navegación en Xcode 26
+
+### Abrir el Workspace
+
+```bash
+open EduGoAppleModules.xcworkspace
+```
+
+### Estructura del Workspace
+
+El workspace organiza **21 módulos SPM** en **7 grupos funcionales**:
+
+| Grupo | Módulos | Descripción |
+|-------|---------|-------------|
+| **TIER-0-Foundation** | 1 módulo | EduGoCommon - Base común del sistema |
+| **TIER-1-Core** | 3 módulos | Logger, Models, Utilities |
+| **TIER-2-Infrastructure** | 3 módulos | Network, Storage, LocalPersistence |
+| **TIER-2-Domain** | 3 módulos | CQRS, StateManagement, UseCases |
+| **TIER-3-Domain** | 2 módulos | Auth, Roles |
+| **TIER-3-Presentation** | 5 módulos | Accessibility, Binding, Navigation, Theme, UI |
+| **TIER-3-ViewModels** | 1 módulo | ViewModels |
+| **TIER-4-Features** | 3 módulos | AI, Analytics, API |
+
+**Total:** 21 módulos con cobertura 100% en el workspace
+
+### Compilar Módulos Individuales
+
+Cada módulo tiene su propio scheme compartido para compilación independiente:
+
+1. **Product → Scheme** → Seleccionar módulo (ej. `Logger`, `Network`, `UI`)
+2. **Product → Build** (⌘B)
+
+**Tip:** Los schemes compartidos permiten compilar y testear módulos de forma aislada sin compilar todo el workspace.
+
+### Ejecutar Tests por TIER
+
+Utiliza test plans organizados por TIER para ejecutar tests de forma focalizada:
+
+| Test Plan | Módulos Incluidos | Uso Recomendado |
+|-----------|-------------------|-----------------|
+| `TIER-0-Foundation.xctestplan` | EduGoCommon | Tests de modelos base |
+| `TIER-1-Core-Infrastructure.xctestplan` | Logger, Models, Utilities, Network, Storage, LocalPersistence | Tests de data layer |
+| `TIER-2-Domain.xctestplan` | CQRS, StateManagement, UseCases | Tests de lógica de negocio |
+| `TIER-3-Presentation.xctestplan` | Auth, Roles, Accessibility, Binding, Navigation, Theme, UI, ViewModels | Tests de presentación |
+| `TIER-4-Features.xctestplan` | AI, Analytics, API | Tests de features |
+
+**Ejecutar test plan:**
+1. **Product → Test Plan** → Seleccionar plan (ej. `TIER-1-Core-Infrastructure`)
+2. **Product → Test** (⌘U)
+
+### Navegación Rápida - Atajos de Teclado
+
+| Atajo | Función | Descripción |
+|-------|---------|-------------|
+| **⌘⇧O** | Open Quickly | Buscar archivos, símbolos, clases en todo el workspace |
+| **⌃6** | Document Items | Ver símbolos del archivo actual |
+| **⌘⌃J** | Jump to Definition | Saltar a definición (funciona entre módulos SPM) |
+| **⌘⌃↑/↓** | Jump to Counterpart | Alternar entre header/implementation (archivos relacionados) |
+| **⌘⇧J** | Reveal in Navigator | Mostrar archivo actual en navegador de proyectos |
+| **⌘1** | Project Navigator | Mostrar navegador de archivos |
+| **⌘⌃⇧F** | Find Navigator | Buscar en todo el workspace |
+
+### Optimizaciones de Xcode 26
+
+El workspace está configurado para aprovechar las nuevas capacidades de Xcode 26:
+
+- **✅ Compilation Caching** - Habilitado para builds incrementales más rápidos
+- **✅ Swift Explicit Modules** - Mejora tiempo de compilación con módulos explícitos
+- **✅ Previews Enabled** - SwiftUI previews habilitados para desarrollo rápido
+- **✅ Latest Build System** - Usando el sistema de build más reciente de Apple
+
+**Verificar configuración:**
+- Workspace Settings → Build System: "Latest"
+- Workspace Settings → Enable Compilation Caching: ✓
+
+### Generar Schemes Compartidos
+
+Si necesitas regenerar schemes compartidos para módulos:
+
+```bash
+# Ejecutar script de generación
+./Scripts/generate-schemes.sh
+
+# Luego en Xcode:
+# Product → Scheme → Manage Schemes
+# Marcar checkbox "Shared" para cada scheme
+```
+
+### Troubleshooting
+
+**Problema:** No veo todos los módulos en el Project Navigator
+- **Solución:** File → Workspace Settings → Derived Data → Delete... → Reabrir workspace
+
+**Problema:** Jump to Definition (⌘⌃J) no funciona entre módulos
+- **Solución:** Product → Clean Build Folder (⌘⇧K) → Product → Build (⌘B)
+
+**Problema:** Tests no aparecen en el Test Navigator
+- **Solución:** Seleccionar test plan apropiado → Product → Test (⌘U)
+
+**Problema:** Compilación lenta
+- **Solución:** Verificar que Compilation Caching esté habilitado en Workspace Settings
+
+### Documentación Adicional
+
+Ver [XCODE_NAVIGATION_GUIDE.md](XCODE_NAVIGATION_GUIDE.md) para guía detallada de navegación y mejores prácticas en Xcode 26.
 
 ---
 

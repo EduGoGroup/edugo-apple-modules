@@ -1,0 +1,57 @@
+{
+  "configurations" : [
+    {
+      "id" : "Default",
+      "name" : "Configuration 1",
+      "options" : {
+        "maximumTestRepetitions" : 3,
+        "testRepetitionMode" : "retryOnFailure"
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : {
+      "targets" : [
+        {
+          "containerPath" : "container:TIER-4-Features\/AI",
+          "identifier" : "AI",
+          "name" : "AI"
+        },
+        {
+          "containerPath" : "container:TIER-4-Features\/Analytics",
+          "identifier" : "Analytics",
+          "name" : "Analytics"
+        },
+        {
+          "containerPath" : "container:TIER-4-Features\/API",
+          "identifier" : "API",
+          "name" : "API"
+        }
+      ]
+    }
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:TIER-4-Features\/AI",
+        "identifier" : "AITests",
+        "name" : "AITests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:TIER-4-Features\/Analytics",
+        "identifier" : "AnalyticsTests",
+        "name" : "AnalyticsTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:TIER-4-Features\/API",
+        "identifier" : "APITests",
+        "name" : "APITests"
+      }
+    }
+  ],
+  "version" : 1
+}
