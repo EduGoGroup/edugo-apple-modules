@@ -1,4 +1,5 @@
 import SwiftUI
+import EduAccessibility
 
 // MARK: - Activity Indicator Style
 
@@ -40,6 +41,13 @@ public struct EduActivityIndicator: View {
             .tint(color)
             .accessibilityLabel("Loading")
             .accessibilityAddTraits(.updatesFrequently)
+            .accessibleIdentifier(.loading(module: "ui", screen: "activity"))
+            .onAppear {
+                AccessibilityAnnouncements.announce("Loading", priority: .medium)
+            }
+            .onDisappear {
+                AccessibilityAnnouncements.announce("Content loaded", priority: .low)
+            }
         #elseif os(macOS)
         ProgressView()
             .progressViewStyle(.circular)
@@ -47,6 +55,13 @@ public struct EduActivityIndicator: View {
             .tint(color)
             .accessibilityLabel("Loading")
             .accessibilityAddTraits(.updatesFrequently)
+            .accessibleIdentifier(.loading(module: "ui", screen: "activity"))
+            .onAppear {
+                AccessibilityAnnouncements.announce("Loading", priority: .medium)
+            }
+            .onDisappear {
+                AccessibilityAnnouncements.announce("Content loaded", priority: .low)
+            }
         #endif
     }
 

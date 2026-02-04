@@ -1,4 +1,5 @@
 import SwiftUI
+import EduAccessibility
 
 // MARK: - Progress Circle
 
@@ -51,11 +52,20 @@ public struct EduProgressCircle: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Progress")
+        .accessibilityLabel("Circular progress")
         .accessibilityValue("\(Int(normalizedProgress * 100)) percent")
         .accessibilityAddTraits(.updatesFrequently)
+        .accessibleIdentifier(.progress(module: "ui", screen: "loading", context: "circular"))
         .onChange(of: progress) { _, newValue in
+            let oldNormalized = normalizedProgress
             normalizedProgress = min(max(newValue, 0), 1)
+
+            // Announce only at milestones (25%, 50%, 75%, 100%)
+            let oldPercentage = Int(oldNormalized * 100)
+            let newPercentage = Int(normalizedProgress * 100)
+            if oldPercentage != newPercentage {
+                AccessibilityAnnouncements.announceProgressMilestone(normalizedProgress)
+            }
         }
     }
 }

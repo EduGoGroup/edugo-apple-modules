@@ -1,4 +1,5 @@
 import SwiftUI
+import EduAccessibility
 
 // MARK: - Progress Bar Mode
 
@@ -93,6 +94,11 @@ public struct EduProgressBar: View {
         .accessibilityLabel("Progress bar")
         .accessibilityValue("\(Int(clampedProgress * 100)) percent")
         .accessibilityAddTraits(.updatesFrequently)
+        .accessibleIdentifier(.progress(module: "ui", screen: "loading", context: "linear"))
+        .onChange(of: clampedProgress) { _, newValue in
+            // Announce only at milestones (25%, 50%, 75%, 100%)
+            AccessibilityAnnouncements.announceProgressMilestone(newValue)
+        }
     }
 
     @ViewBuilder

@@ -1,4 +1,5 @@
 import SwiftUI
+import EduAccessibility
 
 // MARK: - Skeleton Shape
 
@@ -46,10 +47,13 @@ public struct EduSkeletonLoader: View {
         .opacity(opacity)
         .accessibilityLabel("Loading content")
         .accessibilityAddTraits(.updatesFrequently)
+        .accessibleIdentifier(.loading(module: "ui", screen: "skeleton"))
         .onAppear {
             withAnimation(.easeInOut(duration: animationDuration).repeatForever(autoreverses: true)) {
                 opacity = maxOpacity
             }
+            // Announce loading started (low priority to not interrupt)
+            AccessibilityAnnouncements.announce("Loading content", priority: .low)
         }
     }
 }
