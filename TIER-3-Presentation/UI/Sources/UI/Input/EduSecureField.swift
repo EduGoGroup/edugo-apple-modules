@@ -114,6 +114,7 @@ public struct EduSecureField: View {
     @State private var validationState: ValidationState
     @State private var isFocused: Bool = false
     @State private var isPasswordVisible: Bool = false
+    @State private var originalText: String = ""
 
     private var isDisabled: Bool
 
@@ -203,6 +204,9 @@ public struct EduSecureField: View {
                 }
                 .onFocusChange { focused in
                     isFocused = focused
+                    if focused {
+                        originalText = text
+                    }
                 }
 
                 // Toggle button (solo en plataformas aplicables)
@@ -259,6 +263,9 @@ public struct EduSecureField: View {
                 AccessibilityAnnouncements.announceError(error)
             }
         }
+        // MARK: - Keyboard Navigation
+        .tabPriority(25)
+        .cancelEditingOnEscape(text: $text, originalValue: originalText)
     }
 
     // MARK: - Accessibility Helpers

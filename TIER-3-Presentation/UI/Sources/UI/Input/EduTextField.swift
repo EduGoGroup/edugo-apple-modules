@@ -26,6 +26,7 @@ public struct EduTextField: View {
 
     @State private var validationState: ValidationState
     @State private var isFocused: Bool = false
+    @State private var originalText: String = ""
 
     private var isDisabled: Bool
 
@@ -99,6 +100,9 @@ public struct EduTextField: View {
             }
             .onFocusChange { focused in
                 isFocused = focused
+                if focused {
+                    originalText = text
+                }
             }
             .overlay(
                 RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.medium)
@@ -129,6 +133,9 @@ public struct EduTextField: View {
                 AccessibilityAnnouncements.announceError(error)
             }
         }
+        // MARK: - Keyboard Navigation
+        .tabPriority(20)
+        .cancelEditingOnEscape(text: $text, originalValue: originalText)
     }
 
     // MARK: - Accessibility Helpers

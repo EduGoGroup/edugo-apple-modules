@@ -95,6 +95,8 @@ public struct EduProgressBar: View {
         .accessibilityValue("\(Int(clampedProgress * 100)) percent")
         .accessibilityAddTraits(.updatesFrequently)
         .accessibleIdentifier(.progress(module: "ui", screen: "loading", context: "linear"))
+        // MARK: - Keyboard Navigation
+        .skipInTabOrder()
         .onChange(of: clampedProgress) { _, newValue in
             // Announce only at milestones (25%, 50%, 75%, 100%)
             AccessibilityAnnouncements.announceProgressMilestone(newValue)

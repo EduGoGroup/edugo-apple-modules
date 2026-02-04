@@ -42,6 +42,8 @@ public struct EduActivityIndicator: View {
             .accessibilityLabel("Loading")
             .accessibilityAddTraits(.updatesFrequently)
             .accessibleIdentifier(.loading(module: "ui", screen: "activity"))
+            // MARK: - Keyboard Navigation
+            .skipInTabOrder()
             .onAppear {
                 AccessibilityAnnouncements.announce("Loading", priority: .medium)
             }
@@ -56,6 +58,8 @@ public struct EduActivityIndicator: View {
             .accessibilityLabel("Loading")
             .accessibilityAddTraits(.updatesFrequently)
             .accessibleIdentifier(.loading(module: "ui", screen: "activity"))
+            // MARK: - Keyboard Navigation
+            .skipInTabOrder()
             .onAppear {
                 AccessibilityAnnouncements.announce("Loading", priority: .medium)
             }

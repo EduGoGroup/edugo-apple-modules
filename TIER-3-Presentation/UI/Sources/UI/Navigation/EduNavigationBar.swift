@@ -138,6 +138,8 @@ public struct EduNavigationBar<Content: View>: View {
             // MARK: - Accessibility
             .accessibilityElement(children: .contain)
             .accessibilityLabel("Navigation bar, \(title)")
+            // MARK: - Keyboard Navigation
+            .tabGroup(id: "navigation-bar", priority: 5)
 
             Divider()
 

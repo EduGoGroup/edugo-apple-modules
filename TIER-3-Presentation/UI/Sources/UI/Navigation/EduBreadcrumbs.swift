@@ -78,6 +78,8 @@ public struct EduBreadcrumbs: View {
         // MARK: - Accessibility
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Breadcrumb navigation, \(items.count) levels")
+        // MARK: - Keyboard Navigation
+        .tabGroup(id: "breadcrumbs", priority: 90)
     }
 
     @ViewBuilder

@@ -48,6 +48,8 @@ public struct EduSkeletonLoader: View {
         .accessibilityLabel("Loading content")
         .accessibilityAddTraits(.updatesFrequently)
         .accessibleIdentifier(.loading(module: "ui", screen: "skeleton"))
+        // MARK: - Keyboard Navigation
+        .skipInTabOrder()
         .onAppear {
             withAnimation(.easeInOut(duration: animationDuration).repeatForever(autoreverses: true)) {
                 opacity = maxOpacity

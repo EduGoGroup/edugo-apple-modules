@@ -39,6 +39,8 @@ public struct EduBanner: View {
             let priority: AnnouncementPriority = style == .error ? .high : .medium
             AccessibilityAnnouncements.announce("\(style.accessibilityPrefix): \(message)", priority: priority)
         }
+        // MARK: - Keyboard Navigation
+        .tabPriority(85)
     }
 }
 

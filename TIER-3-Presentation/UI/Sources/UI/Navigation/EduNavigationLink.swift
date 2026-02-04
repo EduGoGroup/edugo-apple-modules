@@ -42,6 +42,8 @@ public struct EduNavigationLink<Label: View, Destination: View>: View {
         // MARK: - Accessibility
         .accessibilityAddTraits(.isLink)
         .accessibilityHint(isEnabled ? "Double tap to navigate" : "Navigation disabled")
+        // MARK: - Keyboard Navigation
+        .tabPriority(30)
     }
 }
 
@@ -174,6 +176,8 @@ public struct EduStyledNavigationLink<Destination: View>: View {
         .accessibilityLabel(accessibilityLabelText)
         .accessibilityAddTraits(.isLink)
         .accessibilityHint(isEnabled ? "Double tap to navigate" : "Navigation disabled")
+        // MARK: - Keyboard Navigation
+        .tabPriority(30)
     }
 
     private var accessibilityLabelText: String {

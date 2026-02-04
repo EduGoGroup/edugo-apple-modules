@@ -93,6 +93,8 @@ public struct EduToast: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(item.style.accessibilityPrefix): \(item.message)")
         .accessibilityAddTraits(.isStaticText)
+        // MARK: - Keyboard Navigation
+        .skipInTabOrder()
     }
 }
 

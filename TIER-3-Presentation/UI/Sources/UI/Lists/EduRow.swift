@@ -193,6 +193,8 @@ public struct EduRow<Leading: View, Trailing: View>: View {
         // MARK: - Accessibility
         .rowGrouped(title: title, subtitle: description)
         .accessibilityHint(swipeActionsHint)
+        // MARK: - Keyboard Navigation
+        .tabPriority(45)
     }
 
     // MARK: - Accessibility Helpers

@@ -126,24 +126,37 @@ extension View {
     public func eduModal<Content: View>(
         isPresented: Binding<Bool>,
         style: EduModalPresentationStyle = .sheet,
+        isDismissible: Bool = true,
         @ViewBuilder content: @escaping () -> Content
     ) -> some View {
         Group {
             switch style {
             case .sheet:
-                self.sheet(isPresented: isPresented, content: content)
+                self.sheet(isPresented: isPresented) {
+                    content()
+                        // MARK: - Keyboard Navigation
+                        .dismissOnEscape(isPresented: isPresented, isDismissible: isDismissible)
+                }
             #if os(iOS) || os(visionOS)
             case .fullScreenCover:
-                self.fullScreenCover(isPresented: isPresented, content: content)
+                self.fullScreenCover(isPresented: isPresented) {
+                    content()
+                        // MARK: - Keyboard Navigation
+                        .dismissOnEscape(isPresented: isPresented, isDismissible: isDismissible)
+                }
             case .pageSheet:
                 self.sheet(isPresented: isPresented) {
                     content()
                         .presentationDetents([.medium, .large])
+                        // MARK: - Keyboard Navigation
+                        .dismissOnEscape(isPresented: isPresented, isDismissible: isDismissible)
                 }
             case .formSheet:
                 self.sheet(isPresented: isPresented) {
                     content()
                         .presentationDetents([.height(600)])
+                        // MARK: - Keyboard Navigation
+                        .dismissOnEscape(isPresented: isPresented, isDismissible: isDismissible)
                 }
             #endif
             }

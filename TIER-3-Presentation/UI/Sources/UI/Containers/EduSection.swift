@@ -92,6 +92,8 @@ public struct EduSection<Header: View, Content: View, Footer: View>: View {
         // MARK: - Accessibility
         .accessibilityElement(children: .contain)
         .accessibilityLabel(isCollapsible ? (isExpanded ? "Section expanded" : "Section collapsed") : "Section")
+        // MARK: - Keyboard Navigation
+        .tabGroup(id: "section", priority: 60)
     }
 }
 

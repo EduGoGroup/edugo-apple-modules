@@ -123,6 +123,8 @@ public struct EduCard<Content: View>: View {
             .cardGrouped(headerLabel: accessibilityLabel ?? "Card")
             .accessibilityAddTraits(onTap != nil ? .isButton : [])
             .accessibilityRemoveTraits(isDisabled ? .isButton : [])
+            // MARK: - Keyboard Navigation
+            .tabPriority(onTap != nil ? 40 : 100)
     }
 
     // MARK: - Styling Helpers

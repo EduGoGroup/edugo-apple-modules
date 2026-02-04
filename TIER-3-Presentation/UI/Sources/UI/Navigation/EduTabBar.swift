@@ -79,6 +79,8 @@ public struct EduTabBar<Content: View>: View {
                     .tag(item.id)
             }
         }
+        // MARK: - Keyboard Navigation
+        .tabGroup(id: "main-tab-bar", priority: 1)
         #elseif os(macOS)
         NavigationSplitView {
             List(items, selection: $selection) { item in

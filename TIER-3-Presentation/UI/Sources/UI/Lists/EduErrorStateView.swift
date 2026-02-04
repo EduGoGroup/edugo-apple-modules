@@ -45,6 +45,8 @@ public struct EduErrorStateView: View {
         // MARK: - Accessibility
         .accessibilityElement(children: .contain)
         .accessibleIdentifier(.errorState(module: "ui", screen: "list"))
+        // MARK: - Keyboard Navigation
+        .tabPriority(5)
         .onAppear {
             AccessibilityAnnouncements.announceError("\(title). \(message)")
         }

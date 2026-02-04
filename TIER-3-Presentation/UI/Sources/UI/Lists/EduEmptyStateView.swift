@@ -49,6 +49,8 @@ public struct EduEmptyStateView: View {
         // MARK: - Accessibility
         .emptyStateGrouped(title: title, description: description)
         .accessibleIdentifier(.emptyState(module: "ui", screen: "list"))
+        // MARK: - Keyboard Navigation
+        .tabPriority(actionTitle != nil ? 15 : 100)
         .onAppear {
             AccessibilityAnnouncements.announce("\(title). \(description)", priority: .medium)
         }

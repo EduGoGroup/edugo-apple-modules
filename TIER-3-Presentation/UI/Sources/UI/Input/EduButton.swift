@@ -150,6 +150,8 @@ public struct EduButton: View {
                 AccessibilityAnnouncements.announce("\(title), ready", priority: .low)
             }
         }
+        // MARK: - Keyboard Navigation
+        .tabPriority(style == .primary ? 10 : 50)
     }
 
     // MARK: - Accessibility Helpers

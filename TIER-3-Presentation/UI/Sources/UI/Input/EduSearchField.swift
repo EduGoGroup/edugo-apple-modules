@@ -133,6 +133,9 @@ public struct EduSearchField: View {
                 AccessibilityAnnouncements.announce("Searching", priority: .low)
             }
         }
+        // MARK: - Keyboard Navigation
+        .tabPriority(80)
+        .clearSearchOnEscape(searchText: $text)
     }
 
     // MARK: - Accessibility Helpers
