@@ -1,3 +1,4 @@
+import EduAccessibility
 import SwiftUI
 
 // MARK: - EduAlert
@@ -68,6 +69,10 @@ public final class EduAlertManager: Sendable {
     public func show(alert: EduAlertContent) {
         currentAlert = alert
         isPresented = true
+
+        // VoiceOver announcement
+        let message = alert.message != nil ? "\(alert.title). \(alert.message!)" : alert.title
+        AccessibilityAnnouncements.announce("Alert: \(message)", priority: .high)
     }
 
     /// Muestra una alerta de confirmación simple

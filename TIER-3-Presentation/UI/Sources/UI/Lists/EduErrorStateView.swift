@@ -1,3 +1,4 @@
+import EduAccessibility
 import SwiftUI
 
 @MainActor
@@ -38,8 +39,15 @@ public struct EduErrorStateView: View {
 
             Button(retryTitle, action: onRetry)
                 .buttonStyle(.borderedProminent)
+                .accessibilityHint("Double tap to retry")
         }
         .padding(40)
+        // MARK: - Accessibility
+        .accessibilityElement(children: .contain)
+        .accessibleIdentifier(.errorState(module: "ui", screen: "list"))
+        .onAppear {
+            AccessibilityAnnouncements.announceError("\(title). \(message)")
+        }
     }
 }
 

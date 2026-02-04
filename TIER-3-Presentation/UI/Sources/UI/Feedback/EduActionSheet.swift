@@ -1,3 +1,4 @@
+import EduAccessibility
 import SwiftUI
 
 // MARK: - Action Sheet Action
@@ -257,6 +258,11 @@ public final class EduActionSheetManager: Sendable {
     public func show(actionSheet: EduActionSheetContent) {
         currentActionSheet = actionSheet
         isPresented = true
+
+        // VoiceOver announcement
+        let optionsCount = actionSheet.actions.count
+        let title = actionSheet.title ?? "Options"
+        AccessibilityAnnouncements.announce("\(title). \(optionsCount) options available", priority: .medium)
     }
 
     /// Muestra un action sheet simple con opciones

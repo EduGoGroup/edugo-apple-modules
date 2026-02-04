@@ -1,3 +1,4 @@
+import EduAccessibility
 import SwiftUI
 
 /// GroupBox adaptativo con estilo nativo por plataforma.
@@ -50,6 +51,7 @@ public struct EduGroupBox<Label: View, Content: View>: View {
                 label
                     .font(.headline)
                     .foregroundStyle(.primary)
+                    .accessibilityAddTraits(.isHeader)
             }
 
             content
@@ -58,6 +60,8 @@ public struct EduGroupBox<Label: View, Content: View>: View {
                 .background(Color.groupBoxBackground)
                 .cornerRadius(DesignTokens.CornerRadius.xl)
         }
+        // MARK: - Accessibility
+        .accessibilityElement(children: .contain)
     }
 
     @ViewBuilder
@@ -78,6 +82,7 @@ public struct EduGroupBox<Label: View, Content: View>: View {
             if let label = label {
                 label
                     .font(.headline)
+                    .accessibilityAddTraits(.isHeader)
             }
 
             content
@@ -85,6 +90,8 @@ public struct EduGroupBox<Label: View, Content: View>: View {
                 .background(Color.groupBoxBackground)
                 .cornerRadius(DesignTokens.CornerRadius.medium)
         }
+        // MARK: - Accessibility
+        .accessibilityElement(children: .contain)
     }
 }
 
@@ -147,6 +154,10 @@ public struct EduGroupBoxLabel: View {
             }
             Text(title)
         }
+        // MARK: - Accessibility
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(title)
+        .accessibilityAddTraits(.isHeader)
     }
 }
 

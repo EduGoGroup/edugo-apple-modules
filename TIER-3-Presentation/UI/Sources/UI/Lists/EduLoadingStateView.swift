@@ -1,3 +1,4 @@
+import EduAccessibility
 import SwiftUI
 
 @MainActor
@@ -13,6 +14,13 @@ public struct EduLoadingStateView: View {
             }
         }
         .padding()
+        // MARK: - Accessibility
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Loading content")
+        .accessibleIdentifier(.loading(module: "ui", screen: "list"))
+        .onAppear {
+            AccessibilityAnnouncements.announce("Loading content", priority: .low)
+        }
     }
 }
 

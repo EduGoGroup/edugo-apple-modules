@@ -1,3 +1,4 @@
+import EduAccessibility
 import SwiftUI
 
 public enum ToastStyle: Sendable {
@@ -20,6 +21,15 @@ public enum ToastStyle: Sendable {
         case .info: return .blue
         }
     }
+
+    var accessibilityPrefix: String {
+        switch self {
+        case .success: return "Success"
+        case .error: return "Error"
+        case .warning: return "Warning"
+        case .info: return "Information"
+        }
+    }
 }
 
 @MainActor
@@ -33,6 +43,10 @@ public final class ToastManager: Sendable {
     public func show(_ message: String, style: ToastStyle = .info, duration: TimeInterval = 3.0) {
         let toast = ToastItem(message: message, style: style, duration: duration)
         toasts.append(toast)
+
+        // VoiceOver announcement based on style
+        let priority: AnnouncementPriority = style == .error ? .high : .medium
+        AccessibilityAnnouncements.announce("\(style.accessibilityPrefix): \(message)", priority: priority)
 
         Task {
             try? await Task.sleep(for: .seconds(duration))
@@ -68,12 +82,17 @@ public struct EduToast: View {
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Dismiss")
         }
         .padding()
         .background(.regularMaterial)
         .cornerRadius(DesignTokens.CornerRadius.xl)
         .shadow(radius: DesignTokens.Shadow.medium)
         .padding(.horizontal)
+        // MARK: - Accessibility
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(item.style.accessibilityPrefix): \(item.message)")
+        .accessibilityAddTraits(.isStaticText)
     }
 }
 

@@ -1,3 +1,4 @@
+import EduAccessibility
 import SwiftUI
 
 @MainActor
@@ -25,11 +26,19 @@ public struct EduBanner: View {
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Dismiss banner")
             }
         }
         .padding()
         .frame(maxWidth: .infinity)
         .background(style.color.opacity(0.1))
+        // MARK: - Accessibility
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(style.accessibilityPrefix): \(message)")
+        .onAppear {
+            let priority: AnnouncementPriority = style == .error ? .high : .medium
+            AccessibilityAnnouncements.announce("\(style.accessibilityPrefix): \(message)", priority: priority)
+        }
     }
 }
 

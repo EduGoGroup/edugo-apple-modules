@@ -1,3 +1,4 @@
+import EduAccessibility
 import SwiftUI
 
 // MARK: - Lazy Navigation Link
@@ -38,6 +39,9 @@ public struct EduNavigationLink<Label: View, Destination: View>: View {
         }
         .disabled(!isEnabled)
         .opacity(isEnabled ? 1.0 : 0.6)
+        // MARK: - Accessibility
+        .accessibilityAddTraits(.isLink)
+        .accessibilityHint(isEnabled ? "Double tap to navigate" : "Navigation disabled")
     }
 }
 
@@ -166,6 +170,24 @@ public struct EduStyledNavigationLink<Destination: View>: View {
         }
         .disabled(!isEnabled)
         .opacity(isEnabled ? 1.0 : 0.6)
+        // MARK: - Accessibility
+        .accessibilityLabel(accessibilityLabelText)
+        .accessibilityAddTraits(.isLink)
+        .accessibilityHint(isEnabled ? "Double tap to navigate" : "Navigation disabled")
+    }
+
+    private var accessibilityLabelText: String {
+        var label = title
+        if let subtitle = subtitle {
+            label += ", \(subtitle)"
+        }
+        if let badge = badge {
+            label += ", \(badge) new"
+        }
+        if !isEnabled {
+            label += ", disabled"
+        }
+        return label
     }
 
     @ViewBuilder

@@ -1,3 +1,4 @@
+import EduAccessibility
 import SwiftUI
 
 /// Card genérico y reutilizable para agrupar contenido.
@@ -47,6 +48,7 @@ public struct EduCard<Content: View>: View {
     private let backgroundColor: Color
     private let isHighlighted: Bool
     private let isDisabled: Bool
+    private let accessibilityLabel: String?
     private let onTap: (() -> Void)?
 
     // MARK: - Initializer
@@ -60,6 +62,7 @@ public struct EduCard<Content: View>: View {
     ///   - backgroundColor: Color de fondo (default: .cardBackground)
     ///   - isHighlighted: Si el card está destacado
     ///   - isDisabled: Si el card está deshabilitado
+    ///   - accessibilityLabel: Label para VoiceOver (opcional)
     ///   - onTap: Closure opcional que se ejecuta al tocar el card
     ///   - content: Contenido del card
     public init(
@@ -69,6 +72,7 @@ public struct EduCard<Content: View>: View {
         backgroundColor: Color = .cardBackground,
         isHighlighted: Bool = false,
         isDisabled: Bool = false,
+        accessibilityLabel: String? = nil,
         onTap: (() -> Void)? = nil,
         @ViewBuilder content: () -> Content
     ) {
@@ -78,6 +82,7 @@ public struct EduCard<Content: View>: View {
         self.backgroundColor = backgroundColor
         self.isHighlighted = isHighlighted
         self.isDisabled = isDisabled
+        self.accessibilityLabel = accessibilityLabel
         self.onTap = onTap
         self.content = content()
     }
@@ -114,6 +119,10 @@ public struct EduCard<Content: View>: View {
                 RoundedRectangle(cornerRadius: cornerRadius)
                     .stroke(borderColor, lineWidth: isHighlighted ? DesignTokens.BorderWidth.medium : 0)
             )
+            // MARK: - Accessibility
+            .cardGrouped(headerLabel: accessibilityLabel ?? "Card")
+            .accessibilityAddTraits(onTap != nil ? .isButton : [])
+            .accessibilityRemoveTraits(isDisabled ? .isButton : [])
     }
 
     // MARK: - Styling Helpers

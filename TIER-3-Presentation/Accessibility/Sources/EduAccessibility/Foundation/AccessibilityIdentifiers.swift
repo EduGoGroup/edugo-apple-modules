@@ -42,21 +42,44 @@ public struct AccessibilityIdentifier: Sendable, Equatable, Hashable {
     ///   - module: Módulo o feature (ej: "auth", "profile")
     ///   - screen: Pantalla donde está el botón (ej: "login", "settings")
     ///   - action: Acción que realiza (ej: "submit", "cancel")
+    ///   - context: Contexto alternativo (usa action si no se provee)
     public static func button(
         module: String,
         screen: String,
-        action: String
+        action: String? = nil,
+        context: String? = nil
     ) -> AccessibilityIdentifier {
-        AccessibilityIdentifier("\(module)_\(screen)_button_\(action)")
+        let suffix = action ?? context ?? "default"
+        return AccessibilityIdentifier("\(module)_\(screen)_button_\(suffix)")
     }
 
     /// Crea un identifier para un campo de texto
     public static func textField(
         module: String,
         screen: String,
-        field: String
+        field: String? = nil,
+        context: String? = nil
     ) -> AccessibilityIdentifier {
-        AccessibilityIdentifier("\(module)_\(screen)_textfield_\(field)")
+        let suffix = field ?? context ?? "default"
+        return AccessibilityIdentifier("\(module)_\(screen)_textfield_\(suffix)")
+    }
+
+    /// Crea un identifier para un campo seguro (contraseña)
+    public static func secureField(
+        module: String,
+        screen: String,
+        context: String
+    ) -> AccessibilityIdentifier {
+        AccessibilityIdentifier("\(module)_\(screen)_securefield_\(context)")
+    }
+
+    /// Crea un identifier para un campo de búsqueda
+    public static func searchField(
+        module: String,
+        screen: String,
+        context: String
+    ) -> AccessibilityIdentifier {
+        AccessibilityIdentifier("\(module)_\(screen)_searchfield_\(context)")
     }
 
     /// Crea un identifier para un toggle/switch

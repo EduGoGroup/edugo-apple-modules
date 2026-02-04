@@ -1,3 +1,4 @@
+import EduAccessibility
 import SwiftUI
 
 // MARK: - SwipeAction
@@ -189,6 +190,24 @@ public struct EduRow<Leading: View, Trailing: View>: View {
             .padding(.horizontal, DesignTokens.Spacing.large)
         }
         .buttonStyle(.plain)
+        // MARK: - Accessibility
+        .rowGrouped(title: title, subtitle: description)
+        .accessibilityHint(swipeActionsHint)
+    }
+
+    // MARK: - Accessibility Helpers
+
+    private var swipeActionsHint: String {
+        var hints: [String] = []
+        if !trailingSwipeActions.isEmpty {
+            let actions = trailingSwipeActions.map { $0.title }.joined(separator: ", ")
+            hints.append("Swipe left for \(actions)")
+        }
+        if !leadingSwipeActions.isEmpty {
+            let actions = leadingSwipeActions.map { $0.title }.joined(separator: ", ")
+            hints.append("Swipe right for \(actions)")
+        }
+        return hints.joined(separator: ". ")
     }
 }
 

@@ -1,3 +1,4 @@
+import EduAccessibility
 import SwiftUI
 
 // MARK: - Tab Item
@@ -158,6 +159,9 @@ public final class EduTabBarCoordinator: Sendable {
     public func select(tab: String) {
         previousTab = selectedTab
         selectedTab = tab
+
+        // VoiceOver announcement
+        AccessibilityAnnouncements.announce("Selected \(tab) tab", priority: .medium)
     }
 
     /// Vuelve al tab anterior si existe

@@ -1,3 +1,4 @@
+import EduAccessibility
 import SwiftUI
 import Binding
 
@@ -244,6 +245,33 @@ public struct EduSecureField: View {
         .opacity(isDisabled ? 0.6 : 1.0)
         .animation(.easeInOut(duration: 0.2), value: validationState.errorMessage)
         .animation(.easeInOut(duration: 0.2), value: isFocused)
+        // MARK: - Accessibility
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilityLabelText)
+        .accessibilityValue("Hidden")
+        .accessibleIdentifier(.secureField(module: "ui", screen: "input", context: title.lowercased().replacingOccurrences(of: " ", with: "_")))
+        .onChange(of: isPasswordVisible) { _, newValue in
+            let announcement = newValue ? "Password visible" : "Password hidden"
+            AccessibilityAnnouncements.announce(announcement, priority: .medium)
+        }
+        .onChange(of: validationState.errorMessage) { oldValue, newValue in
+            if let error = newValue, oldValue != newValue {
+                AccessibilityAnnouncements.announceError(error)
+            }
+        }
+    }
+
+    // MARK: - Accessibility Helpers
+
+    private var accessibilityLabelText: String {
+        var label = "Secure text field for \(title)"
+        if !validationState.isValid, let error = validationState.errorMessage {
+            label += ", error: \(error)"
+        }
+        if isDisabled {
+            label += ", disabled"
+        }
+        return label
     }
 
     // MARK: - Helper Methods

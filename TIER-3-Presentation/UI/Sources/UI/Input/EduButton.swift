@@ -1,3 +1,4 @@
+import EduAccessibility
 import SwiftUI
 
 /// Botón genérico con variantes de estilo y soporte multi-plataforma.
@@ -61,6 +62,7 @@ public struct EduButton: View {
     private let size: Size
     private let isLoading: Bool
     private let isDisabled: Bool
+    private let accessibilityHint: String?
     private let action: () -> Void
 
     // MARK: - Initializer
@@ -75,6 +77,7 @@ public struct EduButton: View {
     ///   - size: Tamaño del botón
     ///   - isLoading: Si está en estado de carga (muestra spinner)
     ///   - isDisabled: Si el botón está deshabilitado
+    ///   - accessibilityHint: Hint adicional para VoiceOver (opcional)
     ///   - action: Closure que se ejecuta al presionar
     public init(
         _ title: String,
@@ -84,6 +87,7 @@ public struct EduButton: View {
         size: Size = .medium,
         isLoading: Bool = false,
         isDisabled: Bool = false,
+        accessibilityHint: String? = nil,
         action: @escaping () -> Void
     ) {
         self.title = title
@@ -93,6 +97,7 @@ public struct EduButton: View {
         self.size = size
         self.isLoading = isLoading
         self.isDisabled = isDisabled
+        self.accessibilityHint = accessibilityHint
         self.action = action
     }
 
@@ -134,6 +139,30 @@ public struct EduButton: View {
         .opacity(effectiveOpacity)
         .animation(.easeInOut(duration: 0.2), value: isLoading)
         .animation(.easeInOut(duration: 0.2), value: isDisabled)
+        // MARK: - Accessibility
+        .accessibilityLabel(accessibilityLabelText)
+        .accessibilityHint(accessibilityHint ?? "")
+        .accessibleIdentifier(.button(module: "ui", screen: "input", context: title.lowercased().replacingOccurrences(of: " ", with: "_")))
+        .onChange(of: isLoading) { _, newValue in
+            if newValue {
+                AccessibilityAnnouncements.announce("\(title), loading", priority: .medium)
+            } else {
+                AccessibilityAnnouncements.announce("\(title), ready", priority: .low)
+            }
+        }
+    }
+
+    // MARK: - Accessibility Helpers
+
+    private var accessibilityLabelText: String {
+        var label = title
+        if isLoading {
+            label += ", loading"
+        }
+        if isDisabled {
+            label += ", disabled"
+        }
+        return label
     }
 
     // MARK: - Styling Helpers

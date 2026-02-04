@@ -1,3 +1,4 @@
+import EduAccessibility
 import SwiftUI
 
 // MARK: - Navigation Bar Configuration
@@ -96,6 +97,7 @@ public struct EduNavigationBar<Content: View>: View {
                         }
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel(leading.title ?? "Back")
                 } else {
                     Spacer()
                         .frame(width: 44)
@@ -107,6 +109,7 @@ public struct EduNavigationBar<Content: View>: View {
                 Text(title)
                     .font(.headline)
                     .lineLimit(1)
+                    .accessibilityAddTraits(.isHeader)
 
                 Spacer()
 
@@ -123,6 +126,7 @@ public struct EduNavigationBar<Content: View>: View {
                         }
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel(trailing.title ?? "Options")
                 } else {
                     Spacer()
                         .frame(width: 44)
@@ -131,6 +135,9 @@ public struct EduNavigationBar<Content: View>: View {
             .padding(.horizontal)
             .padding(.vertical, DesignTokens.Spacing.medium)
             .background(Color(white: 0.98))
+            // MARK: - Accessibility
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel("Navigation bar, \(title)")
 
             Divider()
 

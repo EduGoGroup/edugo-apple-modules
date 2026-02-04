@@ -1,3 +1,4 @@
+import EduAccessibility
 import SwiftUI
 import Binding
 
@@ -18,6 +19,7 @@ public struct EduSearchField: View {
     private let debounceInterval: TimeInterval
     private let onSearch: ((String) async -> Void)?
     private let isSearching: Bool
+    private let resultsCount: Int?
 
     @State private var isFocused: Bool = false
     @State private var debouncedText: String = ""
@@ -34,6 +36,7 @@ public struct EduSearchField: View {
     ///   - text: Binding al texto de búsqueda
     ///   - debounceInterval: Intervalo de debounce en segundos (default: 0.5)
     ///   - isSearching: Indica si hay una búsqueda en progreso
+    ///   - resultsCount: Número de resultados encontrados (para VoiceOver)
     ///   - isDisabled: Si el campo está deshabilitado
     ///   - onSearch: Closure async que se ejecuta después del debounce
     public init(
@@ -41,6 +44,7 @@ public struct EduSearchField: View {
         text: Binding<String>,
         debounceInterval: TimeInterval = 0.5,
         isSearching: Bool = false,
+        resultsCount: Int? = nil,
         isDisabled: Bool = false,
         onSearch: ((String) async -> Void)? = nil
     ) {
@@ -48,6 +52,7 @@ public struct EduSearchField: View {
         self._text = text
         self.debounceInterval = debounceInterval
         self.isSearching = isSearching
+        self.resultsCount = resultsCount
         self.isDisabled = isDisabled
         self.onSearch = onSearch
     }
@@ -110,6 +115,40 @@ public struct EduSearchField: View {
         .opacity(isDisabled ? 0.6 : 1.0)
         .animation(.easeInOut(duration: 0.2), value: isFocused)
         .animation(.easeInOut(duration: 0.2), value: isSearching)
+        // MARK: - Accessibility
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilityLabelText)
+        .accessibilityValue(text.isEmpty ? "empty" : text)
+        .accessibleIdentifier(.searchField(module: "ui", screen: "input", context: "search"))
+        .onChange(of: resultsCount) { _, newCount in
+            if let count = newCount {
+                let announcement = count == 0
+                    ? "No results found"
+                    : "\(count) result\(count == 1 ? "" : "s") found"
+                AccessibilityAnnouncements.announce(announcement, priority: .medium)
+            }
+        }
+        .onChange(of: isSearching) { _, newValue in
+            if newValue {
+                AccessibilityAnnouncements.announce("Searching", priority: .low)
+            }
+        }
+    }
+
+    // MARK: - Accessibility Helpers
+
+    private var accessibilityLabelText: String {
+        var label = "Search field"
+        if isSearching {
+            label += ", searching"
+        }
+        if let count = resultsCount {
+            label += ", \(count) result\(count == 1 ? "" : "s")"
+        }
+        if isDisabled {
+            label += ", disabled"
+        }
+        return label
     }
 
     // MARK: - Helper Methods
@@ -156,11 +195,13 @@ extension EduSearchField {
     ///   - placeholder: Texto placeholder cuando está vacío
     ///   - text: Binding al texto de búsqueda
     ///   - isSearching: Indica si hay una búsqueda en progreso
+    ///   - resultsCount: Número de resultados encontrados (para VoiceOver)
     ///   - isDisabled: Si el campo está deshabilitado
     public init(
         placeholder: String = "Buscar...",
         text: Binding<String>,
         isSearching: Bool = false,
+        resultsCount: Int? = nil,
         isDisabled: Bool = false
     ) {
         self.init(
@@ -168,6 +209,7 @@ extension EduSearchField {
             text: text,
             debounceInterval: 0.5,
             isSearching: isSearching,
+            resultsCount: resultsCount,
             isDisabled: isDisabled,
             onSearch: nil
         )

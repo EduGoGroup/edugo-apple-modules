@@ -1,3 +1,4 @@
+import EduAccessibility
 import SwiftUI
 
 @MainActor
@@ -45,6 +46,12 @@ public struct EduEmptyStateView: View {
             }
         }
         .padding(40)
+        // MARK: - Accessibility
+        .emptyStateGrouped(title: title, description: description)
+        .accessibleIdentifier(.emptyState(module: "ui", screen: "list"))
+        .onAppear {
+            AccessibilityAnnouncements.announce("\(title). \(description)", priority: .medium)
+        }
     }
 }
 

@@ -1,3 +1,4 @@
+import EduAccessibility
 import SwiftUI
 
 /// Section con header/footer customizables y contenido colapsable.
@@ -88,6 +89,9 @@ public struct EduSection<Header: View, Content: View, Footer: View>: View {
                 footer
             }
         }
+        // MARK: - Accessibility
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(isCollapsible ? (isExpanded ? "Section expanded" : "Section collapsed") : "Section")
     }
 }
 
@@ -176,6 +180,10 @@ public struct EduSectionHeader: View {
             Spacer()
         }
         .padding(.vertical, DesignTokens.Spacing.small)
+        // MARK: - Accessibility
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isHeader)
+        .accessibilityLabel(subtitle != nil ? "\(title), \(subtitle!)" : title)
     }
 }
 

@@ -1,3 +1,4 @@
+import EduAccessibility
 import SwiftUI
 
 // MARK: - Breadcrumb Item
@@ -74,6 +75,9 @@ public struct EduBreadcrumbs: View {
         .padding(.vertical, DesignTokens.Spacing.small)
         .background(Color(nsColor: .controlBackgroundColor))
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.small))
+        // MARK: - Accessibility
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Breadcrumb navigation, \(items.count) levels")
     }
 
     @ViewBuilder

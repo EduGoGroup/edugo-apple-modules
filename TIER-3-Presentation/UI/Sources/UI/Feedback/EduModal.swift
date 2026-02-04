@@ -1,3 +1,4 @@
+import EduAccessibility
 import SwiftUI
 
 // MARK: - Modal Size
@@ -164,9 +165,13 @@ public final class EduModalManager: Sendable {
     private init() {}
 
     /// Muestra un modal
-    public func show<Content: View>(@ViewBuilder content: @escaping () -> Content) {
+    public func show<Content: View>(title: String? = nil, @ViewBuilder content: @escaping () -> Content) {
         modalView = AnyView(content())
         isPresented = true
+
+        // VoiceOver announcement
+        let announcement = title != nil ? "Modal opened: \(title!)" : "Modal opened"
+        AccessibilityAnnouncements.announce(announcement, priority: .medium)
     }
 
     /// Oculta el modal actual

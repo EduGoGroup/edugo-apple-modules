@@ -1,3 +1,4 @@
+import EduAccessibility
 import SwiftUI
 import StateManagement
 
@@ -44,10 +45,15 @@ public struct EduListView<Item, Content: View>: View where Item: Sendable {
                 } else {
                     ScrollView {
                         LazyVStack(spacing: 0) {
-                            ForEach(Array(items.enumerated()), id: \.offset) { _, item in
+                            ForEach(Array(items.enumerated()), id: \.offset) { index, item in
                                 content(item)
+                                    .accessibilityLabel("Item \(index + 1) of \(items.count)")
                             }
                         }
+                    }
+                    // MARK: - Accessibility
+                    .onAppear {
+                        AccessibilityAnnouncements.announce("\(items.count) item\(items.count == 1 ? "" : "s") loaded", priority: .low)
                     }
                 }
             case .error(let message):
