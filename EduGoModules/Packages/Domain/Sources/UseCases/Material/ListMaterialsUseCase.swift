@@ -61,7 +61,7 @@ public enum MaterialSortOption: String, Sendable, Equatable, Hashable, Codable {
 }
 
 /// Orden de clasificación.
-public enum SortOrder: String, Sendable, Equatable, Hashable, Codable {
+public enum MaterialSortDirection: String, Sendable, Equatable, Hashable, Codable {
     case ascending = "asc"
     case descending = "desc"
 }
@@ -75,13 +75,13 @@ public struct ListMaterialsInput: Sendable, Equatable, Hashable {
     /// Campo de ordenamiento
     public let sortBy: MaterialSortOption
     /// Dirección del orden
-    public let sortOrder: SortOrder
+    public let sortOrder: MaterialSortDirection
 
     public init(
         filters: MaterialFilters = .none,
         pagination: CursorPagination = .firstPage,
         sortBy: MaterialSortOption = .createdAt,
-        sortOrder: SortOrder = .descending
+        sortOrder: MaterialSortDirection = .descending
     ) {
         self.filters = filters
         self.pagination = pagination

@@ -54,7 +54,7 @@ public struct ListMaterialsQuery: Query {
     public let sortBy: MaterialSortOption
 
     /// Dirección del orden
-    public let sortOrder: SortOrder
+    public let sortOrder: MaterialSortDirection
 
     /// Metadata opcional para tracing
     public let metadata: [String: String]?
@@ -73,7 +73,7 @@ public struct ListMaterialsQuery: Query {
         filters: MaterialFilters = .none,
         pagination: CursorPagination = .firstPage,
         sortBy: MaterialSortOption = .createdAt,
-        sortOrder: SortOrder = .descending,
+        sortOrder: MaterialSortDirection = .descending,
         metadata: [String: String]? = nil
     ) {
         self.filters = filters
@@ -96,7 +96,7 @@ public struct ListMaterialsQuery: Query {
         filters: MaterialFilters = .none,
         limit: Int,
         sortBy: MaterialSortOption = .createdAt,
-        sortOrder: SortOrder = .descending
+        sortOrder: MaterialSortDirection = .descending
     ) {
         self.init(
             filters: filters,

@@ -267,7 +267,7 @@ public struct MaterialFilterContext: Sendable, Equatable {
     public let status: MaterialStatus?
     public let searchQuery: String?
     public let sortBy: MaterialSortOption
-    public let sortOrder: SortOrder
+    public let sortOrder: MaterialSortDirection
 
     /// Indica si hay una búsqueda activa
     public var hasSearchQuery: Bool {
@@ -287,7 +287,7 @@ public struct MaterialFilterContext: Sendable, Equatable {
         status: MaterialStatus? = nil,
         searchQuery: String? = nil,
         sortBy: MaterialSortOption = .createdAt,
-        sortOrder: SortOrder = .descending
+        sortOrder: MaterialSortDirection = .descending
     ) {
         self.subjectId = subjectId
         self.unitId = unitId
@@ -299,7 +299,7 @@ public struct MaterialFilterContext: Sendable, Equatable {
     }
 
     /// Crea desde MaterialFilters del use case.
-    public init(from filters: MaterialFilters, sortBy: MaterialSortOption, sortOrder: SortOrder) {
+    public init(from filters: MaterialFilters, sortBy: MaterialSortOption, sortOrder: MaterialSortDirection) {
         self.subjectId = filters.subjectId
         self.unitId = filters.unitId
         self.type = filters.type
