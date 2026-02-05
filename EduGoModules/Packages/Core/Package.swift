@@ -8,23 +8,60 @@ let package = Package(
         .macOS(.v15)
     ],
     products: [
-        .library(name: "EduCore", targets: ["EduCore"])
+        .library(name: "EduCore", targets: ["EduCore"]),
+        .library(name: "EduModels", targets: ["EduModels"]),
+        .library(name: "EduLogger", targets: ["EduLogger"]),
+        .library(name: "EduUtilities", targets: ["EduUtilities"])
     ],
     dependencies: [
         .package(path: "../Foundation")
     ],
     targets: [
+        // Target principal que agrupa todo
         .target(
             name: "EduCore",
             dependencies: [
+                "EduModels",
+                "EduLogger",
+                "EduUtilities"
+            ],
+            path: "Sources/EduCore"
+        ),
+        // Submodulos
+        .target(
+            name: "EduModels",
+            dependencies: [
                 .product(name: "EduFoundation", package: "Foundation")
             ],
-            path: "Sources"
+            path: "Sources/Models"
         ),
+        .target(
+            name: "EduLogger",
+            dependencies: [
+                .product(name: "EduFoundation", package: "Foundation")
+            ],
+            path: "Sources/Logger"
+        ),
+        .target(
+            name: "EduUtilities",
+            dependencies: [
+                .product(name: "EduFoundation", package: "Foundation")
+            ],
+            path: "Sources/Utilities"
+        ),
+        // Tests
         .testTarget(
             name: "EduCoreTests",
-            dependencies: ["EduCore"],
-            path: "Tests/CoreTests"
+            dependencies: [
+                "EduCore",
+                "EduModels",
+                "EduLogger",
+                "EduUtilities"
+            ],
+            path: "Tests/CoreTests",
+            resources: [
+                .copy("Resources/JSON")
+            ]
         )
     ]
 )

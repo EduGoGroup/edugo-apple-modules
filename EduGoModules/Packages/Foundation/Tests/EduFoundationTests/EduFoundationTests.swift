@@ -1,8 +1,10 @@
-import XCTest
+import Testing
 @testable import EduFoundation
 
-final class EduFoundationTests: XCTestCase {
-    func testPlaceholder() {
-        XCTAssertEqual(EduFoundation.version, "2.0.0")
+@Suite("EduFoundation Tests")
+struct EduFoundationTests {
+    @Test("Module version is defined")
+    func testModuleVersion() {
+        #expect(EduFoundation.version == "1.0.0")
     }
 }
