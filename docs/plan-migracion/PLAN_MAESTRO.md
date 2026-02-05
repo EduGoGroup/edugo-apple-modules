@@ -14,7 +14,7 @@
 | 01 | Preparacion e Infraestructura | COMPLETADA | [FASE-01-PREPARACION.md](./fases/FASE-01-PREPARACION.md) |
 | 02 | Migracion Foundation y Core | COMPLETADA | [FASE-02-FOUNDATION-CORE.md](./fases/FASE-02-FOUNDATION-CORE.md) |
 | 03 | Migracion Infrastructure | COMPLETADA | [FASE-03-INFRASTRUCTURE.md](./fases/FASE-03-INFRASTRUCTURE.md) |
-| 04 | Migracion Domain | PENDIENTE | [FASE-04-DOMAIN.md](./fases/FASE-04-DOMAIN.md) |
+| 04 | Migracion Domain | COMPLETADA | [FASE-04-DOMAIN.md](./fases/FASE-04-DOMAIN.md) |
 | 05 | Migracion Presentation | PENDIENTE | [FASE-05-PRESENTATION.md](./fases/FASE-05-PRESENTATION.md) |
 | 06 | Migracion Features y Finalizacion | PENDIENTE | [FASE-06-FEATURES-FINALIZACION.md](./fases/FASE-06-FEATURES-FINALIZACION.md) |
 
@@ -184,7 +184,7 @@ Apple/
 | 01 | 2026-02-04 18:50 | 2026-02-04 19:00 | Claude Code | Completada - Estructura base creada |
 | 02 | 2026-02-04 19:00 | 2026-02-04 20:30 | Claude Code | Completada - Foundation y Core migrados |
 | 03 | 2026-02-04 21:55 | 2026-02-04 22:05 | Claude Code | Completada - Infrastructure migrado |
-| 04 | - | - | - | Pendiente |
+| 04 | 2026-02-04 22:10 | 2026-02-04 22:20 | Claude Code | Completada - Domain migrado (TIER-2 + TIER-3 unificados) |
 | 05 | - | - | - | Pendiente |
 | 06 | - | - | - | Pendiente |
 
@@ -221,11 +221,11 @@ Resumen ejecucion: Network (15), Storage (1), Persistence (28) migrados. 442 tes
 
 ### FASE 04 - Domain
 ```
-Estado: PENDIENTE
-Progreso: 0%
-Tareas completadas: 0/X
-Problemas encontrados: -
-Resumen ejecucion: -
+Estado: COMPLETADA
+Progreso: 100%
+Tareas completadas: 13/13
+Problemas encontrados: Tipos duplicados (MaterialType, AssessmentState), conflictos de imports UseCases namespace
+Resumen ejecucion: CQRS (38), StateManagement (23), UseCases (17), Auth (1), Roles (5) migrados. 85 archivos. 5 tests basicos pasando. Unificacion TIER-2-Domain + TIER-3-Domain completada.
 ```
 
 ### FASE 05 - Presentation
